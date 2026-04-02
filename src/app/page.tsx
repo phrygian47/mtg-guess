@@ -1,93 +1,15 @@
 "use client";
-import Image from "next/image";
+import type { Card } from "@/lib/scryfall/types";
 import styles from "./page.module.css";
 import { useState } from "react";
-
-type Card = {
-  id: string;
-  oracle_id: string;
-  name: string;
-  released_at: string;
-  layout: string;
-  mana_cost: string;
-  cmc: number;
-  type_line: string;
-  oracle_text?: string;
-  colors: string[];
-  color_identity: string[];
-  keywords: string[];
-  produced_mana: string[];
-  power?: string;
-  toughness?: string;
-  flavor_text?: string;
-  legalities: {
-    standard: string;
-    future: string;
-    historic: string;
-    timeless: string;
-    gladiator: string;
-    pioneer: string;
-    modern: string;
-    legacy: string;
-    pauper: string;
-    vintage: string;
-    penny: string;
-    commander: string;
-    oathbreaker: string;
-    standardbrawl: string;
-    brawl: string;
-    alchemy: string;
-    paupercommander: string;
-    duel: string;
-    oldschool: string;
-    premodern: string;
-    predh: string;
-  };
-  game_changer: boolean;
-  rarity: string;
-  image_uris?: {
-    small: string;
-    normal: string;
-    large: string;
-    png: string;
-    art_crop: string;
-    border_crop: string;
-  };
-};
 
 export default function Home() {
   const [data, setData] = useState<Card | null>(null);
 
-  const toCardShape = (card: Card) => {
-    return {
-      id: card.id,
-      oracle_id: card.oracle_id,
-      name: card.name,
-      released_at: card.released_at,
-      layout: card.layout,
-      mana_cost: card.mana_cost,
-      cmc: card.cmc,
-      type_line: card.type_line,
-      oracle_text: card.oracle_text,
-      colors: card.colors,
-      color_identity: card.color_identity,
-      keywords: card.keywords,
-      produced_mana: card.produced_mana,
-      power: card.power,
-      toughness: card.toughness,
-      flavor_text: card.flavor_text,
-      legalities: card.legalities,
-      game_changer: card.game_changer,
-      rarity: card.rarity,
-      image_uris: card.image_uris,
-    };
-  };
-
   const fetchCard = async () => {
-    const res = await fetch("https://api.scryfall.com/cards/random");
-    const data = await res.json();
-    console.log(data);
-    setData(toCardShape(data));
+    const res = await fetch("/api/fetch-card");
+    const card: Card = await res.json();
+    setData(card);
   };
   return (
     <div className={styles.page}>

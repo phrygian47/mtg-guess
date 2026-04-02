@@ -1,0 +1,22 @@
+export type Card = {
+  id: string;
+  oracle_id: string;
+  name: string;
+  released_at: string;
+  layout: string;
+  mana_cost: string;
+  cmc: number;
+  type_line: string;
+  oracle_text?: string;
+  colors: string[];
+  color_identity: string[];
+  keywords: string[];
+  produced_mana: string[];
+  power?: string;
+  toughness?: string;
+  flavor_text?: string;
+  legalities: Record<string, string>;
+  game_changer: boolean;
+  rarity: string;
+  image_uris?: Record<string, string>;
+};
