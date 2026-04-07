@@ -20,9 +20,9 @@ export const FIELD_OPTIONS: { value: QuestionField; label: string }[] = [
   { value: "release_year", label: "Release Year" },
   { value: "legalities", label: "Format Legality" },
   { value: "game_changer", label: "Game Changer" },
+  { value: "oracle_text", label: "Card Text" },
   { value: "produced_mana", label: "Produced Mana" },
   { value: "flavor_text", label: "Flavor Text" },
-  { value: "oracle_text", label: "Card Text" },
 ];
 
 export const RARITY_OPTIONS: OptionItem<Rarity>[] = [
@@ -73,6 +73,25 @@ export const RELEASE_YEAR_OPTIONS: OptionItem[] = Array.from(
     };
   },
 );
+
+export const CMC_OPTIONS: OptionItem[] = Array.from({ length: 17 }, (_, i) => {
+  const value = i.toString();
+  return {
+    value,
+    label: value,
+  };
+});
+
+export const POWER_TOUGHNESS_OPTIONS: OptionItem[] = [
+  {
+    value: "*",
+    label: "*",
+  },
+  ...Array.from({ length: 21 }, (_, i) => ({
+    value: String(i),
+    label: String(i),
+  })),
+];
 
 export const GAME_CHANGER_OPTIONS: OptionItem[] = [
   { value: "true", label: "True" },
@@ -237,6 +256,9 @@ export const VALUE_OPTIONS: Partial<Record<QuestionField, OptionItem[]>> = {
   game_changer: GAME_CHANGER_OPTIONS,
   produced_mana: COLOR_OPTIONS,
   legalities: FORMAT_OPTIONS,
+  cmc: CMC_OPTIONS,
+  power: POWER_TOUGHNESS_OPTIONS,
+  toughness: POWER_TOUGHNESS_OPTIONS,
 };
 
 export const OPERATOR_OPTIONS: { value: QuestionOp; label: string }[] = [
@@ -254,18 +276,18 @@ export const FIELD_OPERATOR_COMPATIBILITY: Record<QuestionField, QuestionOp[]> =
   {
     colors: ["is", "is_not"],
     color_identity: ["is", "is_not"],
-    cmc: ["equals", "not_equals", "greater_than", "less_than"],
+    cmc: ["equals", "greater_than", "less_than"],
     type_line: ["includes", "excludes"],
     keywords: ["includes", "excludes"],
-    power: ["equals", "not_equals", "greater_than", "less_than"],
-    toughness: ["equals", "not_equals", "greater_than", "less_than"],
+    power: ["equals", "greater_than", "less_than"],
+    toughness: ["equals", "greater_than", "less_than"],
     rarity: ["equals", "not_equals"],
     release_year: ["equals", "not_equals", "greater_than", "less_than"],
     legalities: ["includes", "excludes"],
-    game_changer: ["is", "is_not"],
-    produced_mana: ["includes", "excludes"],
-    flavor_text: ["includes", "excludes"],
-    oracle_text: ["includes", "excludes"],
+    game_changer: ["is"],
+    produced_mana: ["includes"],
+    oracle_text: ["includes"],
+    flavor_text: ["includes"],
   };
 
 export const NUMERIC_FIELDS: QuestionField[] = [

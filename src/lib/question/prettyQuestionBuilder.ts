@@ -74,6 +74,17 @@ const prettyQuestionFormatters: Partial<
     less_than: ({ valueLabel }) =>
       `Was the card released before ${valueLabel}?`,
   },
+  game_changer: {
+    is: ({ valueLabel }) =>
+      `${valueLabel === "True" ? "Is the card a game changer?" : "Is the card not a game changer?"}`,
+  },
+  produced_mana: {
+    includes: ({ valueLabel }) => `Does the card produce ${valueLabel} mana?`,
+  },
+  legalities: {
+    includes: ({ valueLabel }) => `Is the card legal in ${valueLabel}?`,
+    excludes: ({ valueLabel }) => `Is the card banned in ${valueLabel}?`,
+  },
 };
 
 export function formatPrettyQuestion({

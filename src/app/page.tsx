@@ -8,6 +8,8 @@ import {
   OPERATOR_OPTIONS,
   FIELD_OPERATOR_COMPATIBILITY,
   NUMERIC_FIELDS,
+  POWER_TOUGHNESS_OPTIONS,
+  CMC_OPTIONS,
 } from "@/lib/question/options";
 import { OptionItem, QuestionField } from "@/lib/question/types";
 import { formatPrettyQuestion } from "@/lib/question/prettyQuestionBuilder";
@@ -22,7 +24,11 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   const availableValues =
-    selectedField === "" ? [] : (VALUE_OPTIONS[selectedField] ?? []);
+    selectedField === ""
+      ? []
+      : (VALUE_OPTIONS[selectedField] ?? []).filter(
+          (option) => option.value !== "*" || selectedOperator === "equals",
+        );
 
   const isNumericField =
     selectedField !== "" && NUMERIC_FIELDS.includes(selectedField);
