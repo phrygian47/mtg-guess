@@ -9,13 +9,16 @@ import {
   FIELD_OPERATOR_COMPATIBILITY,
   NUMERIC_FIELDS,
 } from "@/lib/question/options";
-import { QuestionField } from "@/lib/question/types";
+import { OptionItem, QuestionField } from "@/lib/question/types";
+import { formatPrettyQuestion } from "@/lib/question/prettyQuestionBuilder";
 
 export default function Home() {
   const [data, setData] = useState<Card | null>(null);
   const [guessesRemaining, setGuessesRemaining] = useState(5);
   const [cardInfo, setCardInfo] = useState<string[] | null>(null);
   const [selectedField, setSelectedField] = useState<QuestionField | "">("");
+  const [selectedOperator, setSelectedOperator] = useState<string>("");
+  const [selectedValue, setSelectedValue] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
   const availableValues =
@@ -33,6 +36,25 @@ export default function Home() {
 
   const hasPresetValues = availableValues.length > 0;
 
+  const selectedFieldLabel =
+    FIELD_OPTIONS.find((o) => o.value === selectedField)?.label ?? "";
+
+  const selectedOperatorLabel =
+    availableOperators.find((o) => o.value === selectedOperator)?.label ?? "";
+
+  const selectedValueLabel = hasPresetValues
+    ? (availableValues.find((o) => o.value === selectedValue)?.label ?? "")
+    : selectedValue;
+
+  const prettyQuestion = formatPrettyQuestion({
+    field: selectedField,
+    operator: selectedOperator,
+    value: selectedValue,
+    fieldLabel: selectedFieldLabel,
+    operatorLabel: selectedOperatorLabel,
+    valueLabel: selectedValueLabel,
+  });
+
   const submitGuess = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -46,10 +68,10 @@ export default function Home() {
   const askQuestion = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const formData = new FormData(e.currentTarget);
-    const question = formData.get("ask") as string;
-
-    console.log("Question asked:", question);
+    console.log("Question asked:", selectedField);
+    console.log("Operator:", selectedOperator);
+    console.log("Value:", selectedValue);
+    console.log("Pretty:", prettyQuestion);
   };
 
   const fetchCard = async () => {
@@ -95,13 +117,18 @@ export default function Home() {
             <p>Your guesses will go here</p>
           )}
         </ul>
-        <form className={styles.form}>
+        <form className={styles.form} onSubmit={askQuestion}>
           <select
             id="ask"
             name="ask"
             className={styles.input}
             value={selectedField}
-            onChange={(e) => setSelectedField(e.target.value as QuestionField)}
+            onChange={(e) => {
+              const newField = e.target.value as QuestionField;
+              setSelectedField(newField);
+              setSelectedOperator("");
+              setSelectedValue("");
+            }}
           >
             <option value="" disabled>
               Ask a question about the card
@@ -118,7 +145,8 @@ export default function Home() {
             id="operator"
             name="operator"
             className={styles.input}
-            defaultValue=""
+            value={selectedOperator}
+            onChange={(e) => setSelectedOperator(e.target.value)}
             disabled={!selectedField}
           >
             <option value="" disabled>
@@ -137,7 +165,8 @@ export default function Home() {
               id="value"
               name="value"
               className={styles.input}
-              defaultValue=""
+              value={selectedValue}
+              onChange={(e) => setSelectedValue(e.target.value)}
               disabled={!selectedField}
             >
               <option value="" disabled>
@@ -156,6 +185,8 @@ export default function Home() {
               type="number"
               className={styles.input}
               placeholder="Enter a number"
+              value={selectedValue}
+              onChange={(e) => setSelectedValue(e.target.value)}
               disabled={!selectedField}
             />
           ) : (
@@ -165,10 +196,18 @@ export default function Home() {
               type="text"
               className={styles.input}
               placeholder="Enter a value"
+              value={selectedValue}
+              onChange={(e) => setSelectedValue(e.target.value)}
               disabled={!selectedField}
             />
           )}
+          <button type="submit" className={styles.button}>
+            Ask
+          </button>
         </form>
+        <div className={styles.prettyQuestion}>
+          <p>{prettyQuestion}</p>
+        </div>
         <form id="guess-form" className={styles.form} onSubmit={submitGuess}>
           <input
             id="guess"
