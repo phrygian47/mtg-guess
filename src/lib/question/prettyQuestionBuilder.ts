@@ -24,29 +24,55 @@ const prettyQuestionFormatters: Partial<
       `Is the card's color identity not ${valueLabel}?`,
   },
   cmc: {
-    is: ({ operatorLabel, valueLabel }) =>
-      `Is the card's mana value ${operatorLabel.toLowerCase()} ${valueLabel}?`,
-    greater_than: ({ operatorLabel, valueLabel }) =>
-      `Is the card's mana value ${operatorLabel.toLowerCase()} ${valueLabel}?`,
-    less_than: ({ operatorLabel, valueLabel }) =>
-      `Is the card's mana value ${operatorLabel.toLowerCase()} ${valueLabel}?`,
+    equals: ({ valueLabel }) =>
+      `Is the card's mana value equal to ${valueLabel}?`,
+    not_equals: ({ valueLabel }) =>
+      `Is the card's mana value not equal to ${valueLabel}?`,
+    greater_than: ({ valueLabel }) =>
+      `Is the card's mana value greater than ${valueLabel}?`,
+    less_than: ({ valueLabel }) =>
+      `Is the card's mana value less than ${valueLabel}?`,
   },
   type_line: {
     includes: ({ valueLabel }) => `Is the card a ${valueLabel}?`,
   },
   keywords: {
     includes: ({ valueLabel }) => `Does the card have ${valueLabel}?`,
+    excludes: ({ valueLabel }) => `Does the card not have ${valueLabel}?`,
+  },
+  power: {
+    equals: ({ valueLabel }) => `Is the card's power equal to ${valueLabel}?`,
+    not_equals: ({ valueLabel }) =>
+      `Is the card's power not equal to ${valueLabel}?`,
+    greater_than: ({ valueLabel }) =>
+      `Is the card's power greater than ${valueLabel}?`,
+    less_than: ({ valueLabel }) =>
+      `Is the card's power less than ${valueLabel}?`,
+  },
+  toughness: {
+    equals: ({ valueLabel }) =>
+      `Is the card's toughness equal to ${valueLabel}?`,
+    not_equals: ({ valueLabel }) =>
+      `Is the card's toughness not equal to ${valueLabel}?`,
+    greater_than: ({ valueLabel }) =>
+      `Is the card's toughness greater than ${valueLabel}?`,
+    less_than: ({ valueLabel }) =>
+      `Is the card's toughness less than ${valueLabel}?`,
   },
   rarity: {
-    is: ({ valueLabel }) => `Is the card ${valueLabel} rarity?`,
+    equals: ({ valueLabel }) =>
+      `Is the card ${valueLabel === "uncommon" ? "an" : "a"} ${valueLabel}?`,
+    not_equals: ({ valueLabel }) =>
+      `Is the card not ${valueLabel === "uncommon" ? "an" : "a"} ${valueLabel}?`,
   },
   release_year: {
-    is: ({ operatorLabel, valueLabel }) =>
-      `Was the card released ${operatorLabel.toLowerCase()} ${valueLabel}?`,
-    greater_than: ({ operatorLabel, valueLabel }) =>
-      `Was the card released ${operatorLabel.toLowerCase()} ${valueLabel}?`,
-    less_than: ({ operatorLabel, valueLabel }) =>
-      `Was the card released ${operatorLabel.toLowerCase()} ${valueLabel}?`,
+    equals: ({ valueLabel }) => `Was the card released in ${valueLabel}?`,
+    not_equals: ({ valueLabel }) =>
+      `Was the card not released in ${valueLabel}?`,
+    greater_than: ({ valueLabel }) =>
+      `Was the card released after ${valueLabel}?`,
+    less_than: ({ valueLabel }) =>
+      `Was the card released before ${valueLabel}?`,
   },
 };
 
