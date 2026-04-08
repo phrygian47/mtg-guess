@@ -3,21 +3,28 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "./select.module.css";
 
-type Option = {
+export type Option = {
   label: string;
   value: string;
+};
+
+type SelectProps = {
+  options: Option[];
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
 };
 
 export default function Select({
   options,
   label,
-}: {
-  options: Option[];
-  label: string;
-}) {
+  value,
+  onChange,
+}: SelectProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [selected, setSelected] = useState<Option | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const selected = options.find((option) => option.value === value) ?? null;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -36,7 +43,7 @@ export default function Select({
   }, []);
 
   function handleSelect(option: Option) {
-    setSelected(option);
+    onChange(option.value);
     setIsOpen(false);
   }
 

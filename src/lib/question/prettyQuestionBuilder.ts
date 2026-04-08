@@ -41,7 +41,8 @@ const prettyQuestionFormatters: Partial<
     excludes: ({ valueLabel }) => `Does the card not have ${valueLabel}?`,
   },
   power: {
-    equals: ({ valueLabel }) => `Is the card's power equal to ${valueLabel}?`,
+    equals: ({ valueLabel, value }) =>
+      `Is the card's power ${value === "*" ? "variable" : "equal to " + valueLabel}?`,
     not_equals: ({ valueLabel }) =>
       `Is the card's power not equal to ${valueLabel}?`,
     greater_than: ({ valueLabel }) =>
@@ -50,8 +51,8 @@ const prettyQuestionFormatters: Partial<
       `Is the card's power less than ${valueLabel}?`,
   },
   toughness: {
-    equals: ({ valueLabel }) =>
-      `Is the card's toughness equal to ${valueLabel}?`,
+    equals: ({ valueLabel, value }) =>
+      `Is the card's toughness ${value === "*" ? "variable" : "equal to " + valueLabel}?`,
     not_equals: ({ valueLabel }) =>
       `Is the card's toughness not equal to ${valueLabel}?`,
     greater_than: ({ valueLabel }) =>

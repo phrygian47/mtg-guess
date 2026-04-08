@@ -32,7 +32,7 @@
 
 .form {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   gap: 1rem;
 }
@@ -42,6 +42,17 @@
   overflow-y: auto;
   width: 100%;
   gap: 1rem;
+}
+
+.button {
+  padding: 1rem 2rem;
+  background-color: var(--button-primary);
+  border: 1px solid var(--button-secondary-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 /* Enable hover only on non-touch devices */

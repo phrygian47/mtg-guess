@@ -85,7 +85,7 @@ export const CMC_OPTIONS: OptionItem[] = Array.from({ length: 17 }, (_, i) => {
 export const POWER_TOUGHNESS_OPTIONS: OptionItem[] = [
   {
     value: "*",
-    label: "*",
+    label: "Variable (*/*)",
   },
   ...Array.from({ length: 21 }, (_, i) => ({
     value: String(i),

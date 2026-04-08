@@ -11,8 +11,9 @@ import {
   POWER_TOUGHNESS_OPTIONS,
   CMC_OPTIONS,
 } from "@/lib/question/options";
-import { OptionItem, QuestionField } from "@/lib/question/types";
+import { OptionItem, QuestionField, QuestionOp } from "@/lib/question/types";
 import { formatPrettyQuestion } from "@/lib/question/prettyQuestionBuilder";
+import Select from "@/components/UI/select/select";
 
 export default function Home() {
   const [data, setData] = useState<Card | null>(null);
@@ -22,8 +23,6 @@ export default function Home() {
   const [selectedOperator, setSelectedOperator] = useState<string>("");
   const [selectedValue, setSelectedValue] = useState<string>("");
   const [loading, setLoading] = useState(true);
-
-  const dropDownSize = 8;
 
   const availableValues =
     selectedField === ""
@@ -127,76 +126,36 @@ export default function Home() {
           )}
         </ul>
         <form className={styles.form} onSubmit={askQuestion}>
-          <select
-            id="ask"
-            name="ask"
-            className={styles.input}
+          <Select
+            label="Field"
+            options={FIELD_OPTIONS}
             value={selectedField}
-            onChange={(e) => {
-              const newField = e.target.value as QuestionField;
+            onChange={(value: string) => {
+              const newField = value as QuestionField;
               setSelectedField(newField);
               setSelectedOperator("");
               setSelectedValue("");
             }}
-          >
-            <option value="" disabled>
-              Ask a question about the card
-            </option>
+          />
 
-            {FIELD_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-
-          <select
-            id="operator"
-            name="operator"
-            className={styles.input}
+          <Select
+            label="Operator"
+            options={availableOperators}
             value={selectedOperator}
-            onChange={(e) => setSelectedOperator(e.target.value)}
-            disabled={!selectedField}
-          >
-            <option value="" disabled>
-              Choose an operator
-            </option>
-
-            {availableOperators.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            onChange={(value: string) => {
+              setSelectedOperator(value);
+              setSelectedValue("");
+            }}
+          />
 
           {hasPresetValues ? (
-            <select
-              id="value"
-              name="value"
-              className={styles.input}
+            <Select
+              label="Value"
+              options={availableValues}
               value={selectedValue}
-              onChange={(e) => setSelectedValue(e.target.value)}
-              disabled={!selectedField}
-            >
-              <option value="" disabled>
-                Choose a value
-              </option>
-              {availableValues.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          ) : isNumericField ? (
-            <input
-              id="value"
-              name="value"
-              type="number"
-              className={styles.input}
-              placeholder="Enter a number"
-              value={selectedValue}
-              onChange={(e) => setSelectedValue(e.target.value)}
-              disabled={!selectedField}
+              onChange={(value: string) => {
+                setSelectedValue(value);
+              }}
             />
           ) : (
             <input
