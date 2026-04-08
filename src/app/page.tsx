@@ -23,6 +23,8 @@ export default function Home() {
   const [selectedValue, setSelectedValue] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
+  const dropDownSize = 8;
+
   const availableValues =
     selectedField === ""
       ? []
@@ -91,7 +93,8 @@ export default function Home() {
       try {
         const res = await fetch("/api/fetch-card");
         if (!res.ok) {
-          throw new Error("Failed to fetch card");
+          const text = await res.text();
+          throw new Error(`Failed to fetch card ${res.status} ${text}`);
         }
 
         const card: Card = await res.json();

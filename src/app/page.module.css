@@ -30,6 +30,20 @@
   padding: 120px 60px;
 }
 
+.form {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.input {
+  padding: 1rem;
+  overflow-y: auto;
+  width: 100%;
+  gap: 1rem;
+}
+
 /* Enable hover only on non-touch devices */
 @media (hover: hover) and (pointer: fine) {
   a.primary:hover {
