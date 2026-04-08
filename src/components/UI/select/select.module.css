@@ -1,13 +1,13 @@
 .wrapper {
   position: relative;
-  width: 260px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  padding: 1rem;
+  width: 240px;
 }
 
 .label {
-  font-size: 14px;
+  font-size: 0.9rem;
   font-weight: 600;
   color: #222;
 }
@@ -22,7 +22,7 @@
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 1rem;
   transition: opacity 0.2s ease;
   opacity: 0.8;
 }
@@ -41,7 +41,7 @@
 
 .menu {
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + 4px);
   left: 0;
   width: 100%;
   margin: 0;
@@ -58,13 +58,13 @@
 
 .option {
   width: 100%;
-  padding: 10px 12px;
+  padding: 0.6rem 1rem;
   border: none;
   background: transparent;
   text-align: left;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 1rem;
 }
 
 .option:hover {

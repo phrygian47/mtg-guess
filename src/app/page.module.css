@@ -30,18 +30,34 @@
   padding: 120px 60px;
 }
 
+.questionContainer {
+  margin-top: 2rem;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
 .form {
   display: flex;
-  align-items: flex-end;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
   gap: 1rem;
 }
 
 .input {
-  padding: 1rem;
-  overflow-y: auto;
   width: 100%;
-  gap: 1rem;
+  padding: 1rem;
+  border: transparent;
+  border-radius: 10px;
+  background: rgba(167, 167, 167, 0.3);
+  cursor: pointer;
+  font-size: 1rem;
+  transition: opacity 0.2s ease;
+  opacity: 0.8;
+  max-width: 240px;
 }
 
 .button {

@@ -14,6 +14,8 @@ import {
 import { OptionItem, QuestionField, QuestionOp } from "@/lib/question/types";
 import { formatPrettyQuestion } from "@/lib/question/prettyQuestionBuilder";
 import Select from "@/components/UI/select/select";
+import { TextInput } from "@/components/UI/input/input";
+import Button from "@/components/UI/button/button";
 
 export default function Home() {
   const [data, setData] = useState<Card | null>(null);
@@ -125,57 +127,65 @@ export default function Home() {
             <p>Your guesses will go here</p>
           )}
         </ul>
+
         <form className={styles.form} onSubmit={askQuestion}>
-          <Select
-            label="Field"
-            options={FIELD_OPTIONS}
-            value={selectedField}
-            onChange={(value: string) => {
-              const newField = value as QuestionField;
-              setSelectedField(newField);
-              setSelectedOperator("");
-              setSelectedValue("");
-            }}
-          />
-
-          <Select
-            label="Operator"
-            options={availableOperators}
-            value={selectedOperator}
-            onChange={(value: string) => {
-              setSelectedOperator(value);
-              setSelectedValue("");
-            }}
-          />
-
-          {hasPresetValues ? (
+          <div className={styles.questionContainer}>
             <Select
-              label="Value"
-              options={availableValues}
-              value={selectedValue}
+              label="Field"
+              options={FIELD_OPTIONS}
+              value={selectedField}
               onChange={(value: string) => {
-                setSelectedValue(value);
+                const newField = value as QuestionField;
+                setSelectedField(newField);
+                setSelectedOperator("");
+                setSelectedValue("");
               }}
             />
-          ) : (
-            <input
-              id="value"
-              name="value"
-              type="text"
-              className={styles.input}
-              placeholder="Enter a value"
-              value={selectedValue}
-              onChange={(e) => setSelectedValue(e.target.value)}
-              disabled={!selectedField}
+
+            <Select
+              label="Operator"
+              options={availableOperators}
+              value={selectedOperator}
+              onChange={(value: string) => {
+                setSelectedOperator(value);
+                setSelectedValue("");
+              }}
             />
-          )}
-          <button type="submit" className={styles.button}>
-            Ask
-          </button>
+
+            {hasPresetValues ? (
+              <Select
+                label="Value"
+                options={availableValues}
+                value={selectedValue}
+                onChange={(value: string) => {
+                  setSelectedValue(value);
+                }}
+              />
+            ) : (
+              <TextInput
+                label="Value"
+                id="value"
+                name="value"
+                value={selectedValue}
+                placeholder="Enter a value"
+                disabled={!selectedField}
+                onChange={setSelectedValue}
+              />
+            )}
+          </div>
+          <div className={styles.prettyQuestion}>
+            <p>{prettyQuestion}</p>
+          </div>
+          <Button
+            label="Ask"
+            type="submit"
+            children="Ask"
+            disabled={!selectedField || !selectedOperator || !selectedValue}
+            id="ask-button"
+            name="ask-button"
+          />
         </form>
-        <div className={styles.prettyQuestion}>
-          <p>{prettyQuestion}</p>
-        </div>
+
         <form id="guess-form" className={styles.form} onSubmit={submitGuess}>
           <input
             id="guess"
