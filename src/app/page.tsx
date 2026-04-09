@@ -1,7 +1,7 @@
 "use client";
 import type { Card } from "@/lib/scryfall/types";
 import styles from "./page.module.css";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   FIELD_OPTIONS,
   VALUE_OPTIONS,
@@ -16,6 +16,7 @@ import { formatPrettyQuestion } from "@/lib/question/prettyQuestionBuilder";
 import Select from "@/components/UI/select/select";
 import { TextInput } from "@/components/UI/input/input";
 import Button from "@/components/UI/button/button";
+import SearchableDropdown from "@/components/UI/SearchableDropdown/SearchableDropdown";
 
 export default function Home() {
   const [data, setData] = useState<Card | null>(null);
@@ -25,6 +26,7 @@ export default function Home() {
   const [selectedOperator, setSelectedOperator] = useState<string>("");
   const [selectedValue, setSelectedValue] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const availableValues =
     selectedField === ""
@@ -173,6 +175,7 @@ export default function Home() {
               />
             )}
           </div>
+          <SearchableDropdown ref={}></SearchableDropdown>
           <div className={styles.prettyQuestion}>
             <p>{prettyQuestion}</p>
           </div>
