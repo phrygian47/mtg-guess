@@ -8,15 +8,14 @@ import {
   OPERATOR_OPTIONS,
   FIELD_OPERATOR_COMPATIBILITY,
   NUMERIC_FIELDS,
-  POWER_TOUGHNESS_OPTIONS,
-  CMC_OPTIONS,
 } from "@/lib/question/options";
-import { OptionItem, QuestionField, QuestionOp } from "@/lib/question/types";
+import { QuestionField } from "@/lib/question/types";
 import { formatPrettyQuestion } from "@/lib/question/prettyQuestionBuilder";
 import Select from "@/components/UI/select/select";
 import { TextInput } from "@/components/UI/input/input";
 import Button from "@/components/UI/button/button";
 import SearchableDropdown from "@/components/UI/SearchableDropdown/SearchableDropdown";
+import CustomSearchable from "@/components/UI/CustomSearchable/CustomSearchable";
 
 export default function Home() {
   const [data, setData] = useState<Card | null>(null);
@@ -26,7 +25,9 @@ export default function Home() {
   const [selectedOperator, setSelectedOperator] = useState<string>("");
   const [selectedValue, setSelectedValue] = useState<string>("");
   const [loading, setLoading] = useState(true);
-  const inputRef = useRef<HTMLInputElement>(null);
+
+  const [selectedGuessCard, setSelectedGuessCard] = useState<string>("");
+  const guessInputRef = useRef<HTMLInputElement>(null);
 
   const availableValues =
     selectedField === ""
@@ -85,10 +86,17 @@ export default function Home() {
     console.log("Pretty:", prettyQuestion);
   };
 
-  const fetchCard = async () => {
-    const res = await fetch("/api/fetch-card");
-    const card: Card = await res.json();
-    setData(card);
+  const fetchCardOptions = async (query: string): Promise<string[]> => {
+    const res = await fetch(
+      `https://api.scryfall.com/cards/autocomplete?q=${encodeURIComponent(query)}`,
+    );
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch card options");
+    }
+
+    const cards = await res.json();
+    return cards.data;
   };
 
   useEffect(() => {
@@ -175,7 +183,6 @@ export default function Home() {
               />
             )}
           </div>
-          <SearchableDropdown ref={}></SearchableDropdown>
           <div className={styles.prettyQuestion}>
             <p>{prettyQuestion}</p>
           </div>
@@ -190,14 +197,18 @@ export default function Home() {
         </form>
 
         <form id="guess-form" className={styles.form} onSubmit={submitGuess}>
-          <input
+          <CustomSearchable
             id="guess"
             name="guess"
-            type="text"
-            aria-label="Search for a card"
-            placeholder="Search for a card:"
-            className={styles.input}
+            ref={guessInputRef}
+            fetchOptions={fetchCardOptions}
+            displayValue={(name) => name}
+            renderOption={(name) => <div>{name}</div>}
+            placeholder="Search for a card..."
+            minQueryLength={2}
+            onSelect={(name) => setSelectedGuessCard(name)}
           />
+
           <button
             type="submit"
             className={styles.button}

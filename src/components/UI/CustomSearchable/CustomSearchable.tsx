@@ -1,3 +1,4 @@
+import styles from "./CustomSearchable.module.css";
 import React, {
   useState,
   useEffect,
@@ -17,7 +18,7 @@ const useDebounce = (value: string, delay: number) => {
   return debouncedValue;
 };
 
-export interface SearchableDropdownProps<T> {
+export interface CustomSearchableProps<T> {
   fetchOptions: (query: string) => Promise<T[]>;
   displayValue: (item: T) => string;
   renderOption?: (item: T) => React.ReactNode;
@@ -38,7 +39,7 @@ function SearchableDropdownInner<T>(
     onSelect,
     name,
     id,
-  }: SearchableDropdownProps<T>,
+  }: CustomSearchableProps<T>,
   ref: React.ForwardedRef<HTMLInputElement>,
 ) {
   const [query, setQuery] = useState("");
@@ -146,15 +147,19 @@ function SearchableDropdownInner<T>(
 
   const renderedOptions = useMemo(() => {
     if (loading) {
-      return <li className="p-2 text-sm text-gray-500 italic">Loading...</li>;
+      return (
+        <li className={`${styles.searchable_message} ${styles.italic}`}>
+          Loading...
+        </li>
+      );
     }
 
     if (error) {
-      return <li className="p-2 text-sm text-red-500">{error}</li>;
+      return <li className={styles.searchable_error}>{error}</li>;
     }
 
     if (!loading && options.length === 0 && query.length >= minQueryLength) {
-      return <li className="p-2 text-sm text-gray-500">No results found</li>;
+      return <li className={styles.searchable_message}>No results found</li>;
     }
 
     return options.map((option, index) => {
@@ -167,9 +172,13 @@ function SearchableDropdownInner<T>(
           aria-selected={isSelected}
           onClick={() => handleSelect(option)}
           onMouseEnter={() => setFocusedIndex(index)}
-          className={`p-2 cursor-pointer hover:bg-gray-100 ${
-            isSelected ? "bg-blue-50" : ""
-          } ${index < options.length - 1 ? "border-b border-gray-100" : ""}`}
+          className={
+            styles.searchable_option +
+            (isSelected ? " " + styles.searchable_option_selected : "") +
+            (index < options.length - 1
+              ? " " + styles.searchable_option_with_border
+              : "")
+          }
         >
           {renderOption ? renderOption(option) : displayValue(option)}
         </li>
@@ -186,9 +195,8 @@ function SearchableDropdownInner<T>(
     handleSelect,
     minQueryLength,
   ]);
-
   return (
-    <div className="w-72 relative" ref={dropdownRef}>
+    <div className={styles.searchable_dropdown} ref={dropdownRef}>
       <input
         ref={ref}
         id={id}
@@ -206,7 +214,7 @@ function SearchableDropdownInner<T>(
         aria-autocomplete="list"
         aria-expanded={showDropdown}
         aria-controls="dropdown-listbox"
-        className="w-full p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+        className={styles.searchable_input}
       />
 
       {showDropdown && (
@@ -214,7 +222,7 @@ function SearchableDropdownInner<T>(
           id="dropdown-listbox"
           role="listbox"
           aria-label="Search results"
-          className="absolute top-11 left-0 right-0 bg-white border border-gray-300 rounded-md shadow-md max-h-48 overflow-y-auto z-10"
+          className={styles.searchable_list}
         >
           {renderedOptions}
         </ul>
@@ -223,8 +231,8 @@ function SearchableDropdownInner<T>(
   );
 }
 
-const SearchableDropdown = React.forwardRef(SearchableDropdownInner) as <T>(
-  props: SearchableDropdownProps<T> & React.RefAttributes<HTMLInputElement>,
+const CustomSearchable = React.forwardRef(SearchableDropdownInner) as <T>(
+  props: CustomSearchableProps<T> & React.RefAttributes<HTMLInputElement>,
 ) => React.ReactElement | null;
 
-export default SearchableDropdown;
+export default CustomSearchable;

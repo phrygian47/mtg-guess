@@ -1,0 +1,70 @@
+.searchable_dropdown {
+  position: relative;
+  width: 18rem; /* w-72 */
+}
+
+.searchable_input {
+  width: 100%;
+  padding: 0.5rem; /* p-2 */
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  border-radius: 0.375rem; /* rounded-md */
+  font-size: 0.875rem; /* text-sm */
+  box-sizing: border-box;
+}
+
+.searchable_input:focus {
+  outline: none; /* focus:outline-none */
+  box-shadow: 0 0 0 2px #60a5fa; /* focus:ring-2 focus:ring-blue-400 */
+}
+
+.searchable_list {
+  position: absolute;
+  top: 2.75rem; /* top-11 */
+  left: 0;
+  right: 0;
+  z-index: 10; /* z-10 */
+  max-height: 12rem; /* max-h-48 */
+  overflow-y: auto;
+  background: #ffffff; /* bg-white */
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  border-radius: 0.375rem; /* rounded-md */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* shadow-md */
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.searchable_option,
+.searchable_message,
+.searchable_error {
+  padding: 0.5rem; /* p-2 */
+  font-size: 0.875rem; /* text-sm */
+}
+
+.searchable_message {
+  color: #6b7280; /* text-gray-500 */
+}
+
+.searchable_message.italic {
+  font-style: italic; /* italic */
+}
+
+.searchable_error {
+  color: #ef4444; /* text-red-500 */
+}
+
+.searchable_option {
+  cursor: pointer; /* cursor-pointer */
+}
+
+.searchable_option:hover {
+  background: #f3f4f6; /* hover:bg-gray-100 */
+}
+
+.searchable_option.selected {
+  background: #eff6ff; /* bg-blue-50 */
+}
+
+.searchable_option_with_border {
+  border-bottom: 1px solid #f3f4f6; /* border-b border-gray-100 */
+}
