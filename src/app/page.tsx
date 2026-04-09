@@ -14,7 +14,6 @@ import { formatPrettyQuestion } from "@/lib/question/prettyQuestionBuilder";
 import Select from "@/components/UI/select/select";
 import { TextInput } from "@/components/UI/input/input";
 import Button from "@/components/UI/button/button";
-import SearchableDropdown from "@/components/UI/SearchableDropdown/SearchableDropdown";
 import CustomSearchable from "@/components/UI/CustomSearchable/CustomSearchable";
 
 export default function Home() {
