@@ -1,29 +1,3 @@
-type LegalityStatus = "legal" | "not_legal" | "restricted" | "banned";
-
-type Legalities = {
-  standard: LegalityStatus;
-  future: LegalityStatus;
-  historic: LegalityStatus;
-  timeless: LegalityStatus;
-  gladiator: LegalityStatus;
-  pioneer: LegalityStatus;
-  modern: LegalityStatus;
-  legacy: LegalityStatus;
-  pauper: LegalityStatus;
-  vintage: LegalityStatus;
-  penny: LegalityStatus;
-  commander: LegalityStatus;
-  oathbreaker: LegalityStatus;
-  standardbrawl: LegalityStatus;
-  brawl: LegalityStatus;
-  alchemy: LegalityStatus;
-  paupercommander: LegalityStatus;
-  duel: LegalityStatus;
-  oldschool: LegalityStatus;
-  premodern: LegalityStatus;
-  predh: LegalityStatus;
-};
-
 export type Card = {
   id: string;
   oracle_id?: string;
@@ -53,6 +27,6 @@ export type Card = {
   lang?: string;
   digital?: boolean;
   flavor_text?: string;
-  legalities: Legalities;
+  legalities?: Record<string, string>;
   game_changer: boolean;
 };
