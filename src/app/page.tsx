@@ -35,9 +35,6 @@ export default function Home() {
           (option) => option.value !== "*" || selectedOperator === "equals",
         );
 
-  const isNumericField =
-    selectedField !== "" && NUMERIC_FIELDS.includes(selectedField);
-
   const availableOperators =
     selectedField === ""
       ? []
