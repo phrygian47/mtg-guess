@@ -7,6 +7,18 @@ export async function GET(req: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const result = await importScryfallCards();
-  return Response.json(result);
+  try {
+    const result = await importScryfallCards();
+    return Response.json({ ok: true, result });
+  } catch (error) {
+    console.error("Cron sync failed:", error);
+
+    return Response.json(
+      {
+        ok: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    );
+  }
 }
