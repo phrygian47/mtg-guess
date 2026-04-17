@@ -23,14 +23,25 @@ import { importScryfallCards } from "@/lib/scryfall/scryfall-import";
 //   }
 
 // }
+import { sql } from "@/lib/db/db";
+
 export async function GET(req: Request) {
   const auth = req.headers.get("authorization");
 
-  return Response.json({
-    ok: true,
-    authMatches: auth === `Bearer ${process.env.CRON_SECRET}`,
-    hasCronSecret: Boolean(process.env.CRON_SECRET),
-    hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
-    time: new Date().toISOString(),
-  });
+  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  try {
+    const result = await sql`select now() as now`;
+    return Response.json({ ok: true, db: result[0] });
+  } catch (error) {
+    return Response.json(
+      {
+        ok: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    );
+  }
 }
