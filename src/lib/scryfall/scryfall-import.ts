@@ -37,7 +37,7 @@ export async function importScryfallCards() {
     throw new Error(`Failed to download cards file: ${cardsRes.status}`);
   }
 
-  const cards = (await cardsRes.json()) as Card[];
+  const cards = ((await cardsRes.json()) as Card[]).slice(0, 10);
 
   let processed = 0;
   let inserted = 0;
@@ -108,12 +108,12 @@ export async function importScryfallCards() {
       ${card.released_at ?? null},
       ${card.layout ?? null},
       ${card.games ?? []},
-      ${card.keywords ?? []}
-      ${card.power ?? null}
-      ${card.toughness ?? null}
-      ${card.game_changer ?? false}
-      ${card.flavor_text ?? null}
-      ${card.legalities ?? null}
+      ${card.keywords ?? []},
+      ${card.power ?? null},
+      ${card.toughness ?? null},
+      ${card.game_changer ?? false},
+      ${card.flavor_text ?? null},
+      ${card.legalities ?? null},
       ${card.produced_mana ?? []}
     )
     on conflict (scryfall_id)
