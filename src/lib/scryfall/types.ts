@@ -29,4 +29,6 @@ export type Card = {
   flavor_text?: string;
   legalities?: Record<string, string>;
   game_changer: boolean;
+  border_color?: string;
+  security_stamp?: string | null;
 };

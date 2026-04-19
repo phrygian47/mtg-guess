@@ -1,10 +1,9 @@
 import type { Card } from "@/lib/scryfall/types";
-import { toCardShape } from "@/lib/scryfall/toCardShape";
 
 export async function GET() {
   try {
     const res = await fetch(
-      "https://api.scryfall.com/cards/random?q=game%3Apaper+lang%3Aen+legal%3Astandard+-is%3Apromo+-border%3Agold",
+      "https://api.scryfall.com/cards/random?q=game%3Apaper+lang%3Aen+legal%3Astandard+-is%3Apromo+-border%3Agold+-border%3silver",
       {
         cache: "no-store",
       },
@@ -16,8 +15,7 @@ export async function GET() {
       return Response.json({ error: "Failed to fetch card" }, { status: 500 });
     }
 
-    const data = await res.json();
-    const card: Card = toCardShape(data);
+    const card = await res.json();
 
     return Response.json(card);
   } catch (err) {

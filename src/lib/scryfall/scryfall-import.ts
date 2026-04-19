@@ -42,13 +42,8 @@ export async function importScryfallCards() {
   }
 
   console.log("4. parsing cards json");
-  const cards = ((await cardsRes.json()) as Card[]).slice(0, 10);
+  const cards = (await cardsRes.json()) as Card[];
 
-  return {
-    ok: true,
-    count: cards.length,
-    firstCard: cards[0]?.name,
-  };
   console.log("5. got cards", cards.length);
 
   let processed = 0;
@@ -65,6 +60,16 @@ export async function importScryfallCards() {
     }
 
     if (card.digital) {
+      skipped++;
+      continue;
+    }
+
+    if (card.border_color === "silver") {
+      skipped++;
+      continue;
+    }
+
+    if (card.security_stamp === "acorn") {
       skipped++;
       continue;
     }

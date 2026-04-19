@@ -6,13 +6,16 @@
     "dev": "next dev --hostname localhost --port 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "import:cards": "tsx src/scripts/import-scryfall.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
+    "dotenv": "^17.4.2",
     "next": "^16.2.3",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "tsx": "^4.21.0"
   },
   "devDependencies": {
     "@types/node": "^20",
