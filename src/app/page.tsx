@@ -83,38 +83,36 @@ export default function Home() {
   };
 
   const fetchCardOptions = async (query: string): Promise<string[]> => {
-    const res = await fetch(
-      `https://api.scryfall.com/cards/autocomplete?q=${encodeURIComponent(query)}`,
-    );
+    const res = await fetch(`/api/cards/search?q=${encodeURIComponent(query)}`);
 
     if (!res.ok) {
       throw new Error("Failed to fetch card options");
     }
 
-    const cards = await res.json();
-    return cards.data;
+    const cards: { id: string; name: string }[] = await res.json();
+    return cards.map((card) => card.name);
   };
 
-  useEffect(() => {
-    const fetchCard = async () => {
-      try {
-        const res = await fetch("/api/fetch-card");
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(`Failed to fetch card ${res.status} ${text}`);
-        }
+  // useEffect(() => {
+  //   const fetchCard = async () => {
+  //     try {
+  //       const res = await fetch("/api/fetch-card");
+  //       if (!res.ok) {
+  //         const text = await res.text();
+  //         throw new Error(`Failed to fetch card ${res.status} ${text}`);
+  //       }
 
-        const card: Card = await res.json();
-        setData(card);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  //       const card: Card = await res.json();
+  //       setData(card);
+  //     } catch (error) {
+  //       console.error(error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
 
-    fetchCard();
-  }, []);
+  //   fetchCard();
+  // }, []);
 
   return (
     <div className={styles.page}>
