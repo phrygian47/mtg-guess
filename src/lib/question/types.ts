@@ -22,12 +22,14 @@ export type QuestionOp =
   | "greater_than"
   | "less_than"
   | "is"
-  | "is_not";
+  | "is_not"
+  | "is_exactly"
+  | "has_any";
 
 export type Question = {
   field: QuestionField;
   op: QuestionOp;
-  value: string | number | string[] | Record<string, string>;
+  value?: string | number | string[] | Record<string, string>;
   label: string;
   answer: boolean;
 };
@@ -65,3 +67,8 @@ export type FormatName =
   | "oldschool"
   | "premodern"
   | "predh";
+
+export type QuestionDefinition = {
+  operators: QuestionOp[];
+  requiresValue: (operator: QuestionOp) => boolean;
+};

@@ -8,7 +8,7 @@ export type Card = {
   colors?: string[];
   color_identity: string[];
   keywords?: string[];
-  produced_mana: string[];
+  produced_mana?: string[];
   power?: string;
   toughness?: string;
   cmc?: number;

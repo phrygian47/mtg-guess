@@ -1,4 +1,5 @@
 import type { QuestionField } from "@/lib/question/types";
+import { QUESTION_DEFINITIONS } from "./definitions";
 
 type PrettyQuestionParams = {
   field: QuestionField | "";
@@ -37,6 +38,7 @@ const prettyQuestionFormatters: Partial<
     includes: ({ valueLabel }) => `Is the card a ${valueLabel}?`,
   },
   keywords: {
+    has_any: () => "Does the card have keyword abilities?",
     includes: ({ valueLabel }) => `Does the card have ${valueLabel}?`,
     excludes: ({ valueLabel }) => `Does the card not have ${valueLabel}?`,
   },
@@ -80,11 +82,20 @@ const prettyQuestionFormatters: Partial<
       `${valueLabel === "True" ? "Is the card a game changer?" : "Is the card not a game changer?"}`,
   },
   produced_mana: {
+    has_any: () => "Does the card produce mana?",
     includes: ({ valueLabel }) => `Does the card produce ${valueLabel} mana?`,
   },
   legalities: {
     includes: ({ valueLabel }) => `Is the card legal in ${valueLabel}?`,
     excludes: ({ valueLabel }) => `Is the card banned in ${valueLabel}?`,
+  },
+  oracle_text: {
+    has_any: () => "Does the card have rules text?",
+    includes: ({ valueLabel }) => `Does the rules text include ${valueLabel}?`,
+  },
+  flavor_text: {
+    has_any: () => "Does the card contain flavor text?",
+    includes: ({ valueLabel }) => `Does the flavor text include ${valueLabel}?`,
   },
 };
 
@@ -97,7 +108,14 @@ export function formatPrettyQuestion({
   valueLabel,
 }: PrettyQuestionParams): string {
   if (!field) return "Choose a field to ask a question.";
-  if (!operator || !value) return "Finish building your question.";
+  const definition = field ? QUESTION_DEFINITIONS[field] : null;
+
+  if (!field) return "Choose a field to ask a question.";
+  if (!operator) return "Choose an operator.";
+
+  const needsValue = definition?.requiresValue(operator as any) ?? true;
+
+  if (needsValue && !value) return "Finish building your question.";
 
   const customFormatter = prettyQuestionFormatters[field]?.[operator];
   if (customFormatter) {

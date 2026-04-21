@@ -270,24 +270,26 @@ export const OPERATOR_OPTIONS: { value: QuestionOp; label: string }[] = [
   { value: "less_than", label: "Less Than" },
   { value: "is", label: "Is" },
   { value: "is_not", label: "Is Not" },
+  { value: "has_any", label: "Has Any" },
+  { value: "is_exactly", label: "Is Exactly" },
 ];
 
 export const FIELD_OPERATOR_COMPATIBILITY: Record<QuestionField, QuestionOp[]> =
   {
-    colors: ["is", "is_not"],
-    color_identity: ["is", "is_not"],
+    colors: ["is", "is_not", "is_exactly"],
+    color_identity: ["is", "is_not", "is_exactly"],
     cmc: ["equals", "greater_than", "less_than"],
     type_line: ["includes", "excludes"],
-    keywords: ["includes", "excludes"],
+    keywords: ["has_any", "includes", "excludes"],
     power: ["equals", "greater_than", "less_than"],
     toughness: ["equals", "greater_than", "less_than"],
     rarity: ["equals", "not_equals"],
     release_year: ["equals", "not_equals", "greater_than", "less_than"],
     legalities: ["includes", "excludes"],
     game_changer: ["is"],
-    produced_mana: ["includes"],
-    oracle_text: ["includes"],
-    flavor_text: ["includes"],
+    produced_mana: ["has_any", "includes"],
+    oracle_text: ["has_any", "includes"],
+    flavor_text: ["has_any", "includes"],
   };
 
 export const NUMERIC_FIELDS: QuestionField[] = [

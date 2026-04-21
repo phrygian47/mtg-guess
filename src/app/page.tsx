@@ -9,12 +9,14 @@ import {
   FIELD_OPERATOR_COMPATIBILITY,
   NUMERIC_FIELDS,
 } from "@/lib/question/options";
-import { QuestionField } from "@/lib/question/types";
+import { QuestionField, QuestionOp } from "@/lib/question/types";
 import { formatPrettyQuestion } from "@/lib/question/prettyQuestionBuilder";
 import Select from "@/components/UI/select/select";
 import { TextInput } from "@/components/UI/input/input";
 import Button from "@/components/UI/button/button";
 import CustomSearchable from "@/components/UI/CustomSearchable/CustomSearchable";
+import { getAvailableValues } from "@/lib/question/getAvailableValues";
+import { requiresValue } from "@/lib/question/requiresValue";
 
 export default function Home() {
   const [data, setData] = useState<Card | null>(null);
@@ -28,12 +30,9 @@ export default function Home() {
   const [selectedGuessCard, setSelectedGuessCard] = useState<string>("");
   const guessInputRef = useRef<HTMLInputElement>(null);
 
-  const availableValues =
-    selectedField === ""
-      ? []
-      : (VALUE_OPTIONS[selectedField] ?? []).filter(
-          (option) => option.value !== "*" || selectedOperator === "equals",
-        );
+  const availableValues = getAvailableValues(selectedField, selectedOperator);
+
+  const valueIsRequired = requiresValue(selectedField, selectedOperator);
 
   const availableOperators =
     selectedField === ""
@@ -184,7 +183,11 @@ export default function Home() {
             label="Ask"
             type="submit"
             children="Ask"
-            disabled={!selectedField || !selectedOperator || !selectedValue}
+            disabled={
+              !selectedField ||
+              !selectedOperator ||
+              (valueIsRequired && !selectedValue)
+            }
             id="ask-button"
             name="ask-button"
           />
