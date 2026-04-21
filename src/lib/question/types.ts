@@ -31,7 +31,6 @@ export type Question = {
   op: QuestionOp;
   value?: string | number | string[] | Record<string, string>;
   label: string;
-  answer: boolean;
 };
 
 export type ColorCode = "W" | "U" | "B" | "R" | "G" | "C" | "M";
@@ -71,4 +70,8 @@ export type FormatName =
 export type QuestionDefinition = {
   operators: QuestionOp[];
   requiresValue: (operator: QuestionOp) => boolean;
+};
+
+export type QuestionYN = Question & {
+  answer: boolean;
 };

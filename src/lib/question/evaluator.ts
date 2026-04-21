@@ -108,8 +108,7 @@ export function evaluateQuestion(card: Card, question: Question): boolean {
       if (!card.released_at) return false;
 
       const questionValue = Number(question.value);
-      const releasedYear = Number(card.released_at.slice(0, 4));
-
+      const releasedYear = new Date(card.released_at).getUTCFullYear();
       if (Number.isNaN(questionValue)) {
         return false;
       }

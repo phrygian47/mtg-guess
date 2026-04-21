@@ -72,13 +72,29 @@ export default function Home() {
     setGuessesRemaining((prev) => prev - 1);
   };
 
-  const askQuestion = (e: React.SubmitEvent<HTMLFormElement>) => {
+  const askQuestion = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     console.log("Question asked:", selectedField);
     console.log("Operator:", selectedOperator);
     console.log("Value:", selectedValue);
     console.log("Pretty:", prettyQuestion);
+
+    const res = await fetch("/api/cards/guess", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        field: selectedField,
+        op: selectedOperator,
+        value: selectedValue,
+        label: prettyQuestion,
+      }),
+    });
+
+    const data: { answer: boolean } = await res.json();
+    console.log(data);
   };
 
   const fetchCardOptions = async (query: string): Promise<string[]> => {
