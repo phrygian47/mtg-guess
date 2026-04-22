@@ -43,6 +43,8 @@ export default function Home() {
 
   const hasPresetValues = availableValues.length > 0;
 
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   const selectedFieldLabel =
     FIELD_OPTIONS.find((o) => o.value === selectedField)?.label ?? "";
 
@@ -90,6 +92,7 @@ export default function Home() {
         op: selectedOperator,
         value: selectedValue,
         label: prettyQuestion,
+        timezone: timezone,
       }),
     });
 
