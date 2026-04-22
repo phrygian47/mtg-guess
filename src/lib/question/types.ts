@@ -75,3 +75,8 @@ export type QuestionDefinition = {
 export type QuestionYN = Question & {
   answer: boolean;
 };
+
+export type QuestionWithResponse = {
+  answer: boolean;
+  label: string;
+};

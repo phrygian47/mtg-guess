@@ -9,7 +9,7 @@ import {
   FIELD_OPERATOR_COMPATIBILITY,
   NUMERIC_FIELDS,
 } from "@/lib/question/options";
-import { QuestionField, QuestionOp } from "@/lib/question/types";
+import { QuestionField, QuestionWithResponse } from "@/lib/question/types";
 import { formatPrettyQuestion } from "@/lib/question/prettyQuestionBuilder";
 import Select from "@/components/UI/select/select";
 import { TextInput } from "@/components/UI/input/input";
@@ -19,13 +19,14 @@ import { getAvailableValues } from "@/lib/question/getAvailableValues";
 import { requiresValue } from "@/lib/question/requiresValue";
 
 export default function Home() {
-  const [data, setData] = useState<Card | null>(null);
+  const [card, setCard] = useState<Card | null>(null);
   const [guessesRemaining, setGuessesRemaining] = useState(5);
-  const [cardInfo, setCardInfo] = useState<string[] | null>(null);
+  const [cardInfo, setCardInfo] = useState<QuestionWithResponse[]>([]);
   const [selectedField, setSelectedField] = useState<QuestionField | "">("");
   const [selectedOperator, setSelectedOperator] = useState<string>("");
   const [selectedValue, setSelectedValue] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [cardVisible, setCardVisible] = useState(false);
 
   const [selectedGuessCard, setSelectedGuessCard] = useState<string>("");
   const guessInputRef = useRef<HTMLInputElement>(null);
@@ -96,8 +97,14 @@ export default function Home() {
       }),
     });
 
-    const data: { answer: boolean } = await res.json();
+    const data = await res.json();
     console.log(data);
+
+    const newQuestion: QuestionWithResponse = {
+      answer: data.answer,
+      label: prettyQuestion,
+    };
+    setCardInfo([...cardInfo, newQuestion]);
   };
 
   const fetchCardOptions = async (query: string): Promise<string[]> => {
@@ -111,27 +118,30 @@ export default function Home() {
     return cards.map((card) => card.name);
   };
 
-  // useEffect(() => {
-  //   const fetchCard = async () => {
-  //     try {
-  //       const res = await fetch("/api/fetch-card");
-  //       if (!res.ok) {
-  //         const text = await res.text();
-  //         throw new Error(`Failed to fetch card ${res.status} ${text}`);
-  //       }
+  useEffect(() => {
+    const fetchCard = async () => {
+      try {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const res = await fetch(
+          `/api/fetch-card?timezone=${encodeURIComponent(timezone)}`,
+        );
 
-  //       const card: Card = await res.json();
-  //       setData(card);
-  //     } catch (error) {
-  //       console.error(error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`Failed to fetch card ${res.status} ${text}`);
+        }
 
-  //   fetchCard();
-  // }, []);
+        const card: Card = await res.json();
+        setCard(card);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
+    fetchCard();
+  }, []);
   return (
     <div className={styles.page}>
       <main className={styles.main}>
@@ -139,12 +149,28 @@ export default function Home() {
         {loading ? (
           <p>Loading...</p>
         ) : (
-          <p>Name: {data?.name ?? "No card loaded"}</p>
+          <button onClick={() => setCardVisible(!cardVisible)}>
+            Toggle Reveal (Testing purposes only)
+          </button>
         )}
-        <p>Number of Guesses Remaining: {guessesRemaining}</p>
+        {cardVisible ? <p>{card?.name}</p> : <p>Card is hidden</p>}
         <ul>
-          {cardInfo ? (
-            cardInfo.map((info) => <li key={info}>{info}</li>)
+          {cardInfo.length > 0 ? (
+            cardInfo.map((info, index) => (
+              <div
+                key={`${info.label}-${index}`}
+                className={styles.questionsHistory}
+              >
+                <p className={styles.asked}>{info.label}</p>
+                <p className={styles.answer}>
+                  {typeof info.answer === "boolean"
+                    ? info.answer
+                      ? "Yes"
+                      : "No"
+                    : String(info.answer)}
+                </p>
+              </div>
+            ))
           ) : (
             <p>Your guesses will go here</p>
           )}

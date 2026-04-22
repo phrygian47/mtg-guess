@@ -1,21 +1,31 @@
+import { sql } from "@/lib/db/db";
+import type { QuestionYN } from "@/lib/question/types";
 import type { Card } from "@/lib/scryfall/types";
 
-export async function GET() {
+type QuestionRequest = QuestionYN & {
+  timezone?: string;
+};
+
+export async function GET(req: Request) {
   try {
-    const res = await fetch(
-      "https://api.scryfall.com/cards/random?q=game%3Apaper+lang%3Aen+legal%3Astandard+-is%3Apromo+-border%3Agold+-border%3silver",
-      {
-        cache: "no-store",
-      },
-    );
+    const { searchParams } = new URL(req.url);
+    const timezone = searchParams.get("timezone") ?? "UTC";
 
-    if (!res.ok) {
-      const text = await res.text();
-      console.error("Scryfall responded with error:", res.status, text);
-      return Response.json({ error: "Failed to fetch card" }, { status: 500 });
+    const rows = await sql`
+      select *
+      from dailycardselections
+      where puzzle_date = (now() at time zone ${timezone})::date
+      limit 1
+    `;
+
+    const card = rows[0] as Card | undefined;
+
+    if (!card) {
+      return Response.json(
+        { error: "No puzzle card found for today." },
+        { status: 404 },
+      );
     }
-
-    const card = await res.json();
 
     return Response.json(card);
   } catch (err) {
