@@ -50,13 +50,23 @@ function SearchableDropdownInner<T>(
   const [focusedIndex, setFocusedIndex] = useState(-1);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const selectedDisplayValueRef = useRef<string | null>(null);
 
-  const debouncedQuery = useDebounce(query, 300);
+  const debouncedQuery = useDebounce(query, 500);
 
   useEffect(() => {
-    if (debouncedQuery.trim().length < minQueryLength) {
+    const trimmedQuery = debouncedQuery.trim();
+
+    if (trimmedQuery.length < minQueryLength) {
       setOptions([]);
       setShowDropdown(false);
+      setFocusedIndex(-1);
+      return;
+    }
+
+    if (selectedDisplayValueRef.current === trimmedQuery) {
+      setShowDropdown(false);
+      setOptions([]);
       setFocusedIndex(-1);
       return;
     }
@@ -68,7 +78,7 @@ function SearchableDropdownInner<T>(
       setError(null);
 
       try {
-        const results = await fetchOptions(debouncedQuery.trim());
+        const results = await fetchOptions(trimmedQuery);
         if (!isActive) return;
 
         setOptions(results || []);
@@ -109,10 +119,15 @@ function SearchableDropdownInner<T>(
 
   const handleSelect = useCallback(
     (item: T) => {
-      setQuery(displayValue(item));
+      const label = displayValue(item);
+
+      selectedDisplayValueRef.current = label;
+
+      setQuery(label);
       setShowDropdown(false);
       setOptions([]);
       setFocusedIndex(-1);
+
       onSelect?.(item);
     },
     [displayValue, onSelect],
@@ -204,7 +219,10 @@ function SearchableDropdownInner<T>(
         type="text"
         placeholder={placeholder}
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={(e) => {
+          selectedDisplayValueRef.current = null;
+          setQuery(e.target.value);
+        }}
         onFocus={() => {
           if (query.length >= minQueryLength && options.length > 0) {
             setShowDropdown(true);

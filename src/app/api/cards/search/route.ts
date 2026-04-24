@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
   WITH ranked_cards AS (
     SELECT
       id,
+      oracle_id,
       name,
       normalized_name,
       CASE
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
         ELSE 3
       END AS match_rank,
       ROW_NUMBER() OVER (
-        PARTITION BY name
+        PARTITION BY oracle_id
         ORDER BY
           CASE
             WHEN normalized_name = ${query} THEN 0
@@ -40,12 +41,13 @@ export async function GET(req: NextRequest) {
             ELSE 3
           END,
           LENGTH(normalized_name) ASC,
+          name ASC,
           id ASC
       ) AS rn
     FROM cards
     WHERE normalized_name ILIKE ${`%${query}%`}
   )
-  SELECT id, name
+  SELECT id, oracle_id, name
   FROM ranked_cards
   WHERE rn = 1
   ORDER BY

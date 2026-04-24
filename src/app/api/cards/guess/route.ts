@@ -1,25 +1,24 @@
 import { sql } from "@/lib/db/db";
-import { evaluateQuestion } from "@/lib/question/evaluator";
-import type { QuestionYN } from "@/lib/question/types";
-import type { Card } from "@/lib/scryfall/types";
-
-type QuestionRequest = QuestionYN & {
-  timezone?: string;
-};
+import type { CardGuess } from "@/lib/question/types";
+import { guessCard } from "@/lib/question/guessCard";
 
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as QuestionRequest;
-    const { timezone = "UTC", ...question } = body;
+    const body = await req.json();
+    const { timezone = "UTC", oracle_id } = body;
+
+    if (!oracle_id) {
+      return Response.json({ error: "Missing oracle_id." }, { status: 400 });
+    }
 
     const rows = await sql`
-      select *
-      from dailycardselections
-      where puzzle_date = (now() at time zone ${timezone})::date
-      limit 1
+        select oracle_id, name
+        from dailycardselections
+        where puzzle_date = (now() at time zone ${timezone})::date
+        limit 1
     `;
 
-    const card = rows[0] as Card | undefined;
+    const card = rows[0];
 
     if (!card) {
       return Response.json(
@@ -28,8 +27,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const answer = evaluateQuestion(card, question);
-
+    const answer = oracle_id === card.oracle_id;
     return Response.json({ answer });
   } catch (error) {
     console.error("POST /api/question failed:", error);

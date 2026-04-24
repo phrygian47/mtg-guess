@@ -1,7 +1,7 @@
 "use client";
 import type { Card } from "@/lib/scryfall/types";
 import styles from "./page.module.css";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import {
   FIELD_OPTIONS,
   VALUE_OPTIONS,
@@ -9,7 +9,11 @@ import {
   FIELD_OPERATOR_COMPATIBILITY,
   NUMERIC_FIELDS,
 } from "@/lib/question/options";
-import { QuestionField, QuestionWithResponse } from "@/lib/question/types";
+import {
+  QuestionField,
+  QuestionWithResponse,
+  CardGuess,
+} from "@/lib/question/types";
 import { formatPrettyQuestion } from "@/lib/question/prettyQuestionBuilder";
 import Select from "@/components/UI/select/select";
 import { TextInput } from "@/components/UI/input/input";
@@ -65,14 +69,19 @@ export default function Home() {
     valueLabel: selectedValueLabel,
   });
 
-  const submitGuess = (e: React.SubmitEvent<HTMLFormElement>) => {
+  const submitGuess = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const formData = new FormData(e.currentTarget);
-    const guess = formData.get("guess") as string;
-
-    console.log("Guess submitted:", guess);
-    setGuessesRemaining((prev) => prev - 1);
+    const answer = await fetch("/api/cards/guess", {
+      method: "POST",
+      body: JSON.stringify({
+        timezone: timezone,
+        oracle_id: selectedGuessCard,
+      }),
+    });
+    const res = await answer.json();
+    console.log("Guess submitted:", selectedGuessCard);
+    console.log(res);
   };
 
   const askQuestion = async (e: React.SubmitEvent<HTMLFormElement>) => {
@@ -83,7 +92,7 @@ export default function Home() {
     console.log("Value:", selectedValue);
     console.log("Pretty:", prettyQuestion);
 
-    const res = await fetch("/api/cards/guess", {
+    const res = await fetch("/api/cards/ask", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -107,16 +116,21 @@ export default function Home() {
     setCardInfo([...cardInfo, newQuestion]);
   };
 
-  const fetchCardOptions = async (query: string): Promise<string[]> => {
-    const res = await fetch(`/api/cards/search?q=${encodeURIComponent(query)}`);
+  const fetchCardOptions = useCallback(
+    async (query: string): Promise<CardGuess[]> => {
+      const res = await fetch(
+        `/api/cards/search?q=${encodeURIComponent(query)}`,
+      );
 
-    if (!res.ok) {
-      throw new Error("Failed to fetch card options");
-    }
+      if (!res.ok) {
+        throw new Error("Failed to fetch card options");
+      }
 
-    const cards: { id: string; name: string }[] = await res.json();
-    return cards.map((card) => card.name);
-  };
+      const cards: CardGuess[] = await res.json();
+      return cards;
+    },
+    [],
+  );
 
   useEffect(() => {
     const fetchCard = async () => {
@@ -240,15 +254,14 @@ export default function Home() {
 
         <form id="guess-form" className={styles.form} onSubmit={submitGuess}>
           <CustomSearchable
-            id="guess"
-            name="guess"
+            id="guess-search"
             ref={guessInputRef}
             fetchOptions={fetchCardOptions}
-            displayValue={(name) => name}
-            renderOption={(name) => <div>{name}</div>}
+            displayValue={(card) => card.name}
+            renderOption={(card) => <div>{card.name}</div>}
             placeholder="Search for a card..."
             minQueryLength={2}
-            onSelect={(name) => setSelectedGuessCard(name)}
+            onSelect={(card) => setSelectedGuessCard(card.oracle_id)}
           />
 
           <button

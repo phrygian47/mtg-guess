@@ -80,3 +80,13 @@ export type QuestionWithResponse = {
   answer: boolean;
   label: string;
 };
+
+export type QuestionRequest = QuestionYN & {
+  timezone?: string;
+};
+
+export type CardGuess = {
+  id: string;
+  oracle_id: string;
+  name: string;
+};
