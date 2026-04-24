@@ -14,6 +14,7 @@ import {
   QuestionWithResponse,
   CardGuess,
 } from "@/lib/question/types";
+import { submitGuess } from "@/lib/game/submitGuess";
 import { formatPrettyQuestion } from "@/lib/question/prettyQuestionBuilder";
 import Select from "@/components/UI/select/select";
 import { TextInput } from "@/components/UI/input/input";
@@ -68,19 +69,10 @@ export default function Home() {
     operatorLabel: selectedOperatorLabel,
     valueLabel: selectedValueLabel,
   });
-
-  const submitGuess = async (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleSubmitGuess = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const res = await submitGuess(timezone, selectedGuessCard);
 
-    const answer = await fetch("/api/cards/guess", {
-      method: "POST",
-      body: JSON.stringify({
-        timezone: timezone,
-        oracle_id: selectedGuessCard,
-      }),
-    });
-    const res = await answer.json();
-    console.log("Guess submitted:", selectedGuessCard);
     console.log(res);
   };
 
@@ -252,7 +244,11 @@ export default function Home() {
           />
         </form>
 
-        <form id="guess-form" className={styles.form} onSubmit={submitGuess}>
+        <form
+          id="guess-form"
+          className={styles.form}
+          onSubmit={handleSubmitGuess}
+        >
           <CustomSearchable
             id="guess-search"
             ref={guessInputRef}
