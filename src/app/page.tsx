@@ -40,6 +40,8 @@ export default function Home() {
 
   const valueIsRequired = requiresValue(selectedField, selectedOperator);
 
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   const availableOperators =
     selectedField === ""
       ? []
@@ -48,8 +50,6 @@ export default function Home() {
         );
 
   const hasPresetValues = availableValues.length > 0;
-
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const selectedFieldLabel =
     FIELD_OPTIONS.find((o) => o.value === selectedField)?.label ?? "";
@@ -125,9 +125,26 @@ export default function Home() {
   );
 
   useEffect(() => {
+    const startGame = async () => {
+      try {
+        const res = await fetch(
+          `/api/game/start-game?timezone=${encodeURIComponent(timezone)}`,
+        );
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`Failed to fetch card ${res.status} ${text}`);
+        }
+
+        const startInfo = await res.json();
+
+        console.log(startInfo);
+      } catch (error) {
+        console.log(error);
+      }
+    };
     const fetchCard = async () => {
       try {
-        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         const res = await fetch(
           `/api/fetch-card?timezone=${encodeURIComponent(timezone)}`,
         );
@@ -147,6 +164,7 @@ export default function Home() {
     };
 
     fetchCard();
+    startGame();
   }, []);
   return (
     <div className={styles.page}>
