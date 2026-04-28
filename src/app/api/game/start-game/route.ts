@@ -1,9 +1,5 @@
 import { sql } from "@/lib/db/db";
-
-type StartInfo = {
-  colors: string[];
-  type: string;
-};
+import { StartInfo } from "@/lib/game/types";
 
 const WORDS_TO_REMOVE = ["Basic", "Legendary"];
 const pattern = `\\m(${WORDS_TO_REMOVE.join("|")})\\M`;

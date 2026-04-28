@@ -14,6 +14,7 @@ import {
   QuestionWithResponse,
   CardGuess,
 } from "@/lib/question/types";
+import { StartInfo } from "@/lib/game/types";
 import { submitGuess } from "@/lib/game/submitGuess";
 import { formatPrettyQuestion } from "@/lib/question/prettyQuestionBuilder";
 import Select from "@/components/UI/select/select";
@@ -22,10 +23,14 @@ import Button from "@/components/UI/button/button";
 import CustomSearchable from "@/components/UI/CustomSearchable/CustomSearchable";
 import { getAvailableValues } from "@/lib/question/getAvailableValues";
 import { requiresValue } from "@/lib/question/requiresValue";
+import parseColor from "@/lib/game/parseColor";
+import { start } from "repl";
 
 export default function Home() {
   const [card, setCard] = useState<Card | null>(null);
-  const [guessesRemaining, setGuessesRemaining] = useState(5);
+  const [startInfo, setStartInfo] = useState<StartInfo | null>(null);
+  const [gameStart, setGameStart] = useState<boolean>(false);
+  const [guessesRemaining, setGuessesRemaining] = useState(21);
   const [cardInfo, setCardInfo] = useState<QuestionWithResponse[]>([]);
   const [selectedField, setSelectedField] = useState<QuestionField | "">("");
   const [selectedOperator, setSelectedOperator] = useState<string>("");
@@ -106,6 +111,7 @@ export default function Home() {
       label: prettyQuestion,
     };
     setCardInfo([...cardInfo, newQuestion]);
+    setGuessesRemaining(guessesRemaining - 1);
   };
 
   const fetchCardOptions = useCallback(
@@ -125,7 +131,7 @@ export default function Home() {
   );
 
   useEffect(() => {
-    const startGame = async () => {
+    const loadStartInfo = async () => {
       try {
         const res = await fetch(
           `/api/game/start-game?timezone=${encodeURIComponent(timezone)}`,
@@ -137,6 +143,8 @@ export default function Home() {
         }
 
         const startInfo = await res.json();
+
+        setStartInfo(startInfo);
 
         console.log(startInfo);
       } catch (error) {
@@ -164,7 +172,7 @@ export default function Home() {
     };
 
     fetchCard();
-    startGame();
+    loadStartInfo();
   }, []);
   return (
     <div className={styles.page}>
@@ -173,119 +181,139 @@ export default function Home() {
         {loading ? (
           <p>Loading...</p>
         ) : (
-          <button onClick={() => setCardVisible(!cardVisible)}>
-            Toggle Reveal (Testing purposes only)
-          </button>
-        )}
-        {cardVisible ? <p>{card?.name}</p> : <p>Card is hidden</p>}
-        <ul>
-          {cardInfo.length > 0 ? (
-            cardInfo.map((info, index) => (
-              <div
-                key={`${info.label}-${index}`}
-                className={styles.questionsHistory}
-              >
-                <p className={styles.asked}>{info.label}</p>
-                <p className={styles.answer}>
-                  {typeof info.answer === "boolean"
-                    ? info.answer
-                      ? "Yes"
-                      : "No"
-                    : String(info.answer)}
-                </p>
-              </div>
-            ))
-          ) : (
-            <p>Your guesses will go here</p>
-          )}
-        </ul>
-
-        <form className={styles.form} onSubmit={askQuestion}>
-          <div className={styles.questionContainer}>
-            <Select
-              label="Field"
-              options={FIELD_OPTIONS}
-              value={selectedField}
-              onChange={(value: string) => {
-                const newField = value as QuestionField;
-                setSelectedField(newField);
-                setSelectedOperator("");
-                setSelectedValue("");
-              }}
-            />
-
-            <Select
-              label="Operator"
-              options={availableOperators}
-              value={selectedOperator}
-              onChange={(value: string) => {
-                setSelectedOperator(value);
-                setSelectedValue("");
-              }}
-            />
-
-            {hasPresetValues ? (
-              <Select
-                label="Value"
-                options={availableValues}
-                value={selectedValue}
-                onChange={(value: string) => {
-                  setSelectedValue(value);
-                }}
-              />
-            ) : (
-              <TextInput
-                label="Value"
-                id="value"
-                name="value"
-                value={selectedValue}
-                placeholder="Enter a value"
-                disabled={!selectedField}
-                onChange={setSelectedValue}
-              />
+          <div>
+            {!gameStart && (
+              <button onClick={() => setGameStart(true)}>
+                Start Game (21 Questions)
+              </button>
             )}
+            <button onClick={() => setCardVisible(!cardVisible)}>
+              Toggle Reveal (Testing purposes only)
+            </button>
           </div>
-          <div className={styles.prettyQuestion}>
-            <p>{prettyQuestion}</p>
+        )}
+        {cardVisible && <p>{card?.name}</p>}
+        {gameStart && startInfo && (
+          <div>
+            <h3>You have {guessesRemaining} questions left!</h3>
+            <p>
+              The card is a {parseColor(startInfo.colors).join("/")}{" "}
+              {startInfo.type}
+            </p>
           </div>
-          <Button
-            label="Ask"
-            type="submit"
-            children="Ask"
-            disabled={
-              !selectedField ||
-              !selectedOperator ||
-              (valueIsRequired && !selectedValue)
-            }
-            id="ask-button"
-            name="ask-button"
-          />
-        </form>
+        )}
+        {cardInfo.length > 0 ? (
+          cardInfo.map((info, index) => (
+            <div
+              key={`${info.label}-${index}`}
+              className={styles.questionsHistory}
+            >
+              <p className={styles.asked}>{info.label}</p>
+              <p className={styles.answer}>
+                {typeof info.answer === "boolean"
+                  ? info.answer
+                    ? "Yes"
+                    : "No"
+                  : String(info.answer)}
+              </p>
+            </div>
+          ))
+        ) : (
+          <p>Your guesses will go here</p>
+        )}
 
-        <form
-          id="guess-form"
-          className={styles.form}
-          onSubmit={handleSubmitGuess}
-        >
-          <CustomSearchable
-            id="guess-search"
-            ref={guessInputRef}
-            fetchOptions={fetchCardOptions}
-            displayValue={(card) => card.name}
-            renderOption={(card) => <div>{card.name}</div>}
-            placeholder="Search for a card..."
-            minQueryLength={2}
-            onSelect={(card) => setSelectedGuessCard(card.oracle_id)}
-          />
+        {gameStart ? (
+          <div>
+            <form className={styles.form} onSubmit={askQuestion}>
+              <div className={styles.questionContainer}>
+                <Select
+                  label="Field"
+                  options={FIELD_OPTIONS}
+                  value={selectedField}
+                  onChange={(value: string) => {
+                    const newField = value as QuestionField;
+                    setSelectedField(newField);
+                    setSelectedOperator("");
+                    setSelectedValue("");
+                  }}
+                />
 
-          <button
-            type="submit"
-            className={styles.button}
-            disabled={guessesRemaining <= 0}
-          >
-            Guess
-          </button>
-        </form>
+                <Select
+                  label="Operator"
+                  options={availableOperators}
+                  value={selectedOperator}
+                  onChange={(value: string) => {
+                    setSelectedOperator(value);
+                    setSelectedValue("");
+                  }}
+                />
+
+                {hasPresetValues ? (
+                  <Select
+                    label="Value"
+                    options={availableValues}
+                    value={selectedValue}
+                    onChange={(value: string) => {
+                      setSelectedValue(value);
+                    }}
+                  />
+                ) : (
+                  <TextInput
+                    label="Value"
+                    id="value"
+                    name="value"
+                    value={selectedValue}
+                    placeholder="Enter a value"
+                    disabled={!selectedField}
+                    onChange={setSelectedValue}
+                  />
+                )}
+              </div>
+              <div className={styles.prettyQuestion}>
+                <p>{prettyQuestion}</p>
+              </div>
+              <Button
+                label="Ask"
+                type="submit"
+                children="Ask"
+                disabled={
+                  !selectedField ||
+                  !selectedOperator ||
+                  (valueIsRequired && !selectedValue)
+                }
+                id="ask-button"
+                name="ask-button"
+              />
+            </form>
+
+            <form
+              id="guess-form"
+              className={styles.form}
+              onSubmit={handleSubmitGuess}
+            >
+              <CustomSearchable
+                id="guess-search"
+                ref={guessInputRef}
+                fetchOptions={fetchCardOptions}
+                displayValue={(card) => card.name}
+                renderOption={(card) => <div>{card.name}</div>}
+                placeholder="Search for a card..."
+                minQueryLength={2}
+                onSelect={(card) => setSelectedGuessCard(card.oracle_id)}
+              />
+
+              <button
+                type="submit"
+                className={styles.button}
+                disabled={guessesRemaining <= 0}
+              >
+                Guess
+              </button>
+            </form>
+          </div>
+        ) : (
+          <div>MTG 21 Questions!</div>
+        )}
 
         {/* <button onClick={fetchCard}>Fetch a Card!</button>
         <h2>Here is some info about the card:</h2>
