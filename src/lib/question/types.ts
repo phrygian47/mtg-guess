@@ -1,6 +1,4 @@
 export type QuestionField =
-  | "colors"
-  | "color_identity"
   | "cmc"
   | "keywords"
   | "produced_mana"

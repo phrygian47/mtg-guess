@@ -9,8 +9,6 @@ import type {
 } from "./types";
 
 export const FIELD_OPTIONS: { value: QuestionField; label: string }[] = [
-  { value: "colors", label: "Color" },
-  { value: "color_identity", label: "Color Identity" },
   { value: "cmc", label: "Mana Value" },
   { value: "type_line", label: "Card Type" },
   { value: "keywords", label: "Keyword" },
@@ -248,8 +246,6 @@ export const COLOR_OPTIONS: OptionItem<ColorCode>[] = [
 ];
 
 export const VALUE_OPTIONS: Partial<Record<QuestionField, OptionItem[]>> = {
-  colors: COLOR_OPTIONS,
-  color_identity: COLOR_OPTIONS,
   rarity: RARITY_OPTIONS,
   keywords: KEYWORD_OPTIONS,
   release_year: RELEASE_YEAR_OPTIONS,
@@ -276,8 +272,6 @@ export const OPERATOR_OPTIONS: { value: QuestionOp; label: string }[] = [
 
 export const FIELD_OPERATOR_COMPATIBILITY: Record<QuestionField, QuestionOp[]> =
   {
-    colors: ["is", "is_not", "is_exactly"],
-    color_identity: ["is", "is_not", "is_exactly"],
     cmc: ["equals", "greater_than", "less_than"],
     type_line: ["includes", "excludes"],
     keywords: ["has_any", "includes", "excludes"],
