@@ -2,14 +2,6 @@ import type { QuestionDefinition, QuestionField } from "./types";
 import { FIELD_OPERATOR_COMPATIBILITY } from "./options";
 
 export const QUESTION_DEFINITIONS: Record<QuestionField, QuestionDefinition> = {
-  colors: {
-    operators: FIELD_OPERATOR_COMPATIBILITY.colors,
-    requiresValue: () => true,
-  },
-  color_identity: {
-    operators: FIELD_OPERATOR_COMPATIBILITY.color_identity,
-    requiresValue: () => true,
-  },
   cmc: {
     operators: FIELD_OPERATOR_COMPATIBILITY.cmc,
     requiresValue: () => true,

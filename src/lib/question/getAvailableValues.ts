@@ -15,13 +15,5 @@ export function getAvailableValues(
     );
   }
 
-  if (field === "colors" && operator === "is_exactly") {
-    options = options.filter((option) => option.value !== "M");
-  }
-
-  if (field === "color_identity") {
-    options = options.filter((option) => option.value !== "M");
-  }
-
   return options;
 }

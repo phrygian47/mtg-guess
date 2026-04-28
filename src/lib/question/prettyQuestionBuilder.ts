@@ -15,19 +15,6 @@ type Formatter = (params: PrettyQuestionParams) => string;
 const prettyQuestionFormatters: Partial<
   Record<QuestionField, Partial<Record<string, Formatter>>>
 > = {
-  colors: {
-    is: ({ valueLabel }) => `Is the card ${valueLabel}?`,
-    is_not: ({ valueLabel }) => `Is the card not ${valueLabel}?`,
-    is_exactly: ({ valueLabel }) =>
-      `Is the card ${valueLabel !== "C" ? `mono-${valueLabel.toLowerCase()}` : "Colorless?"}?`,
-  },
-  color_identity: {
-    is: ({ valueLabel }) => `Is the card's color identity ${valueLabel}?`,
-    is_not: ({ valueLabel }) =>
-      `Is the card's color identity not ${valueLabel}?`,
-    is_exactly: ({ valueLabel }) =>
-      `Is the card's color identity ${valueLabel !== "C" ? `mono-${valueLabel.toLowerCase()}` : "Colorless?"}?`,
-  },
   cmc: {
     equals: ({ valueLabel }) =>
       `Is the card's mana value equal to ${valueLabel}?`,

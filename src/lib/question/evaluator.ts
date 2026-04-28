@@ -32,50 +32,6 @@ export function evaluateQuestion(card: Card, question: Question): boolean {
           return false;
       }
     }
-    case "colors": {
-      const value = String(question.value);
-      const colors = card.colors ?? [];
-
-      switch (question.op) {
-        case "is":
-          if (value === "C") return colors.length === 0;
-          if (value === "M") return colors.length > 1;
-          return colors.includes(value);
-
-        case "is_not":
-          if (value === "C") return colors.length !== 0;
-          if (value === "M") return colors.length <= 1;
-          return !colors.includes(value);
-
-        case "is_exactly":
-          if (value === "C") return colors.length === 0;
-          return colors.length === 1 && colors[0] === value;
-
-        default:
-          return false;
-      }
-    }
-    case "color_identity": {
-      const value = String(question.value);
-      const colors = card.color_identity ?? [];
-
-      switch (question.op) {
-        case "is":
-          if (value === "C") return colors.length === 0;
-          return colors.includes(value);
-
-        case "is_not":
-          if (value === "C") return colors.length !== 0;
-          return !colors.includes(value);
-
-        case "is_exactly":
-          if (value === "C") return colors.length === 0;
-          return colors.length === 1 && colors[0] === value;
-
-        default:
-          return false;
-      }
-    }
     case "type_line": {
       const value = String(question.value).toLowerCase();
       const typeLine = card.type_line?.toLowerCase() ?? "";
