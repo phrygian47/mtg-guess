@@ -10,11 +10,13 @@
     "import:cards": "tsx src/scripts/import-scryfall.ts"
   },
   "dependencies": {
+    "@azure/msal-node": "^5.1.5",
     "@neondatabase/serverless": "^1.0.2",
     "dotenv": "^17.4.2",
-    "next": "^16.2.3",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
+    "next": "^16.2.4",
+    "postcss": "^8.5.12",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
     "tsx": "^4.21.0"
   },
   "devDependencies": {

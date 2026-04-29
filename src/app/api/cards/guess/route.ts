@@ -1,6 +1,4 @@
 import { sql } from "@/lib/db/db";
-import type { CardGuess } from "@/lib/question/types";
-import { guessCard } from "@/lib/question/guessCard";
 
 export async function POST(req: Request) {
   try {

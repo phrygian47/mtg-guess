@@ -76,11 +76,19 @@ export default function Home() {
     valueLabel: selectedValueLabel,
   });
 
-  const handleSubmitGuess = async (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleSubmitGuess = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const res = await submitGuess(timezone, selectedGuessCard);
-    setGameWon(res);
-    setGuessesRemaining(guessesRemaining - 1);
+
+    if (!selectedGuessCard) return;
+
+    try {
+      const isCorrect = await submitGuess(timezone, selectedGuessCard);
+
+      setGameWon(isCorrect);
+      setGuessesRemaining((prev) => prev - 1);
+    } catch (error) {
+      console.error("Could not submit guess:", error);
+    }
   };
 
   const askQuestion = async (e: React.SubmitEvent<HTMLFormElement>) => {
@@ -318,7 +326,8 @@ export default function Home() {
                 disabled={
                   !selectedField ||
                   !selectedOperator ||
-                  (valueIsRequired && !selectedValue)
+                  (valueIsRequired && !selectedValue) ||
+                  guessesRemaining <= 1
                 }
                 id="ask-button"
                 name="ask-button"
