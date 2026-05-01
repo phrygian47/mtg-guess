@@ -13,8 +13,6 @@ export async function submitGuess(
     }),
   });
 
-  const text = await res.text();
-
   if (!res.ok) {
     const message = await res.text();
     throw new Error(`Failed to submit guess: ${res.status} ${message}`);
