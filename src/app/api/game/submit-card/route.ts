@@ -1,5 +1,5 @@
 import { sql } from "@/lib/db/db";
-import { InfoGridRow } from "@/lib/game/types";
+import type { InfoGridRow } from "@/lib/game/types";
 
 type CellTone = "correct" | "partial" | "wrong" | "neutral";
 
