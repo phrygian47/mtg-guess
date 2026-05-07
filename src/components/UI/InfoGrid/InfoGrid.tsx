@@ -1,23 +1,5 @@
 import styles from "./InfoGrid.module.css";
-
-type CellTone = "correct" | "partial" | "wrong" | "neutral";
-
-type InfoCell = {
-  value: React.ReactNode;
-  tone?: CellTone;
-};
-
-type InfoGridRow = {
-  card: InfoCell;
-  colors: InfoCell;
-  mana_value: InfoCell;
-  type: InfoCell;
-  subtypes: InfoCell;
-  set: InfoCell;
-  rarity: InfoCell;
-  stats: InfoCell;
-  keywords: InfoCell;
-};
+import { InfoGridRow } from "@/lib/game/types";
 
 const columns: Array<{
   key: keyof InfoGridRow;
