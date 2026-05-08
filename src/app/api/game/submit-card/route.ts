@@ -59,7 +59,7 @@ export async function GET(req: Request) {
        ,toughness
        ,produced_mana
     from cards
-    where id = ${cardId}
+     where oracle_id = ${cardId}
     limit 1
   `) as DailyCardSelectionRow[];
 
@@ -78,7 +78,7 @@ export async function GET(req: Request) {
   }
 
   const infoRow = mapGuessToInfoGridRow(answer, guess);
-
+  console.log(infoRow);
   return Response.json(infoRow);
 }
 

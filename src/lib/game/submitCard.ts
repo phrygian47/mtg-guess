@@ -9,7 +9,7 @@ export async function submitCard(
     cardId,
   });
 
-  const res = await fetch(`/api/game/submit-guess?${params.toString()}`, {
+  const res = await fetch(`/api/game/submit-card?${params.toString()}`, {
     method: "GET",
   });
 

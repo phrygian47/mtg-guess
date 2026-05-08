@@ -25,6 +25,7 @@ import { getAvailableValues } from "@/lib/question/getAvailableValues";
 import { requiresValue } from "@/lib/question/requiresValue";
 import parseColor from "@/lib/game/parseColor";
 import { start } from "repl";
+import { submitCard } from "@/lib/game/submitCard";
 
 export default function Home() {
   const [card, setCard] = useState<Card | null>(null);
@@ -83,7 +84,8 @@ export default function Home() {
 
     try {
       const isCorrect = await submitGuess(timezone, selectedGuessCard);
-
+      const testValue = await submitCard(timezone, selectedGuessCard);
+      console.log(testValue);
       setGameWon(isCorrect);
       setGuessesRemaining((prev) => prev - 1);
     } catch (error) {
