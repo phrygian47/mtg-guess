@@ -29,10 +29,14 @@ export default function InfoGrid({ rows }: InfoGridProps) {
   if (rows.length === 0) return null;
 
   const getRevealStyle = (revealIndex: number, shouldAnimate: boolean) =>
-    shouldAnimate ? { animationDelay: `${revealIndex * 120}ms` } : undefined;
+    shouldAnimate
+      ? {
+          animationDelay: `${revealIndex * 120}ms`,
+        }
+      : undefined;
 
   const getRevealClass = (shouldAnimate: boolean) =>
-    shouldAnimate ? styles.revealCell : "";
+    `${styles.revealWrapper} ${shouldAnimate ? styles.revealCell : ""}`;
 
   const renderInfoCell = (
     cell: InfoCell,
@@ -41,12 +45,12 @@ export default function InfoGrid({ rows }: InfoGridProps) {
   ) => {
     return (
       <div
-        className={`${styles.infoCell} ${getRevealClass(shouldAnimate)} ${
-          styles[cell.tone ?? "neutral"]
-        }`}
+        className={getRevealClass(shouldAnimate)}
         style={getRevealStyle(revealIndex, shouldAnimate)}
       >
-        {cell.value}
+        <div className={`${styles.infoCell} ${styles[cell.tone ?? "neutral"]}`}>
+          {cell.value}
+        </div>
       </div>
     );
   };
@@ -60,16 +64,24 @@ export default function InfoGrid({ rows }: InfoGridProps) {
 
     return (
       <div
-        className={`${styles.infoCell} ${styles.cardCell} ${getRevealClass(
-          shouldAnimate,
-        )} ${styles[cell.tone ?? "neutral"]}`}
+        className={getRevealClass(shouldAnimate)}
         style={getRevealStyle(revealIndex, shouldAnimate)}
       >
-        {imageUrl ? (
-          <img src={imageUrl} alt="Guessed card" className={styles.cardImage} />
-        ) : (
-          cell.value
-        )}
+        <div
+          className={`${styles.infoCell} ${styles.cardCell} ${
+            styles[cell.tone ?? "neutral"]
+          }`}
+        >
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt="Guessed card"
+              className={styles.cardImage}
+            />
+          ) : (
+            cell.value
+          )}
+        </div>
       </div>
     );
   };
@@ -81,18 +93,22 @@ export default function InfoGrid({ rows }: InfoGridProps) {
   ) => {
     return (
       <div
-        className={`${styles.infoCell} ${styles.neutral} ${styles.otherCell} ${getRevealClass(
-          shouldAnimate,
-        )}`}
+        className={getRevealClass(shouldAnimate)}
         style={getRevealStyle(revealIndex, shouldAnimate)}
       >
-        <div className={styles.otherValueList}>
-          {cell.value.map((line) => (
-            <div key={line.label} className={styles.otherValueLine}>
-              <span className={styles.otherLabel}>{line.label}: </span>
-              <span className={styles[`text_${line.tone}`]}>{line.value}</span>
-            </div>
-          ))}
+        <div
+          className={`${styles.infoCell} ${styles.neutral} ${styles.otherCell}`}
+        >
+          <div className={styles.otherValueList}>
+            {cell.value.map((line) => (
+              <div key={line.label} className={styles.otherValueLine}>
+                <span className={styles.otherLabel}>{line.label}: </span>
+                <span className={styles[`text_${line.tone}`]}>
+                  {line.value}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );

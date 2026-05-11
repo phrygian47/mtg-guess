@@ -50,39 +50,39 @@ export default function Home() {
   const [selectedGuessCard, setSelectedGuessCard] = useState<string>("");
   const guessInputRef = useRef<HTMLInputElement>(null);
 
-  const availableValues = getAvailableValues(selectedField, selectedOperator);
+  // const availableValues = getAvailableValues(selectedField, selectedOperator);
 
-  const valueIsRequired = requiresValue(selectedField, selectedOperator);
+  // const valueIsRequired = requiresValue(selectedField, selectedOperator);
 
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  const availableOperators =
-    selectedField === ""
-      ? []
-      : OPERATOR_OPTIONS.filter((operator) =>
-          FIELD_OPERATOR_COMPATIBILITY[selectedField].includes(operator.value),
-        );
+  // const availableOperators =
+  //   selectedField === ""
+  //     ? []
+  //     : OPERATOR_OPTIONS.filter((operator) =>
+  //         FIELD_OPERATOR_COMPATIBILITY[selectedField].includes(operator.value),
+  //       );
 
-  const hasPresetValues = availableValues.length > 0;
+  // const hasPresetValues = availableValues.length > 0;
 
-  const selectedFieldLabel =
-    FIELD_OPTIONS.find((o) => o.value === selectedField)?.label ?? "";
+  // const selectedFieldLabel =
+  //   FIELD_OPTIONS.find((o) => o.value === selectedField)?.label ?? "";
 
-  const selectedOperatorLabel =
-    availableOperators.find((o) => o.value === selectedOperator)?.label ?? "";
+  // const selectedOperatorLabel =
+  //   availableOperators.find((o) => o.value === selectedOperator)?.label ?? "";
 
-  const selectedValueLabel = hasPresetValues
-    ? (availableValues.find((o) => o.value === selectedValue)?.label ?? "")
-    : selectedValue;
+  // const selectedValueLabel = hasPresetValues
+  //   ? (availableValues.find((o) => o.value === selectedValue)?.label ?? "")
+  //   : selectedValue;
 
-  const prettyQuestion = formatPrettyQuestion({
-    field: selectedField,
-    operator: selectedOperator,
-    value: selectedValue,
-    fieldLabel: selectedFieldLabel,
-    operatorLabel: selectedOperatorLabel,
-    valueLabel: selectedValueLabel,
-  });
+  // const prettyQuestion = formatPrettyQuestion({
+  //   field: selectedField,
+  //   operator: selectedOperator,
+  //   value: selectedValue,
+  //   fieldLabel: selectedFieldLabel,
+  //   operatorLabel: selectedOperatorLabel,
+  //   valueLabel: selectedValueLabel,
+  // });
 
   const handleSubmitGuess = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -257,7 +257,7 @@ export default function Home() {
           </div>
         )}
         {cardVisible && <p>{card?.name}</p>}
-        {gameStart && startInfo && (
+        {gameStart && (
           <div>
             <h3>You have {guessesRemaining} questions left!</h3>
             {/* <p>

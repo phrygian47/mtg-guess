@@ -12,6 +12,11 @@
   align-items: stretch;
 }
 
+.infoGridRow > div {
+  min-height: 100%;
+  height: 100%;
+}
+
 .infoCell,
 .infoHeader {
   min-height: 100%;
@@ -24,6 +29,8 @@
   align-items: center;
   justify-content: center;
   padding: 0.25rem;
+  width: 100%;
+  height: 100%;
 }
 
 .otherCell {
@@ -34,7 +41,7 @@
   overflow-wrap: anywhere;
 }
 
-.infoGrid > .infoHeader {
+.infoGridRow > .infoHeader {
   display: none;
 }
 
@@ -107,23 +114,33 @@
 }
 
 .revealCell {
+  width: 100%;
+  height: 100%;
   opacity: 0;
-  transform: translateY(8px) scale(0.98);
-  animation: revealCell 220ms ease-out forwards;
+  transform: scale(0.8) scaleX(-1);
+  transform-origin: center;
+  animation: revealCell 800ms ease-out both;
+}
+
+.revealWrapper {
+  width: 100%;
+  height: 100%;
 }
 
 @keyframes revealCell {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.98);
+    transform: scale(0.8) scaleX(-1);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: scale(1) scaleX(1);
   }
 }
 
+/* Add this back after debugging if you want reduced-motion support. */
+/*
 @media (prefers-reduced-motion: reduce) {
   .revealCell {
     opacity: 1;
@@ -131,3 +148,4 @@
     animation: none;
   }
 }
+*/
