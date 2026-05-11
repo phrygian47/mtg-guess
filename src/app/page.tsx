@@ -94,11 +94,11 @@ export default function Home() {
       const newInfoGridRow = await submitCard(timezone, selectedGuessCard);
 
       setInfoGrid((prev) => [
-        ...prev,
         {
           id: crypto.randomUUID(),
           row: newInfoGridRow,
         },
+        ...prev,
       ]);
 
       setGameWon(isCorrect);

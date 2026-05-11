@@ -112,7 +112,7 @@ export default function InfoGrid({ rows }: InfoGridProps) {
         </div>
 
         {rows.map(({ id, row }, rowIndex) => {
-          const isNewestRow = rowIndex === rows.length - 1;
+          const isNewestRow = rowIndex === 0;
 
           return (
             <div className={styles.infoGridRow} key={id}>
