@@ -1,6 +1,7 @@
 import { sql } from "@/lib/db/db";
 import { Card } from "@/lib/scryfall/types";
 import { fetchRandomSelectedCard } from "@/lib/scryfall/save-selected";
+import { getLoyalty } from "@/lib/scryfall/getCardFields";
 
 export async function GET(req: Request) {
   const auth = req.headers.get("authorization");
@@ -41,6 +42,7 @@ export async function GET(req: Request) {
           keywords,
           power,
           toughness,
+          loyalty,
           game_changer,
           flavor_text,
           legalities,
@@ -69,6 +71,7 @@ export async function GET(req: Request) {
           ${card.keywords ?? []},
           ${card.power ?? null},
           ${card.toughness ?? null},
+          ${getLoyalty(card)},
           ${card.game_changer ?? false},
           ${card.flavor_text ?? null},
           ${JSON.stringify(card.legalities ?? null)},
@@ -98,6 +101,7 @@ export async function GET(req: Request) {
             keywords = excluded.keywords,
             power = excluded.power,
             toughness = excluded.toughness,
+            loyalty = excluded.loyalty,
             game_changer = excluded.game_changer,
             flavor_text = excluded.flavor_text,
             legalities = excluded.legalities,

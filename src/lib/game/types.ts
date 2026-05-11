@@ -6,7 +6,12 @@ export type StartInfo = {
 export type CellTone = "correct" | "partial" | "wrong" | "neutral";
 
 export type InfoCell = {
-  value: React.ReactNode;
+  value: string | number | null;
+  tone?: CellTone;
+};
+
+export type InfoOtherCell = {
+  value: InfoOtherLine[];
   tone?: CellTone;
 };
 
@@ -18,6 +23,11 @@ export type InfoGridRow = {
   subtypes: InfoCell;
   set: InfoCell;
   rarity: InfoCell;
-  stats: InfoCell;
-  keywords: InfoCell;
+  other: InfoOtherCell;
+};
+
+export type InfoOtherLine = {
+  label: string;
+  value: string;
+  tone: CellTone;
 };

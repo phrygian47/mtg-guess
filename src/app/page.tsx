@@ -28,6 +28,11 @@ import parseColor from "@/lib/game/parseColor";
 import { start } from "repl";
 import { submitCard } from "@/lib/game/submitCard";
 
+type DisplayInfoGridRow = {
+  id: string;
+  row: InfoGridRow;
+};
+
 export default function Home() {
   const [card, setCard] = useState<Card | null>(null);
   const [startInfo, setStartInfo] = useState<StartInfo | null>(null);
@@ -40,7 +45,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [cardVisible, setCardVisible] = useState(false);
   const [gameWon, setGameWon] = useState(false);
-  const [infoGrid, setInfoGrid] = useState<InfoGridRow[]>([]);
+  const [infoGrid, setInfoGrid] = useState<DisplayInfoGridRow[]>([]);
 
   const [selectedGuessCard, setSelectedGuessCard] = useState<string>("");
   const guessInputRef = useRef<HTMLInputElement>(null);
@@ -88,9 +93,17 @@ export default function Home() {
       const isCorrect = await submitGuess(timezone, selectedGuessCard);
       const newInfoGridRow = await submitCard(timezone, selectedGuessCard);
 
-      setInfoGrid((prev) => [...prev, newInfoGridRow]);
+      setInfoGrid((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          row: newInfoGridRow,
+        },
+      ]);
+
       setGameWon(isCorrect);
       setGuessesRemaining((prev) => prev - 1);
+      setSelectedGuessCard("");
     } catch (error) {
       console.error("Could not submit guess:", error);
     }

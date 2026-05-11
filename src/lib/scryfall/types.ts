@@ -34,4 +34,15 @@ export type Card = {
   promo?: boolean;
   promo_types?: string[];
   set_type?: string;
+  loyalty?: string | null;
+  card_faces?: {
+    name?: string;
+    type_line?: string;
+    oracle_text?: string;
+    mana_cost?: string;
+    colors?: string[];
+    power?: string;
+    toughness?: string;
+    loyalty?: string;
+  }[];
 };

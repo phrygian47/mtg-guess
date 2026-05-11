@@ -1,5 +1,6 @@
 import { sql } from "@/lib/db/db";
 import { Card } from "./types";
+import { getLoyalty } from "./getCardFields";
 
 type ScryfallBulkItem = {
   type: string;
@@ -123,6 +124,7 @@ export async function importScryfallCards() {
           keywords,
           power,
           toughness,
+          loyalty,
           game_changer,
           flavor_text,
           legalities,
@@ -150,6 +152,7 @@ export async function importScryfallCards() {
           ${card.keywords ?? []},
           ${card.power ?? null},
           ${card.toughness ?? null},
+          ${getLoyalty(card)},
           ${card.game_changer ?? false},
           ${card.flavor_text ?? null},
           ${JSON.stringify(card.legalities ?? null)},
@@ -177,6 +180,7 @@ export async function importScryfallCards() {
           keywords = excluded.keywords,
           power = excluded.power,
           toughness = excluded.toughness,
+          loyalty = excluded.loyalty,
           game_changer = excluded.game_changer,
           flavor_text = excluded.flavor_text,
           legalities = excluded.legalities,
