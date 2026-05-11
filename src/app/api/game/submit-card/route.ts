@@ -19,7 +19,7 @@ type DailyCardSelectionRow = {
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
-  const timezone = searchParams.get("timezone") ?? "UTC";
+  const timezone = searchParams.get("timezone")?.trim() || "UTC";
   const cardId = searchParams.get("cardId");
 
   if (!cardId) {
@@ -29,7 +29,8 @@ export async function GET(req: Request) {
     );
   }
 
-  const answerRows = (await sql`
+  const [answerRows, guessRows] = await Promise.all([
+    sql`
     select 
         d.image_small
       ,d.colors
@@ -56,9 +57,9 @@ export async function GET(req: Request) {
       ,d.toughness
       ,d.produced_mana
     limit 1
-  `) as DailyCardSelectionRow[];
+  `,
 
-  const guessRows = (await sql`
+    sql`
     with guess_card as (
       select *
       from cards
@@ -84,10 +85,11 @@ export async function GET(req: Request) {
       ,guess_card.produced_mana
     from guess_card
     cross join guess_sets
-  `) as DailyCardSelectionRow[];
+  `,
+  ]);
 
-  const answer = answerRows[0];
-  const guess = guessRows[0];
+  const answer = (answerRows as DailyCardSelectionRow[])[0];
+  const guess = (guessRows as DailyCardSelectionRow[])[0];
 
   if (!answer) {
     return Response.json(
@@ -101,7 +103,6 @@ export async function GET(req: Request) {
   }
 
   const infoRow = mapGuessToInfoGridRow(answer, guess);
-  console.log(infoRow);
   return Response.json(infoRow);
 }
 
@@ -112,7 +113,7 @@ function mapGuessToInfoGridRow(
   return {
     card: {
       value: guess.image_small,
-      tone: compareValue(answer.image_small, guess.image_small),
+      tone: "neutral",
     },
 
     colors: {
