@@ -10,7 +10,46 @@ type ScryfallBulkResponse = {
   data: ScryfallBulkItem[];
 };
 
+function shouldSkipCard(card: Card) {
+  const setCode = card.set?.toLowerCase() ?? "";
+  const setName = card.set_name?.toLowerCase() ?? "";
+  const setType = card.set_type?.toLowerCase() ?? "";
+  const promoTypes = card.promo_types ?? [];
+
+  return (
+    // Only English cards
+    card.lang !== "en" ||
+    // Exclude digital-only cards
+    card.digital ||
+    // Exclude silver-border / acorn cards
+    card.border_color === "silver" ||
+    card.security_stamp === "acorn" ||
+    // Require a normal image
+    !card.image_uris?.normal ||
+    // Exclude general promos
+    card.promo === true ||
+    promoTypes.length > 0 ||
+    setType === "promo" ||
+    // Exclude Secret Lair
+    setCode === "sld" ||
+    setName.includes("secret lair") ||
+    // Exclude judge gifts / judge promos
+    setName.includes("judge") ||
+    promoTypes.includes("judgegift")
+  );
+}
+
 export async function importScryfallCards() {
+  const SHOULD_CLEAR_CARDS = true;
+
+  if (SHOULD_CLEAR_CARDS) {
+    console.log("0. clearing existing cards");
+
+    await sql`
+    truncate table cards
+  `;
+  }
+
   console.log("1. fetching bulk list");
 
   const bulkRes = await fetch("https://api.scryfall.com/bulk-data", {
@@ -33,6 +72,7 @@ export async function importScryfallCards() {
   }
 
   console.log("3. downloading cards file");
+
   const cardsRes = await fetch(defaultCardsFile.download_uri, {
     cache: "no-store",
   });
@@ -54,27 +94,7 @@ export async function importScryfallCards() {
     processed++;
     console.log("processing", processed, card.name);
 
-    if (card.lang !== "en") {
-      skipped++;
-      continue;
-    }
-
-    if (card.digital) {
-      skipped++;
-      continue;
-    }
-
-    if (card.border_color === "silver") {
-      skipped++;
-      continue;
-    }
-
-    if (card.security_stamp === "acorn") {
-      skipped++;
-      continue;
-    }
-
-    if (!card.image_uris?.normal) {
+    if (shouldSkipCard(card)) {
       skipped++;
       continue;
     }

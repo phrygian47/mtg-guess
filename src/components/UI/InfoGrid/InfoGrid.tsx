@@ -1,61 +1,70 @@
+import { InfoGridRow, InfoCell } from "@/lib/game/types";
 import styles from "./InfoGrid.module.css";
-import { InfoGridRow } from "@/lib/game/types";
-
-const columns: Array<{
-  key: keyof InfoGridRow;
-  label: string;
-  className: string;
-}> = [
-  { key: "card", label: "Card", className: styles.card },
-  { key: "colors", label: "Colors", className: styles.colors },
-  { key: "mana_value", label: "Mana Value", className: styles.mana_value },
-  { key: "type", label: "Type", className: styles.type },
-  { key: "subtypes", label: "Subtypes", className: styles.subtypes },
-  { key: "set", label: "Set", className: styles.set },
-  { key: "rarity", label: "Rarity", className: styles.rarity },
-  { key: "stats", label: "Stats", className: styles.stats },
-  { key: "keywords", label: "Keywords", className: styles.keywords },
-];
 
 type InfoGridProps = {
-  rows?: InfoGridRow[];
+  rows: InfoGridRow[];
 };
 
-export default function InfoGrid({ rows = [] }: InfoGridProps) {
-  return (
-    <div className={styles.container}>
-      <div className={styles.info_grid} role="grid" aria-label="Card info grid">
-        {columns.map((column) => (
-          <div
-            key={`header-${column.key}`}
-            className={`${styles.item} ${styles.header} ${column.className}`}
-            role="columnheader"
-          >
-            {column.label}
-          </div>
-        ))}
+export default function InfoGrid({ rows }: InfoGridProps) {
+  if (rows.length === 0) return null;
 
-        {rows.map((row, rowIndex) =>
-          columns.map((column) => {
-            const cell = row[column.key];
+  const renderInfoCell = (cell: InfoCell) => {
+    return (
+      <div className={`${styles.infoCell} ${styles[cell.tone ?? "neutral"]}`}>
+        {cell.value}
+      </div>
+    );
+  };
 
-            return (
-              <div
-                key={`${rowIndex}-${column.key}`}
-                className={[
-                  styles.item,
-                  styles.cell,
-                  column.className,
-                  cell.tone ? styles[cell.tone] : "",
-                ].join(" ")}
-                role="gridcell"
-              >
-                {cell.value}
-              </div>
-            );
-          }),
+  const renderCardCell = (cell: InfoCell) => {
+    const imageUrl = typeof cell.value === "string" ? cell.value : "";
+
+    return (
+      <div
+        className={`${styles.infoCell} ${styles.cardCell} ${
+          styles[cell.tone ?? "neutral"]
+        }`}
+      >
+        {imageUrl ? (
+          <img src={imageUrl} alt="Guessed card" className={styles.cardImage} />
+        ) : (
+          cell.value
         )}
       </div>
-    </div>
+    );
+  };
+
+  return (
+    <section className={styles.infoGridSection}>
+      <h2>Previous Guesses</h2>
+
+      <div className={styles.infoGrid}>
+        <div className={styles.infoGridRow}>
+          <div className={styles.infoHeader}>Card</div>
+          <div className={styles.infoHeader}>Colors</div>
+          <div className={styles.infoHeader}>Mana Value</div>
+          <div className={styles.infoHeader}>Type</div>
+          <div className={styles.infoHeader}>Subtypes</div>
+          <div className={styles.infoHeader}>Set</div>
+          <div className={styles.infoHeader}>Rarity</div>
+          <div className={styles.infoHeader}>Stats</div>
+          <div className={styles.infoHeader}>Keywords</div>
+        </div>
+
+        {rows.map((row, index) => (
+          <div className={styles.infoGridRow} key={index}>
+            {renderCardCell(row.card)}
+            {renderInfoCell(row.colors)}
+            {renderInfoCell(row.mana_value)}
+            {renderInfoCell(row.type)}
+            {renderInfoCell(row.subtypes)}
+            {renderInfoCell(row.set)}
+            {renderInfoCell(row.rarity)}
+            {renderInfoCell(row.stats)}
+            {renderInfoCell(row.keywords)}
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }

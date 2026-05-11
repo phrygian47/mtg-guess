@@ -31,4 +31,7 @@ export type Card = {
   game_changer: boolean;
   border_color?: string;
   security_stamp?: string | null;
+  promo?: boolean;
+  promo_types?: string[];
+  set_type?: string;
 };

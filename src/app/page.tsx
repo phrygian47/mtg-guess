@@ -1,7 +1,7 @@
 "use client";
 import type { Card } from "@/lib/scryfall/types";
 import styles from "./page.module.css";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, Fragment } from "react";
 import {
   FIELD_OPTIONS,
   VALUE_OPTIONS,
@@ -14,7 +14,8 @@ import {
   QuestionWithResponse,
   CardGuess,
 } from "@/lib/question/types";
-import { StartInfo } from "@/lib/game/types";
+import { StartInfo, InfoGridRow } from "@/lib/game/types";
+import InfoGrid from "@/components/UI/InfoGrid/InfoGrid";
 import { submitGuess } from "@/lib/game/submitGuess";
 import { formatPrettyQuestion } from "@/lib/question/prettyQuestionBuilder";
 import Select from "@/components/UI/select/select";
@@ -39,6 +40,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [cardVisible, setCardVisible] = useState(false);
   const [gameWon, setGameWon] = useState(false);
+  const [infoGrid, setInfoGrid] = useState<InfoGridRow[]>([]);
 
   const [selectedGuessCard, setSelectedGuessCard] = useState<string>("");
   const guessInputRef = useRef<HTMLInputElement>(null);
@@ -84,47 +86,47 @@ export default function Home() {
 
     try {
       const isCorrect = await submitGuess(timezone, selectedGuessCard);
-      const testValue = await submitCard(timezone, selectedGuessCard);
-      console.log(testValue);
+      const newInfoGridRow = await submitCard(timezone, selectedGuessCard);
+
+      setInfoGrid((prev) => [...prev, newInfoGridRow]);
       setGameWon(isCorrect);
       setGuessesRemaining((prev) => prev - 1);
     } catch (error) {
       console.error("Could not submit guess:", error);
     }
   };
+  // const askQuestion = async (e: React.SubmitEvent<HTMLFormElement>) => {
+  //   e.preventDefault();
 
-  const askQuestion = async (e: React.SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  //   console.log("Question asked:", selectedField);
+  //   console.log("Operator:", selectedOperator);
+  //   console.log("Value:", selectedValue);
+  //   console.log("Pretty:", prettyQuestion);
 
-    console.log("Question asked:", selectedField);
-    console.log("Operator:", selectedOperator);
-    console.log("Value:", selectedValue);
-    console.log("Pretty:", prettyQuestion);
+  //   const res = await fetch("/api/cards/ask", {
+  //     method: "POST",
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //     },
+  //     body: JSON.stringify({
+  //       field: selectedField,
+  //       op: selectedOperator,
+  //       value: selectedValue,
+  //       label: prettyQuestion,
+  //       timezone: timezone,
+  //     }),
+  //   });
 
-    const res = await fetch("/api/cards/ask", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        field: selectedField,
-        op: selectedOperator,
-        value: selectedValue,
-        label: prettyQuestion,
-        timezone: timezone,
-      }),
-    });
+  //   const data = await res.json();
+  //   console.log(data);
 
-    const data = await res.json();
-    console.log(data);
-
-    const newQuestion: QuestionWithResponse = {
-      answer: data.answer,
-      label: prettyQuestion,
-    };
-    setCardInfo([...cardInfo, newQuestion]);
-    setGuessesRemaining(guessesRemaining - 1);
-  };
+  //   const newQuestion: QuestionWithResponse = {
+  //     answer: data.answer,
+  //     label: prettyQuestion,
+  //   };
+  //   setCardInfo([...cardInfo, newQuestion]);
+  //   setGuessesRemaining(guessesRemaining - 1);
+  // };
 
   const fetchCardOptions = useCallback(
     async (query: string): Promise<CardGuess[]> => {
@@ -143,26 +145,26 @@ export default function Home() {
   );
 
   useEffect(() => {
-    const loadStartInfo = async () => {
-      try {
-        const res = await fetch(
-          `/api/game/start-game?timezone=${encodeURIComponent(timezone)}`,
-        );
+    // const loadStartInfo = async () => {
+    //   try {
+    //     const res = await fetch(
+    //       `/api/game/start-game?timezone=${encodeURIComponent(timezone)}`,
+    //     );
 
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(`Failed to fetch card ${res.status} ${text}`);
-        }
+    //     if (!res.ok) {
+    //       const text = await res.text();
+    //       throw new Error(`Failed to fetch card ${res.status} ${text}`);
+    //     }
 
-        const startInfo = await res.json();
+    //     const startInfo = await res.json();
 
-        setStartInfo(startInfo);
+    //     setStartInfo(startInfo);
 
-        console.log(startInfo);
-      } catch (error) {
-        console.log(error);
-      }
-    };
+    //     console.log(startInfo);
+    //   } catch (error) {
+    //     console.log(error);
+    //   }
+    // };
     const fetchCard = async () => {
       try {
         const res = await fetch(
@@ -184,7 +186,7 @@ export default function Home() {
     };
 
     fetchCard();
-    loadStartInfo();
+    // loadStartInfo();
   }, []);
 
   if (gameWon && card) {
@@ -245,10 +247,10 @@ export default function Home() {
         {gameStart && startInfo && (
           <div>
             <h3>You have {guessesRemaining} questions left!</h3>
-            <p>
+            {/* <p>
               The card is a {parseColor(startInfo.colors).join("/")}{" "}
               {startInfo.type}
-            </p>
+            </p> */}
           </div>
         )}
         {cardInfo.length > 0 ? (
@@ -273,7 +275,7 @@ export default function Home() {
 
         {gameStart ? (
           <div>
-            <form className={styles.form} onSubmit={askQuestion}>
+            {/* <form className={styles.form} onSubmit={askQuestion}>
               <div className={styles.questionContainer}>
                 <Select
                   label="Field"
@@ -334,7 +336,7 @@ export default function Home() {
                 id="ask-button"
                 name="ask-button"
               />
-            </form>
+            </form> */}
 
             <form
               id="guess-form"
@@ -360,6 +362,7 @@ export default function Home() {
                 Guess
               </button>
             </form>
+            <InfoGrid rows={infoGrid} />
           </div>
         ) : (
           <div>MTG 21 Questions!</div>

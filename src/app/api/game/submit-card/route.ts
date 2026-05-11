@@ -8,7 +8,7 @@ type DailyCardSelectionRow = {
   colors: string[] | null;
   cmc: number | null;
   type_line: string | null;
-  set_code: string | null;
+  set_codes: string[] | null;
   rarity: string | null;
   keywords: string[] | null;
   power: string | null;
@@ -31,36 +31,59 @@ export async function GET(req: Request) {
 
   const answerRows = (await sql`
     select 
-        image_small
-       ,colors
-       ,cmc
-       ,type_line
-       ,set_code
-       ,rarity
-       ,keywords
-       ,power
-       ,toughness
-       ,produced_mana
-    from dailycardselections
-    where puzzle_date = (now() at time zone ${timezone})::date
+        d.image_small
+      ,d.colors
+      ,d.cmc
+      ,d.type_line
+      ,array_agg(distinct c.set_code order by c.set_code) as set_codes
+      ,d.rarity
+      ,d.keywords
+      ,d.power
+      ,d.toughness
+      ,d.produced_mana
+    from dailycardselections d
+    join cards c
+      on c.oracle_id = d.oracle_id
+    where d.puzzle_date = (now() at time zone ${timezone})::date
+    group by
+        d.image_small
+      ,d.colors
+      ,d.cmc
+      ,d.type_line
+      ,d.rarity
+      ,d.keywords
+      ,d.power
+      ,d.toughness
+      ,d.produced_mana
     limit 1
   `) as DailyCardSelectionRow[];
 
   const guessRows = (await sql`
+    with guess_card as (
+      select *
+      from cards
+      where oracle_id = ${cardId}
+      order by released_at desc nulls last
+      limit 1
+    ),
+    guess_sets as (
+      select array_agg(distinct set_code order by set_code) as set_codes
+      from cards
+      where oracle_id = ${cardId}
+    )
     select 
-        image_small
-       ,colors
-       ,cmc
-       ,type_line
-       ,set_code
-       ,rarity
-       ,keywords
-       ,power
-       ,toughness
-       ,produced_mana
-    from cards
-     where oracle_id = ${cardId}
-    limit 1
+        guess_card.image_small
+      ,guess_card.colors
+      ,guess_card.cmc
+      ,guess_card.type_line
+      ,guess_sets.set_codes
+      ,guess_card.rarity
+      ,guess_card.keywords
+      ,guess_card.power
+      ,guess_card.toughness
+      ,guess_card.produced_mana
+    from guess_card
+    cross join guess_sets
   `) as DailyCardSelectionRow[];
 
   const answer = answerRows[0];
@@ -117,13 +140,9 @@ function mapGuessToInfoGridRow(
         getSubtypeArray(guess.type_line),
       ),
     },
-
     set: {
-      value: guess.set_code?.toUpperCase() ?? "—",
-      tone: compareValue(
-        normalizeNullable(answer.set_code),
-        normalizeNullable(guess.set_code),
-      ),
+      value: formatSets(guess.set_codes),
+      tone: compareArray(answer.set_codes, guess.set_codes),
     },
 
     rarity: {
@@ -158,6 +177,14 @@ function compareValue(
   }
 
   return answer === guess ? "correct" : "wrong";
+}
+
+function formatSets(setCodes: string[] | null): string {
+  if (!setCodes || setCodes.length === 0) {
+    return "—";
+  }
+
+  return setCodes.map((setCode) => setCode.toUpperCase()).join(", ");
 }
 
 function compareArray(
