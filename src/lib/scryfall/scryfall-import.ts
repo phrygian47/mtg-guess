@@ -65,7 +65,7 @@ export async function importScryfallCards() {
   const bulkJson = (await bulkRes.json()) as ScryfallBulkResponse;
 
   const defaultCardsFile = bulkJson.data.find(
-    (item) => item.type === "default_cards",
+    (item) => item.type === "oracle_cards",
   );
 
   if (!defaultCardsFile) {
