@@ -41,7 +41,7 @@
   overflow-wrap: anywhere;
 }
 
-.infoGridRow > .infoHeader {
+.infoGrid > .infoHeader {
   display: none;
 }
 
