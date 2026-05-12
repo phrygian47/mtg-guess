@@ -1,6 +1,5 @@
 import { sql } from "@/lib/db/db";
 import { Card } from "./types";
-import { getLoyalty } from "./getCardFields";
 
 type ScryfallBulkItem = {
   type: string;
@@ -11,46 +10,47 @@ type ScryfallBulkResponse = {
   data: ScryfallBulkItem[];
 };
 
-function shouldSkipCard(card: Card) {
-  const setCode = card.set?.toLowerCase() ?? "";
-  const setName = card.set_name?.toLowerCase() ?? "";
-  const setType = card.set_type?.toLowerCase() ?? "";
-  const promoTypes = card.promo_types ?? [];
+// Add these fields to your Card type if they are not already present.
+type ImportableCard = Card & {
+  set_type?: string;
+  set?: string;
+  released_at?: string;
+  oracle_id?: string | null;
+};
 
-  return (
-    // Only English cards
-    card.lang !== "en" ||
-    // Exclude digital-only cards
-    card.digital ||
-    // Exclude silver-border / acorn cards
-    card.border_color === "silver" ||
-    card.security_stamp === "acorn" ||
-    // Require a normal image
-    !card.image_uris?.normal ||
-    // Exclude general promos
-    card.promo === true ||
-    promoTypes.length > 0 ||
-    setType === "promo" ||
-    // Exclude Secret Lair
-    setCode === "sld" ||
-    setName.includes("secret lair") ||
-    // Exclude judge gifts / judge promos
-    setName.includes("judge") ||
-    promoTypes.includes("judgegift")
-  );
+function isExcludedSet(card: ImportableCard) {
+  const setCode = card.set?.toLowerCase();
+  const setType = card.set_type?.toLowerCase();
+
+  return setType === "promo" || setCode === "sld" || setCode === "plst";
+}
+
+function isEligibleCard(card: ImportableCard) {
+  if (card.lang !== "en") return false;
+  if (card.digital) return false;
+  if (card.border_color === "silver") return false;
+  if (card.security_stamp === "acorn") return false;
+  if (!card.image_uris?.normal) return false;
+
+  if (isExcludedSet(card)) return false;
+
+  return true;
+}
+
+function isNewerPrinting(candidate: ImportableCard, current: ImportableCard) {
+  const candidateDate = candidate.released_at ?? "";
+  const currentDate = current.released_at ?? "";
+
+  if (candidateDate !== currentDate) {
+    return candidateDate > currentDate;
+  }
+
+  // Stable tie-breaker when two eligible printings share the same release date.
+  // This does not necessarily mean "better", just deterministic.
+  return candidate.id > current.id;
 }
 
 export async function importScryfallCards() {
-  const SHOULD_CLEAR_CARDS = true;
-
-  if (SHOULD_CLEAR_CARDS) {
-    console.log("0. clearing existing cards");
-
-    await sql`
-    truncate table cards
-  `;
-  }
-
   console.log("1. fetching bulk list");
 
   const bulkRes = await fetch("https://api.scryfall.com/bulk-data", {
@@ -73,7 +73,6 @@ export async function importScryfallCards() {
   }
 
   console.log("3. downloading cards file");
-
   const cardsRes = await fetch(defaultCardsFile.download_uri, {
     cache: "no-store",
   });
@@ -83,7 +82,7 @@ export async function importScryfallCards() {
   }
 
   console.log("4. parsing cards json");
-  const cards = (await cardsRes.json()) as Card[];
+  const cards = (await cardsRes.json()) as ImportableCard[];
 
   console.log("5. got cards", cards.length);
 
@@ -91,14 +90,42 @@ export async function importScryfallCards() {
   let inserted = 0;
   let skipped = 0;
 
+  const mostRecentByOracleId = new Map<string, ImportableCard>();
+
   for (const card of cards) {
     processed++;
-    console.log("processing", processed, card.name);
 
-    if (shouldSkipCard(card)) {
+    if (!isEligibleCard(card)) {
       skipped++;
       continue;
     }
+
+    // oracle_id groups all printings of the same Oracle card.
+    // Fallback to name only in case a weird object lacks oracle_id.
+    const cardKey = card.oracle_id ?? card.name;
+
+    const existing = mostRecentByOracleId.get(cardKey);
+
+    if (!existing || isNewerPrinting(card, existing)) {
+      mostRecentByOracleId.set(cardKey, card);
+    }
+  }
+
+  const cardsToInsert = [...mostRecentByOracleId.values()];
+
+  console.log(
+    "6. selected most recent eligible printings",
+    cardsToInsert.length,
+  );
+
+  for (const card of cardsToInsert) {
+    console.log(
+      "inserting",
+      inserted + 1,
+      card.name,
+      card.set,
+      card.released_at,
+    );
 
     try {
       await sql`
@@ -124,7 +151,6 @@ export async function importScryfallCards() {
           keywords,
           power,
           toughness,
-          loyalty,
           game_changer,
           flavor_text,
           legalities,
@@ -152,7 +178,6 @@ export async function importScryfallCards() {
           ${card.keywords ?? []},
           ${card.power ?? null},
           ${card.toughness ?? null},
-          ${getLoyalty(card)},
           ${card.game_changer ?? false},
           ${card.flavor_text ?? null},
           ${JSON.stringify(card.legalities ?? null)},
@@ -180,7 +205,6 @@ export async function importScryfallCards() {
           keywords = excluded.keywords,
           power = excluded.power,
           toughness = excluded.toughness,
-          loyalty = excluded.loyalty,
           game_changer = excluded.game_changer,
           flavor_text = excluded.flavor_text,
           legalities = excluded.legalities,
@@ -197,6 +221,7 @@ export async function importScryfallCards() {
   return {
     ok: true,
     processed,
+    selected: cardsToInsert.length,
     inserted,
     skipped,
   };
