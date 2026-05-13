@@ -53,6 +53,8 @@ function isNewerPrinting(candidate: ImportableCard, current: ImportableCard) {
 export async function importScryfallCards() {
   console.log("1. fetching bulk list");
 
+  await sql`truncate table cards restart identity`;
+
   const bulkRes = await fetch("https://api.scryfall.com/bulk-data", {
     cache: "no-store",
   });
