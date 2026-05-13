@@ -18,21 +18,11 @@ type ImportableCard = Card & {
   oracle_id?: string | null;
 };
 
-function isExcludedSet(card: ImportableCard) {
-  const setCode = card.set?.toLowerCase();
-  const setType = card.set_type?.toLowerCase();
-
-  return setType === "promo" || setCode === "sld" || setCode === "plst";
-}
-
 function isEligibleCard(card: ImportableCard) {
-  if (card.lang !== "en") return false;
   if (card.digital) return false;
   if (card.border_color === "silver") return false;
   if (card.security_stamp === "acorn") return false;
   if (!card.image_uris?.normal) return false;
-
-  if (isExcludedSet(card)) return false;
 
   return true;
 }
