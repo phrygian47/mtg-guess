@@ -219,6 +219,7 @@ function SearchableDropdownInner<T>(
         type="text"
         placeholder={placeholder}
         value={query}
+        autoComplete="off"
         onChange={(e) => {
           selectedDisplayValueRef.current = null;
           setQuery(e.target.value);

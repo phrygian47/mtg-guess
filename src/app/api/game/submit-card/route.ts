@@ -1,5 +1,5 @@
 import { sql } from "@/lib/db/db";
-import type { CellTone, InfoGridRow, InfoOtherLine } from "@/lib/game/types";
+import type { CellTone, InfoGridRow } from "@/lib/game/types";
 
 type DailyCardSelectionRow = {
   image_small: string | null;
@@ -8,11 +8,8 @@ type DailyCardSelectionRow = {
   type_line: string | null;
   set_codes: string[] | null;
   rarity: string | null;
-  keywords: string[] | null;
-  power: string | null;
-  toughness: string | null;
-  loyalty: string | null;
-  produced_mana: string[] | null;
+  tags: string[] | null;
+  release_year: number | null;
 };
 
 export async function GET(req: Request) {
@@ -36,57 +33,50 @@ export async function GET(req: Request) {
         , d.cmc
         , d.type_line
         , array_agg(distinct c.set_code order by c.set_code) as set_codes
+        , extract(year from c.released_at)::int as release_year
         , d.rarity
-        , d.keywords
-        , d.power
-        , d.toughness
-        , d.loyalty
-        , d.produced_mana
+        , array_remove(array_agg(distinct t.slug order by t.slug), null) as tags
       from dailycardselections d
       join cards c
-        on c.oracle_id = d.oracle_id
+        on c.oracle_id = d.oracle_id::uuid
+      left join card_tags ct
+        on ct.oracle_id = d.oracle_id::uuid
+      left join tags t
+        on t.slug = ct.tag_slug
+      and t.enabled = true
       where d.puzzle_date = (now() at time zone ${timezone})::date
       group by
           d.image_small
         , d.colors
         , d.cmc
         , d.type_line
+        , c.released_at
         , d.rarity
-        , d.keywords
-        , d.power
-        , d.toughness
-        , d.loyalty
-        , d.produced_mana
       limit 1
     `,
 
     sql`
-      with guess_card as (
-        select *
-        from cards
-        where oracle_id = ${cardId}
-        order by released_at desc nulls last
-        limit 1
-      ),
-      guess_sets as (
-        select array_agg(distinct set_code order by set_code) as set_codes
-        from cards
-        where oracle_id = ${cardId}
-      )
-      select 
-          guess_card.image_small
-        , guess_card.colors
-        , guess_card.cmc
-        , guess_card.type_line
-        , guess_sets.set_codes
-        , guess_card.rarity
-        , guess_card.keywords
-        , guess_card.power
-        , guess_card.toughness
-        , guess_card.loyalty
-        , guess_card.produced_mana
-      from guess_card
-      cross join guess_sets
+      select
+            c.image_small
+          , c.colors
+          , c.cmc
+          , c.type_line
+          , case
+              when c.set_code is null then null
+              else array[c.set_code]
+            end as set_codes
+          , extract(year from c.released_at)::int as release_year
+          , c.rarity
+          , (
+              select array_agg(distinct t.slug order by t.slug)
+              from card_tags ct
+              join tags t
+                on t.slug = ct.tag_slug
+              and t.enabled = true
+              where ct.oracle_id = c.oracle_id
+            ) as tags
+        from cards c
+        where c.oracle_id = ${cardId}::uuid
     `,
   ]);
 
@@ -127,22 +117,10 @@ function mapGuessToInfoGridRow(
       tone: compareValue(answer.cmc, guess.cmc),
     },
 
-    type: {
-      value: getCardType(guess.type_line),
-      tone: compareValue(
-        getCardType(answer.type_line),
-        getCardType(guess.type_line),
-      ),
+    type_line: {
+      value: formatTypeLine(guess.type_line),
+      tone: compareTypeLine(answer.type_line, guess.type_line),
     },
-
-    subtypes: {
-      value: getCardSubtypes(guess.type_line),
-      tone: compareArray(
-        getSubtypeArray(answer.type_line),
-        getSubtypeArray(guess.type_line),
-      ),
-    },
-
     set: {
       value: formatSets(guess.set_codes),
       tone: compareArray(answer.set_codes, guess.set_codes),
@@ -156,44 +134,86 @@ function mapGuessToInfoGridRow(
       ),
     },
 
-    other: {
-      value: formatOtherLines(answer, guess),
-      tone: "neutral",
+    tags: {
+      value: formatTags(guess.tags),
+      tone: compareOptionalArray(answer.tags, guess.tags),
+    },
+
+    release_year: {
+      value: formatYearWithArrow(answer.release_year, guess.release_year),
+      tone: compareYear(answer.release_year, guess.release_year),
     },
   };
 }
 
-function formatOtherLines(
-  answer: DailyCardSelectionRow,
-  guess: DailyCardSelectionRow,
-): InfoOtherLine[] {
-  return [
-    {
-      label: "P/T",
-      value: formatStats(guess.power, guess.toughness),
-      tone: compareStats(
-        answer.power,
-        answer.toughness,
-        guess.power,
-        guess.toughness,
-      ),
-    },
-    {
-      label: "Loyalty",
-      value: guess.loyalty ?? "—",
-      tone: compareOptionalValue(answer.loyalty, guess.loyalty),
-    },
-    {
-      label: "Produces",
-      value: formatArrayValue(guess.produced_mana),
-      tone: compareOptionalArray(answer.produced_mana, guess.produced_mana),
-    },
-    {
-      label: "Keywords",
-      value: formatArrayValue(guess.keywords),
-      tone: compareOptionalArray(answer.keywords, guess.keywords),
-    },
-  ];
+function compareYear(answer: number | null, guess: number | null): CellTone {
+  if (answer == null || guess == null) {
+    return "neutral";
+  }
+
+  return answer === guess ? "correct" : "partial";
+}
+
+function formatTypeLine(typeLine: string | null): string {
+  return typeLine?.trim() || "—";
+}
+
+function compareTypeLine(
+  answerTypeLine: string | null,
+  guessTypeLine: string | null,
+): CellTone {
+  const answer = getTypeLineParts(answerTypeLine);
+  const guess = getTypeLineParts(guessTypeLine);
+
+  const exactMain =
+    answer.main.length === guess.main.length &&
+    answer.main.every((value, index) => value === guess.main[index]);
+
+  const exactSub =
+    answer.sub.length === guess.sub.length &&
+    answer.sub.every((value, index) => value === guess.sub[index]);
+
+  if (exactMain && exactSub) {
+    return "correct";
+  }
+
+  const mainOverlap = guess.main.some((value) => answer.main.includes(value));
+  const subOverlap = guess.sub.some((value) => answer.sub.includes(value));
+
+  return mainOverlap || subOverlap ? "partial" : "wrong";
+}
+
+function getTypeLineParts(typeLine: string | null): {
+  main: string[];
+  sub: string[];
+} {
+  if (!typeLine) {
+    return { main: [], sub: [] };
+  }
+
+  const [mainPart, subPart] = typeLine
+    .split("—")
+    .map((part) => part?.trim() ?? "");
+
+  return {
+    main: mainPart ? mainPart.split(/\s+/).map(normalize) : [],
+    sub: subPart ? subPart.split(/\s+/).map(normalize) : [],
+  };
+}
+
+function formatYearWithArrow(
+  answer: number | null,
+  guess: number | null,
+): string {
+  if (guess == null) {
+    return "—";
+  }
+
+  if (answer == null || answer === guess) {
+    return String(guess);
+  }
+
+  return answer > guess ? `${guess} ↑` : `${guess} ↓`;
 }
 
 function compareValue(
@@ -207,41 +227,24 @@ function compareValue(
   return answer === guess ? "correct" : "wrong";
 }
 
-function compareOptionalValue(
-  answer: string | number | null,
-  guess: string | number | null,
-): CellTone {
-  if (answer == null && guess == null) {
-    return "correct";
+function formatTags(tags: string[] | null): string {
+  const values = normalizeArray(tags);
+
+  if (values.length === 0) {
+    return "—";
   }
 
-  if (answer == null || guess == null) {
-    return "wrong";
-  }
-
-  return answer === guess ? "correct" : "wrong";
-}
-
-function compareStats(
-  answerPower: string | null,
-  answerToughness: string | null,
-  guessPower: string | null,
-  guessToughness: string | null,
-): CellTone {
-  const answerHasStats = answerPower != null && answerToughness != null;
-  const guessHasStats = guessPower != null && guessToughness != null;
-
-  if (!answerHasStats && !guessHasStats) {
-    return "correct";
-  }
-
-  if (!answerHasStats || !guessHasStats) {
-    return "wrong";
-  }
-
-  return answerPower === guessPower && answerToughness === guessToughness
-    ? "correct"
-    : "wrong";
+  return values
+    .map((tag) =>
+      tag
+        .split("-")
+        .map((part) => {
+          if (part === "etb") return "ETB";
+          return part.charAt(0).toUpperCase() + part.slice(1);
+        })
+        .join(" "),
+    )
+    .join(", ");
 }
 
 function compareOptionalArray(
@@ -301,14 +304,6 @@ function formatSets(setCodes: string[] | null): string {
   return setCodes.map((setCode) => setCode.toUpperCase()).join(", ");
 }
 
-function formatArrayValue(values: string[] | null): string {
-  if (!values || values.length === 0) {
-    return "—";
-  }
-
-  return values.join(", ");
-}
-
 function getCardType(typeLine: string | null): string {
   if (!typeLine) {
     return "—";
@@ -347,14 +342,6 @@ function formatColors(colors: string[] | null): string {
   }
 
   return colors.join(", ");
-}
-
-function formatStats(power: string | null, toughness: string | null): string {
-  if (power == null || toughness == null) {
-    return "—";
-  }
-
-  return `${power}/${toughness}`;
 }
 
 function normalize(value: string): string {

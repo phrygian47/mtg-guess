@@ -1,4 +1,4 @@
-import { InfoGridRow, InfoCell, InfoOtherCell } from "@/lib/game/types";
+import { InfoGridRow, InfoCell } from "@/lib/game/types";
 import styles from "./InfoGrid.module.css";
 
 type DisplayInfoGridRow = {
@@ -13,16 +13,16 @@ type InfoGridProps = {
 const CELL_ORDER: Array<{
   key: keyof InfoGridRow;
   label: string;
-  type?: "card" | "other";
+  type?: "card";
 }> = [
   { key: "card", label: "Card", type: "card" },
   { key: "colors", label: "Colors" },
   { key: "mana_value", label: "Mana Value" },
-  { key: "type", label: "Type" },
-  { key: "subtypes", label: "Subtypes" },
+  { key: "type_line", label: "Type Line" },
   { key: "set", label: "Set" },
   { key: "rarity", label: "Rarity" },
-  { key: "other", label: "Other", type: "other" },
+  { key: "tags", label: "Tags" },
+  { key: "release_year", label: "Release Year" },
 ];
 
 export default function InfoGrid({ rows }: InfoGridProps) {
@@ -86,34 +86,6 @@ export default function InfoGrid({ rows }: InfoGridProps) {
     );
   };
 
-  const renderOtherCell = (
-    cell: InfoOtherCell,
-    revealIndex: number,
-    shouldAnimate: boolean,
-  ) => {
-    return (
-      <div
-        className={getRevealClass(shouldAnimate)}
-        style={getRevealStyle(revealIndex, shouldAnimate)}
-      >
-        <div
-          className={`${styles.infoCell} ${styles.neutral} ${styles.otherCell}`}
-        >
-          <div className={styles.otherValueList}>
-            {cell.value.map((line) => (
-              <div key={line.label} className={styles.otherValueLine}>
-                <span className={styles.otherLabel}>{line.label}: </span>
-                <span className={styles[`text_${line.tone}`]}>
-                  {line.value}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <section className={styles.infoGridSection}>
       <h2>Previous Guesses</h2>
@@ -140,14 +112,6 @@ export default function InfoGrid({ rows }: InfoGridProps) {
                   return (
                     <div key={cell.key}>
                       {renderCardCell(row.card, revealIndex, shouldAnimate)}
-                    </div>
-                  );
-                }
-
-                if (cell.type === "other") {
-                  return (
-                    <div key={cell.key}>
-                      {renderOtherCell(row.other, revealIndex, shouldAnimate)}
                     </div>
                   );
                 }
