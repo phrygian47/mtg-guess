@@ -151,7 +151,11 @@ function compareYear(answer: number | null, guess: number | null): CellTone {
     return "neutral";
   }
 
-  return answer === guess ? "correct" : "partial";
+  if (answer === guess) {
+    return "correct";
+  }
+
+  return Math.abs(answer - guess) <= 1 ? "partial" : "wrong";
 }
 
 function formatTypeLine(typeLine: string | null): string {
