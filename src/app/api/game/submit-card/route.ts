@@ -1,12 +1,13 @@
 import { sql } from "@/lib/db/db";
-import type { CellTone, InfoGridRow } from "@/lib/game/types";
+
+import type { CellTone, InfoGridRow, SetInfo } from "@/lib/game/types";
 
 type DailyCardSelectionRow = {
   image_small: string | null;
   colors: string[] | null;
   cmc: number | null;
   type_line: string | null;
-  set_codes: string[] | null;
+  sets: SetInfo[] | null;
   rarity: string | null;
   tags: string[] | null;
   release_year: number | null;
@@ -32,7 +33,30 @@ export async function GET(req: Request) {
         , d.colors
         , d.cmc
         , d.type_line
-        , array_agg(distinct c.set_code order by c.set_code) as set_codes
+        , coalesce(
+            (
+              select jsonb_agg(
+                jsonb_build_object(
+                'code', x.set_code,
+                'name', x.name,
+                'image_uri', x.image_uri
+              )
+                order by x.set_code
+              )
+              from (
+                select distinct
+                    c2.set_code
+                  , s2.name
+                  , s2.imageuri as image_uri
+                from cards c2
+                left join sets s2
+                  on s2.code = c2.set_code
+                where c2.oracle_id = d.oracle_id::uuid
+                  and c2.set_code is not null
+              ) x
+            ),
+            '[]'::jsonb
+          ) as sets
         , extract(year from c.released_at)::int as release_year
         , d.rarity
         , array_remove(array_agg(distinct t.slug order by t.slug), null) as tags
@@ -46,7 +70,8 @@ export async function GET(req: Request) {
       and t.enabled = true
       where d.puzzle_date = (now() at time zone ${timezone})::date
       group by
-          d.image_small
+          d.oracle_id
+        , d.image_small
         , d.colors
         , d.cmc
         , d.type_line
@@ -56,28 +81,36 @@ export async function GET(req: Request) {
     `,
 
     sql`
-      select
-            c.image_small
-          , c.colors
-          , c.cmc
-          , c.type_line
-          , case
-              when c.set_code is null then null
-              else array[c.set_code]
-            end as set_codes
-          , extract(year from c.released_at)::int as release_year
-          , c.rarity
-          , (
-              select array_agg(distinct t.slug order by t.slug)
-              from card_tags ct
-              join tags t
-                on t.slug = ct.tag_slug
-              and t.enabled = true
-              where ct.oracle_id = c.oracle_id
-            ) as tags
-        from cards c
-        where c.oracle_id = ${cardId}::uuid
-    `,
+    select
+          c.image_small
+        , c.colors
+        , c.cmc
+        , c.type_line
+        , case
+          when c.set_code is null then '[]'::jsonb
+          else jsonb_build_array(
+            jsonb_build_object(
+              'code', c.set_code,
+              'name', s.name,
+              'image_uri', s.imageuri
+            )
+          )
+        end as sets
+        , extract(year from c.released_at)::int as release_year
+        , c.rarity
+        , (
+            select array_agg(distinct t.slug order by t.slug)
+            from card_tags ct
+            join tags t
+              on t.slug = ct.tag_slug
+            and t.enabled = true
+            where ct.oracle_id = c.oracle_id
+          ) as tags
+      from cards c
+      left join sets s
+        on s.code = c.set_code
+      where c.oracle_id = ${cardId}::uuid
+  `,
   ]);
 
   const answer = (answerRows as DailyCardSelectionRow[])[0];
@@ -122,8 +155,8 @@ function mapGuessToInfoGridRow(
       tone: compareTypeLine(answer.type_line, guess.type_line),
     },
     set: {
-      value: formatSets(guess.set_codes),
-      tone: compareArray(answer.set_codes, guess.set_codes),
+      value: formatSets(guess.sets),
+      tone: compareSets(answer.sets, guess.sets),
     },
 
     rarity: {
@@ -300,12 +333,26 @@ function normalizeArray(values: string[] | null): string[] {
   return values?.map(normalize).filter(Boolean) ?? [];
 }
 
-function formatSets(setCodes: string[] | null): string {
-  if (!setCodes || setCodes.length === 0) {
+function formatSets(sets: SetInfo[] | null): SetInfo[] | string {
+  if (!sets || sets.length === 0) {
     return "—";
   }
 
-  return setCodes.map((setCode) => setCode.toUpperCase()).join(", ");
+  return sets.map((set) => ({
+    code: set.code.toUpperCase(),
+    name: set.name,
+    image_uri: set.image_uri,
+  }));
+}
+
+function compareSets(
+  answer: SetInfo[] | null,
+  guess: SetInfo[] | null,
+): CellTone {
+  return compareArray(
+    answer?.map((set) => set.code) ?? null,
+    guess?.map((set) => set.code) ?? null,
+  );
 }
 
 function getCardType(typeLine: string | null): string {

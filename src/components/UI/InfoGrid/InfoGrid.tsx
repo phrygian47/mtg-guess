@@ -1,4 +1,4 @@
-import { InfoGridRow, InfoCell } from "@/lib/game/types";
+import { InfoGridRow, InfoCell, SetInfo } from "@/lib/game/types";
 import styles from "./InfoGrid.module.css";
 
 type DisplayInfoGridRow = {
@@ -13,13 +13,13 @@ type InfoGridProps = {
 const CELL_ORDER: Array<{
   key: keyof InfoGridRow;
   label: string;
-  type?: "card";
+  type?: "card" | "set";
 }> = [
   { key: "card", label: "Card", type: "card" },
   { key: "colors", label: "Colors" },
   { key: "mana_value", label: "Mana Value" },
   { key: "type_line", label: "Type Line" },
-  { key: "set", label: "Set" },
+  { key: "set", label: "Set", type: "set" },
   { key: "rarity", label: "Rarity" },
   { key: "tags", label: "Tags" },
   { key: "release_year", label: "Release Year" },
@@ -50,6 +50,44 @@ export default function InfoGrid({ rows }: InfoGridProps) {
       >
         <div className={`${styles.infoCell} ${styles[cell.tone ?? "neutral"]}`}>
           {cell.value}
+        </div>
+      </div>
+    );
+  };
+
+  const renderSetCell = (
+    cell: InfoCell<string | SetInfo[]>,
+    revealIndex: number,
+    shouldAnimate: boolean,
+  ) => {
+    const value = cell.value;
+
+    return (
+      <div
+        className={getRevealClass(shouldAnimate)}
+        style={getRevealStyle(revealIndex, shouldAnimate)}
+      >
+        <div className={`${styles.infoCell} ${styles[cell.tone ?? "neutral"]}`}>
+          {Array.isArray(value) ? (
+            <div className={styles.setList}>
+              {value.map((set) => (
+                <span key={set.code} className={styles.setItem}>
+                  {set.image_uri && (
+                    <img
+                      src={set.image_uri}
+                      alt={`${set.code} set icon`}
+                      className={styles.set_icon}
+                    />
+                  )}
+                  <span className={styles.set_name}>
+                    {set.name ?? set.code}
+                  </span>
+                </span>
+              ))}
+            </div>
+          ) : (
+            value
+          )}
         </div>
       </div>
     );
@@ -112,6 +150,14 @@ export default function InfoGrid({ rows }: InfoGridProps) {
                   return (
                     <div key={cell.key}>
                       {renderCardCell(row.card, revealIndex, shouldAnimate)}
+                    </div>
+                  );
+                }
+
+                if (cell.type === "set") {
+                  return (
+                    <div key={cell.key}>
+                      {renderSetCell(row.set, revealIndex, shouldAnimate)}
                     </div>
                   );
                 }

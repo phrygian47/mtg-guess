@@ -127,6 +127,38 @@
   height: 100%;
 }
 
+.setList {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  width: 100%;
+  padding: auto;
+}
+
+.setItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  line-height: 1;
+}
+
+.set_icon {
+  width: 3rem;
+  height: 3rem;
+  object-fit: contain;
+  display: block;
+}
+
+.set_name {
+  max-width: 8rem;
+  overflow-wrap: anywhere;
+  text-align: center;
+  margin-top: 0.25rem;
+}
+
 @keyframes revealCell {
   from {
     opacity: 0;
