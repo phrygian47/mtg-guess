@@ -79,6 +79,7 @@ export default function InfoGrid({ rows }: InfoGridProps) {
                       className={styles.set_icon}
                     />
                   )}
+
                   <span className={styles.set_name}>
                     {set.name ?? set.code}
                   </span>
@@ -124,57 +125,60 @@ export default function InfoGrid({ rows }: InfoGridProps) {
     );
   };
 
+  const renderCell = (
+    row: InfoGridRow,
+    cell: (typeof CELL_ORDER)[number],
+    revealIndex: number,
+    shouldAnimate: boolean,
+  ) => {
+    if (cell.type === "card") {
+      return renderCardCell(row.card, revealIndex, shouldAnimate);
+    }
+
+    if (cell.type === "set") {
+      return renderSetCell(row.set, revealIndex, shouldAnimate);
+    }
+
+    return renderInfoCell(
+      row[cell.key] as InfoCell,
+      revealIndex,
+      shouldAnimate,
+    );
+  };
+
   return (
     <section className={styles.infoGridSection}>
       <h2>Previous Guesses</h2>
 
-      <div className={styles.infoGrid}>
-        <div className={styles.infoGridRow}>
-          {CELL_ORDER.map((cell) => (
-            <div className={styles.infoHeader} key={cell.key}>
-              {cell.label}
-            </div>
-          ))}
+      <div className={styles.infoGridScroller}>
+        <div className={styles.infoGrid}>
+          <div className={styles.infoGridRow}>
+            {CELL_ORDER.map((cell) => (
+              <div className={styles.infoHeader} key={cell.key}>
+                {cell.label}
+              </div>
+            ))}
+          </div>
+
+          {rows.map(({ id, row }, rowIndex) => {
+            const isNewestRow = rowIndex === 0;
+
+            return (
+              <div className={styles.infoGridRow} key={id}>
+                {CELL_ORDER.map((cell, cellIndex) => {
+                  const shouldAnimate = isNewestRow;
+                  const revealIndex = isNewestRow ? cellIndex : 0;
+
+                  return (
+                    <div key={cell.key}>
+                      {renderCell(row, cell, revealIndex, shouldAnimate)}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
         </div>
-
-        {rows.map(({ id, row }, rowIndex) => {
-          const isNewestRow = rowIndex === 0;
-
-          return (
-            <div className={styles.infoGridRow} key={id}>
-              {CELL_ORDER.map((cell, cellIndex) => {
-                const shouldAnimate = isNewestRow;
-                const revealIndex = isNewestRow ? cellIndex : 0;
-
-                if (cell.type === "card") {
-                  return (
-                    <div key={cell.key}>
-                      {renderCardCell(row.card, revealIndex, shouldAnimate)}
-                    </div>
-                  );
-                }
-
-                if (cell.type === "set") {
-                  return (
-                    <div key={cell.key}>
-                      {renderSetCell(row.set, revealIndex, shouldAnimate)}
-                    </div>
-                  );
-                }
-
-                return (
-                  <div key={cell.key}>
-                    {renderInfoCell(
-                      row[cell.key] as InfoCell,
-                      revealIndex,
-                      shouldAnimate,
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })}
       </div>
     </section>
   );

@@ -1,7 +1,8 @@
 .infoGridSection {
   margin-top: 1.5rem;
-  width: 100%;
-  overflow-x: auto;
+  width: 100vw;
+  overflow-x: scroll;
+  margin: 1rem;
 }
 
 .infoGridRow {
@@ -10,11 +11,13 @@
   grid-template-columns: repeat(8, minmax(120px, 1fr));
   gap: 0.25rem;
   align-items: stretch;
+
 }
 
 .infoGridRow > div {
   min-height: 100%;
   height: 100%;
+  padding: 0.25rem;
 }
 
 .infoCell,
