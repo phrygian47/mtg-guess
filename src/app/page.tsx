@@ -92,42 +92,6 @@ export default function Home() {
     fetchCard();
   }, []);
 
-  if (gameWon && card) {
-    return (
-      <div className={styles.page}>
-        <main className={styles.main}>
-          <section className={styles.victoryScreen}>
-            <h1 className={styles.title}>You got it!</h1>
-
-            <p className={styles.victoryText}>
-              The card was <strong>{card.name}</strong>.
-            </p>
-
-            {card.image_uris?.normal && (
-              <img
-                src={card.image_uris.normal}
-                alt={card.name}
-                className={styles.victoryCard}
-              />
-            )}
-
-            <p>
-              You solved it with {guessesRemaining} question
-              {guessesRemaining === 1 ? "" : "s"} remaining.
-            </p>
-
-            <button
-              className={styles.button}
-              onClick={() => window.location.reload()}
-            >
-              Play Again
-            </button>
-          </section>
-        </main>
-      </div>
-    );
-  }
-
   return (
     <div className={styles.page}>
       <main className={styles.main}>

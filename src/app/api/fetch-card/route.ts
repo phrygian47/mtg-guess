@@ -13,7 +13,7 @@ export async function GET(req: Request) {
 
     const rows = await sql`
       select *
-      from dailycardselections
+      from card_history
       where puzzle_date = (now() at time zone ${timezone})::date
       limit 1
     `;

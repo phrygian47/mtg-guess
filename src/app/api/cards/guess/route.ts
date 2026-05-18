@@ -10,10 +10,10 @@ export async function POST(req: Request) {
     }
 
     const rows = await sql`
-        select oracle_id, name
-        from dailycardselections
-        where puzzle_date = (now() at time zone ${timezone})::date
-        limit 1
+      select oracle_id
+      from card_history
+      where puzzle_date = (now() at time zone ${timezone})::date
+      limit 1
     `;
 
     const card = rows[0];
