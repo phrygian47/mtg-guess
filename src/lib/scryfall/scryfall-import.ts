@@ -10,7 +10,6 @@ type ScryfallBulkResponse = {
   data: ScryfallBulkItem[];
 };
 
-// Add these fields to your Card type if they are not already present.
 type ImportableCard = Card & {
   set_type?: string;
   set?: string;
@@ -18,54 +17,83 @@ type ImportableCard = Card & {
   oracle_id?: string | null;
 };
 
+function getPrimaryFace(card: ImportableCard) {
+  return card.card_faces?.[0];
+}
+
+function getImageUris(card: ImportableCard) {
+  if (card.image_uris) {
+    return card.image_uris;
+  }
+
+  return getPrimaryFace(card)?.image_uris;
+}
+
+function getTypeLine(card: ImportableCard) {
+  return card.type_line ?? getPrimaryFace(card)?.type_line ?? null;
+}
+
+function getOracleText(card: ImportableCard) {
+  return card.oracle_text ?? getPrimaryFace(card)?.oracle_text ?? null;
+}
+
+function getManaCost(card: ImportableCard) {
+  return card.mana_cost ?? getPrimaryFace(card)?.mana_cost ?? null;
+}
+
+function getColors(card: ImportableCard) {
+  return card.colors ?? getPrimaryFace(card)?.colors ?? [];
+}
+
+function getPower(card: ImportableCard) {
+  return card.power ?? getPrimaryFace(card)?.power ?? null;
+}
+
+function getToughness(card: ImportableCard) {
+  return card.toughness ?? getPrimaryFace(card)?.toughness ?? null;
+}
+
+function getLoyalty(card: ImportableCard) {
+  return card.loyalty ?? getPrimaryFace(card)?.loyalty ?? null;
+}
+
 function isEligibleCard(card: ImportableCard) {
+  if (!card.oracle_id) return false;
   if (card.digital) return false;
   if (card.border_color === "silver") return false;
   if (card.security_stamp === "acorn") return false;
-  if (!card.image_uris?.normal) return false;
+  if (!getImageUris(card)?.normal) return false;
+  if (card.layout === "token") return false;
 
   return true;
-}
-
-function isNewerPrinting(candidate: ImportableCard, current: ImportableCard) {
-  const candidateDate = candidate.released_at ?? "";
-  const currentDate = current.released_at ?? "";
-
-  if (candidateDate !== currentDate) {
-    return candidateDate > currentDate;
-  }
-
-  // Stable tie-breaker when two eligible printings share the same release date.
-  // This does not necessarily mean "better", just deterministic.
-  return candidate.id > current.id;
 }
 
 export async function importScryfallCards() {
   console.log("1. fetching bulk list");
 
-  await sql`truncate table cards restart identity`;
+  await sql`truncate table card_history, card_pool, cards restart identity`;
 
   const bulkRes = await fetch("https://api.scryfall.com/bulk-data", {
     cache: "no-store",
   });
 
   if (!bulkRes.ok) {
-    throw new Error(`Failed to fetch Bulk Data list: ${bulkRes.status}`);
+    throw new Error(`Failed to fetch bulk data list: ${bulkRes.status}`);
   }
 
   console.log("2. parsing bulk list");
   const bulkJson = (await bulkRes.json()) as ScryfallBulkResponse;
 
-  const defaultCardsFile = bulkJson.data.find(
+  const oracleCardsFile = bulkJson.data.find(
     (item) => item.type === "oracle_cards",
   );
 
-  if (!defaultCardsFile) {
-    throw new Error("Could not find default_cards file in JSON object.");
+  if (!oracleCardsFile) {
+    throw new Error("Could not find oracle_cards bulk file.");
   }
 
-  console.log("3. downloading cards file");
-  const cardsRes = await fetch(defaultCardsFile.download_uri, {
+  console.log("3. downloading oracle cards file");
+  const cardsRes = await fetch(oracleCardsFile.download_uri, {
     cache: "no-store",
   });
 
@@ -82,33 +110,18 @@ export async function importScryfallCards() {
   let inserted = 0;
   let skipped = 0;
 
-  const mostRecentByOracleId = new Map<string, ImportableCard>();
-
-  for (const card of cards) {
+  const cardsToInsert = cards.filter((card) => {
     processed++;
 
     if (!isEligibleCard(card)) {
       skipped++;
-      continue;
+      return false;
     }
 
-    // oracle_id groups all printings of the same Oracle card.
-    // Fallback to name only in case a weird object lacks oracle_id.
-    const cardKey = card.oracle_id ?? card.name;
+    return true;
+  });
 
-    const existing = mostRecentByOracleId.get(cardKey);
-
-    if (!existing || isNewerPrinting(card, existing)) {
-      mostRecentByOracleId.set(cardKey, card);
-    }
-  }
-
-  const cardsToInsert = [...mostRecentByOracleId.values()];
-
-  console.log(
-    "6. selected most recent eligible printings",
-    cardsToInsert.length,
-  );
+  console.log("6. selected eligible cards", cardsToInsert.length);
 
   for (const card of cardsToInsert) {
     console.log(
@@ -118,6 +131,8 @@ export async function importScryfallCards() {
       card.set,
       card.released_at,
     );
+
+    const imageUris = getImageUris(card);
 
     try {
       await sql`
@@ -143,6 +158,7 @@ export async function importScryfallCards() {
           keywords,
           power,
           toughness,
+          loyalty,
           game_changer,
           flavor_text,
           legalities,
@@ -150,26 +166,27 @@ export async function importScryfallCards() {
         )
         values (
           ${card.id},
-          ${card.oracle_id ?? null},
+          ${card.oracle_id},
           ${card.name},
-          ${card.type_line ?? null},
-          ${card.oracle_text ?? null},
-          ${card.mana_cost ?? null},
-          ${card.colors ?? []},
+          ${getTypeLine(card)},
+          ${getOracleText(card)},
+          ${getManaCost(card)},
+          ${getColors(card)},
           ${card.cmc ?? null},
           ${card.set ?? null},
           ${card.set_name ?? null},
           ${card.rarity ?? null},
-          ${card.image_uris?.small ?? null},
-          ${card.image_uris?.normal ?? null},
-          ${card.image_uris?.art_crop ?? null},
+          ${imageUris?.small ?? null},
+          ${imageUris?.normal ?? null},
+          ${imageUris?.art_crop ?? null},
           ${card.artist ?? null},
           ${card.released_at ?? null},
           ${card.layout ?? null},
           ${card.games ?? []},
           ${card.keywords ?? []},
-          ${card.power ?? null},
-          ${card.toughness ?? null},
+          ${getPower(card)},
+          ${getToughness(card)},
+          ${getLoyalty(card)},
           ${card.game_changer ?? false},
           ${card.flavor_text ?? null},
           ${JSON.stringify(card.legalities ?? null)},
@@ -197,6 +214,7 @@ export async function importScryfallCards() {
           keywords = excluded.keywords,
           power = excluded.power,
           toughness = excluded.toughness,
+          loyalty = excluded.loyalty,
           game_changer = excluded.game_changer,
           flavor_text = excluded.flavor_text,
           legalities = excluded.legalities,

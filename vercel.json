@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/select-daily-card",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/select-daily-card",
+      "schedule": "0 8 * * *"
     }
   ]
 }

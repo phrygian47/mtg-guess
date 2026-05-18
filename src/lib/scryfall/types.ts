@@ -20,6 +20,21 @@ export type Card = {
     normal?: string;
     art_crop?: string;
   };
+  card_faces?: {
+    name?: string;
+    type_line?: string;
+    oracle_text?: string;
+    mana_cost?: string;
+    colors?: string[];
+    power?: string;
+    toughness?: string;
+    loyalty?: string;
+    image_uris?: {
+      small?: string;
+      normal?: string;
+      art_crop?: string;
+    };
+  }[];
   artist?: string;
   released_at?: string;
   layout?: string;
@@ -35,14 +50,4 @@ export type Card = {
   promo_types?: string[];
   set_type?: string;
   loyalty?: string | null;
-  card_faces?: {
-    name?: string;
-    type_line?: string;
-    oracle_text?: string;
-    mana_cost?: string;
-    colors?: string[];
-    power?: string;
-    toughness?: string;
-    loyalty?: string;
-  }[];
 };

@@ -9,7 +9,8 @@
     "lint": "eslint",
     "import:cards": "tsx src/scripts/import-scryfall.ts",
     "import:tags": "tsx src/scripts/import-tags.ts",
-    "import:sets": "tsx src/scripts/import-sets.ts"
+    "import:sets": "tsx src/scripts/import-sets.ts",
+    "import:card-pool": "tsx src/scripts/import-card-pool.ts"
   },
   "dependencies": {
     "@azure/msal-node": "^5.1.5",
