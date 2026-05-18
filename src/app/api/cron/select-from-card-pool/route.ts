@@ -1,7 +1,7 @@
 import { sql } from "@/lib/db/db";
 
 const PUZZLE_TIMEZONE = "America/Los_Angeles";
-const RECENT_DAYS_TO_AVOID = 180;
+const RECENT_DAYS_TO_AVOID = 181;
 
 async function pickOracleId() {
   const freshRows = await sql`
