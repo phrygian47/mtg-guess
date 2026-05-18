@@ -1,7 +1,8 @@
 .infoGridSection {
   margin-top: 1.5rem;
-  width: 100vw;
-  overflow-x: scroll;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: auto;
 }
 
 .infoGridRow {
