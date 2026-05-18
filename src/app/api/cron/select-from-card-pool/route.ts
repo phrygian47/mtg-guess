@@ -1,22 +1,32 @@
 import { sql } from "@/lib/db/db";
 
 const PUZZLE_TIMEZONE = "America/Los_Angeles";
-const RECENT_DAYS_TO_AVOID = 181;
+const RECENT_DAYS_TO_AVOID = 180;
+
+const cutoffDate = new Date();
+cutoffDate.setUTCDate(cutoffDate.getUTCDate() - RECENT_DAYS_TO_AVOID);
+
+const cutoffDateString = new Intl.DateTimeFormat("en-CA", {
+  timeZone: PUZZLE_TIMEZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+}).format(cutoffDate);
 
 async function pickOracleId() {
-  const freshRows = await sql`
-    select cp.oracle_id
-    from card_pool cp
-    where cp.enabled = true
-      and not exists (
-        select 1
-        from card_history ch
-        where ch.oracle_id = cp.oracle_id
-          and ch.puzzle_date >= ((now() at time zone ${PUZZLE_TIMEZONE})::date - ${RECENT_DAYS_TO_AVOID})
-      )
-    order by random() * cp.weight desc
-    limit 1
-  `;
+    const freshRows = await sql`
+      select cp.oracle_id
+      from card_pool cp
+      where cp.enabled = true
+        and not exists (
+          select 1
+          from card_history ch
+          where ch.oracle_id = cp.oracle_id
+            and ch.puzzle_date >= ${cutoffDateString}::date
+        )
+      order by random() * cp.weight desc
+      limit 1
+    `;
 
   if (freshRows.length > 0) {
     return freshRows[0]?.oracle_id as string;
