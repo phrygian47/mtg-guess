@@ -108,14 +108,9 @@ export default function Home() {
         {cardVisible && <p>{card?.name}</p>}
 
         <div>
-          <h3>You have {guessesRemaining} questions left!</h3>
-        </div>
-
-        <div>
           {infoGrid.length === 0 && (
             <div>
-              <h3>Card is a non promo standard legal card.</h3>
-              <p>Start typing to submit a guess</p>
+              <h3>Start typing to submit a guess!</h3>
             </div>
           )}
 

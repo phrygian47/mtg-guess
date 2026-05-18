@@ -64,6 +64,7 @@ function isEligibleCard(card: ImportableCard) {
   if (card.security_stamp === "acorn") return false;
   if (!getImageUris(card)?.normal) return false;
   if (card.layout === "token") return false;
+  if (card.set_type === "memorabilia") return false;
 
   return true;
 }

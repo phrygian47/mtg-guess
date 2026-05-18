@@ -13,7 +13,9 @@ export async function GET(req: Request) {
 
     const rows = await sql`
       select *
-      from card_history
+      from card_history ch
+      join cards c
+      on ch.oracle_id = c.oracle_id
       where puzzle_date = (now() at time zone ${timezone})::date
       limit 1
     `;
