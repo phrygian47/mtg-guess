@@ -5,7 +5,7 @@
       "schedule": "0 8 * * *"
     },
     {
-      "path": "/api/cron/select-daily-card",
+      "path": "/api/cron/select-from-card-pool",
       "schedule": "0 8 * * *"
     }
   ]
