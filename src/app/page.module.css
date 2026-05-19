@@ -1,129 +1,44 @@
 .page {
-  --background: #fafafa;
-  --foreground: #fff;
-
-  --text-primary: #000;
-  --text-secondary: #666;
-
-  --button-primary-hover: #383838;
-  --button-secondary-hover: #f2f2f2;
-  --button-secondary-border: #ebebeb;
-
+  min-height: 100dvh;
   display: flex;
-  flex: 1;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-geist-sans);
-  background-color: var(--background);
+  padding: 1rem;
 }
 
 .main {
-  display: flex;
-  flex: 1;
-  width: 100%;
-  max-width: 1200px;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--foreground);
-  padding: 120px 60px;
-}
-
-.questionContainer {
-  margin-top: 2rem;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-}
-
-.form {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-}
-
-.input {
-  width: 100%;
-  padding: 1rem;
-  border: transparent;
-  border-radius: 10px;
-  background: rgba(167, 167, 167, 0.3);
-  cursor: pointer;
-  font-size: 1rem;
-  transition: opacity 0.2s ease;
-  opacity: 0.8;
-  max-width: 240px;
-}
-
-.button {
-  padding: 1rem 2rem;
-  background-color: var(--button-primary);
-  border: 1px solid var(--button-secondary-border);
-  border-radius: 8px;
-  cursor: pointer;
-  transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.victoryScreen {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1rem;
   text-align: center;
-  padding: 2rem;
 }
 
-.victoryText {
-  font-size: 1.25rem;
+.title {
+  font-size: 3rem;
+  font-weight: 700;
+  margin: 0;
 }
 
-.victoryCard {
-  max-width: 320px;
-  width: 100%;
-  border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+.subtitle {
+  font-size: 1.125rem;
+  margin: 0;
+  opacity: 0.8;
 }
 
-/* Enable hover only on non-touch devices */
-@media (hover: hover) and (pointer: fine) {
-  a.primary:hover {
-    background: var(--button-primary-hover);
-    border-color: transparent;
-  }
-
-  a.secondary:hover {
-    background: var(--button-secondary-hover);
-    border-color: transparent;
-  }
+.actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
 }
 
-@media (max-width: 600px) {
-  .main {
-    padding: 48px 24px;
-  }
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.25rem;
+  border-radius: 1rem;
+  text-decoration: none;
+  font-weight: 600;
+  border: 1px solid #ccc;
 }
-
-/* @media (prefers-color-scheme: dark) {
-  .logo {
-    filter: invert();
-  }
-
-  .page {
-    --background: #000;
-    --foreground: #000;
-
-    --text-primary: #ededed;
-    --text-secondary: #999;
-
-    --button-primary-hover: #ccc;
-    --button-secondary-hover: #1a1a1a;
-    --button-secondary-border: #1a1a1a;
-  }
-} */
