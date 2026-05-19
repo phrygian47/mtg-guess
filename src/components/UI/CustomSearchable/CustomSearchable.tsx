@@ -212,35 +212,29 @@ function SearchableDropdownInner<T>(
   ]);
   return (
     <div className={styles.searchable_dropdown} ref={dropdownRef}>
-      <div className={styles.searchable_frame}>
-        <div className={styles.searchable_inner}>
-          <input
-            ref={ref}
-            id={id}
-            name={name}
-            type="text"
-            placeholder={placeholder}
-            value={query}
-            autoComplete="off"
-            onChange={(e) => {
-              selectedDisplayValueRef.current = null;
-              setQuery(e.target.value);
-            }}
-            onFocus={() => {
-              if (query.length >= minQueryLength && options.length > 0) {
-                setShowDropdown(true);
-              }
-            }}
-            onKeyDown={handleKeyDown}
-            aria-autocomplete="list"
-            aria-expanded={showDropdown}
-            aria-controls="dropdown-listbox"
-            className={styles.searchable_input}
-          />
-
-          <div className={styles.searchable_rightAccent}></div>
-        </div>
-      </div>
+      <input
+        ref={ref}
+        id={id}
+        name={name}
+        type="text"
+        placeholder={placeholder}
+        value={query}
+        autoComplete="off"
+        onChange={(e) => {
+          selectedDisplayValueRef.current = null;
+          setQuery(e.target.value);
+        }}
+        onFocus={() => {
+          if (query.length >= minQueryLength && options.length > 0) {
+            setShowDropdown(true);
+          }
+        }}
+        onKeyDown={handleKeyDown}
+        aria-autocomplete="list"
+        aria-expanded={showDropdown}
+        aria-controls="dropdown-listbox"
+        className={styles.searchable_input}
+      />
 
       {showDropdown && (
         <ul

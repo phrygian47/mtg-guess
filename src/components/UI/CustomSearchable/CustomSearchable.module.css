@@ -1,152 +1,70 @@
 .searchable_dropdown {
   position: relative;
-  width: 100%;
-  max-width: 24rem;
-}
-
-/* .searchable_frame {
-  position: relative;
-  width: 100%;
-  border-radius: 14px;
-  overflow: visible;
-  padding: 2px;
-  background: linear-gradient(180deg, #d9d9d9 0%, #8f8f8f 100%);
-  box-shadow:
-    0 8px 20px rgba(0, 0, 0, 0.16),
-    inset 0 1px 0 rgba(255, 255, 255, 0.45);
-} */
-
-.searchable_inner {
-  position: relative;
-  display: flex;
-  align-items: stretch;
-  min-height: var(--control-height, 64px);
-  border-radius: 1rem;
-  overflow: hidden;
-  box-sizing: border-box;
-  background: linear-gradient(180deg, #2c2c2c 0%, #171717 100%);
+  width: 18rem; /* w-72 */
 }
 
 .searchable_input {
-  flex: 1;
-  min-width: 0;
-  padding: 0.95rem 1rem;
-  border: 0;
-  outline: none;
-  background: transparent;
-  color: #f4f4f4;
-  font-size: 0.95rem;
+  width: 100%;
+  padding: 1.5rem 0.5rem; /* p-2 */
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  border-radius: 0.375rem; /* rounded-md */
+  font-size: 0.875rem; /* text-sm */
   box-sizing: border-box;
 }
 
-.searchable_input::placeholder {
-  color: rgba(244, 244, 244, 0.55);
-}
-
 .searchable_input:focus {
-  outline: none;
-}
-
-.searchable_inner:has(.searchable_input:focus) {
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.15),
-    0 0 0 3px rgba(255, 255, 255, 0.08);
-}
-
-.searchable_rightAccent {
-  position: relative;
-}
-
-.searchable_rightAccent::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, #6e6e6e 0%, #4b4b4b 100%);
-  clip-path: polygon(28% 0, 100% 0, 100% 100%, 0 100%);
-}
-
-/* .searchable_rightAccent::after {
-  content: "";
-  position: absolute;
-  width: 62px;
-  height: 62px;
-  border-radius: 999px;
-  left: -20px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: #1f1f1f;
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.04);
-} */
-
-.searchable_rightContent {
-  position: relative;
-  z-index: 1;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  pointer-events: none;
+  outline: none; /* focus:outline-none */
+  box-shadow: 0 0 0 2px #60a5fa; /* focus:ring-2 focus:ring-blue-400 */
 }
 
 .searchable_list {
   position: absolute;
-  top: calc(100% + 0.5rem);
+  top: 2.75rem; /* top-11 */
   left: 0;
   right: 0;
-  z-index: 20;
-  max-height: 18rem;
+  z-index: 10; /* z-10 */
+  max-height: 12rem; /* max-h-48 */
   overflow-y: auto;
+  background: #ffffff; /* bg-white */
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  border-radius: 0.375rem; /* rounded-md */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* shadow-md */
   margin: 0;
-  padding: 0.4rem;
+  padding: 0;
   list-style: none;
-  border: 1px solid #8c8c8c;
-  border-radius: 12px;
-  background: linear-gradient(180deg, #2a2a2a 0%, #171717 100%);
-  box-shadow:
-    0 14px 28px rgba(0, 0, 0, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .searchable_option,
 .searchable_message,
 .searchable_error {
-  font-size: 0.9rem;
-  border-radius: 8px;
-}
-
-.searchable_option {
-  cursor: pointer;
-  padding: 0.85rem 0.9rem;
-  color: #f4f4f4;
-}
-
-.searchable_option:hover {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.searchable_option_selected {
-  background: rgba(255, 255, 255, 0.12);
-  outline: 1px solid rgba(255, 255, 255, 0.18);
-}
-
-.searchable_option_with_border {
-  margin-bottom: 0.2rem;
+  padding: 0.5rem; /* p-2 */
+  font-size: 0.875rem; /* text-sm */
 }
 
 .searchable_message {
-  padding: 0.85rem 0.9rem;
-  color: rgba(244, 244, 244, 0.7);
+  color: #6b7280; /* text-gray-500 */
 }
 
 .searchable_message.italic {
-  font-style: italic;
+  font-style: italic; /* italic */
 }
 
 .searchable_error {
-  padding: 0.85rem 0.9rem;
-  color: #f0b4b4;
+  color: #ef4444; /* text-red-500 */
+}
+
+.searchable_option {
+  cursor: pointer; /* cursor-pointer */
+}
+
+.searchable_option:hover {
+  background: #f3f4f6; /* hover:bg-gray-100 */
+}
+
+.searchable_option.selected {
+  background: #eff6ff; /* bg-blue-50 */
+}
+
+.searchable_option_with_border {
+  border-bottom: 1px solid #f3f4f6; /* border-b border-gray-100 */
 }
