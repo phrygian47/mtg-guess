@@ -19,7 +19,7 @@
 
 .searchable_list {
   position: absolute;
-  top: 2.75rem; /* top-11 */
+  top: 100%; /* top-11 */
   left: 0;
   right: 0;
   z-index: 10; /* z-10 */
@@ -31,6 +31,7 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* shadow-md */
   margin: 0;
   padding: 0;
+  color: #000;
   list-style: none;
 }
 
@@ -55,6 +56,8 @@
 
 .searchable_option {
   cursor: pointer; /* cursor-pointer */
+  padding: 1rem;
+  font-size: 1rem;
 }
 
 .searchable_option:hover {

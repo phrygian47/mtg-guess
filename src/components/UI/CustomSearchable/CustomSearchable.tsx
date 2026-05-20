@@ -61,6 +61,7 @@ function SearchableDropdownInner<T>(
       setOptions([]);
       setShowDropdown(false);
       setFocusedIndex(-1);
+      setLoading(false);
       return;
     }
 
@@ -68,6 +69,7 @@ function SearchableDropdownInner<T>(
       setShowDropdown(false);
       setOptions([]);
       setFocusedIndex(-1);
+      setLoading(false);
       return;
     }
 
@@ -76,13 +78,14 @@ function SearchableDropdownInner<T>(
     const fetchData = async () => {
       setLoading(true);
       setError(null);
+      setOptions([]);
+      setShowDropdown(true);
 
       try {
         const results = await fetchOptions(trimmedQuery);
         if (!isActive) return;
 
         setOptions(results || []);
-        setShowDropdown(true);
       } catch (err: any) {
         if (!isActive) return;
 
@@ -173,7 +176,11 @@ function SearchableDropdownInner<T>(
       return <li className={styles.searchable_error}>{error}</li>;
     }
 
-    if (!loading && options.length === 0 && query.length >= minQueryLength) {
+    if (
+      !loading &&
+      options.length === 0 &&
+      debouncedQuery.trim().length >= minQueryLength
+    ) {
       return <li className={styles.searchable_message}>No results found</li>;
     }
 
@@ -204,7 +211,7 @@ function SearchableDropdownInner<T>(
     error,
     options,
     focusedIndex,
-    query,
+    debouncedQuery,
     renderOption,
     displayValue,
     handleSelect,
@@ -225,7 +232,10 @@ function SearchableDropdownInner<T>(
           setQuery(e.target.value);
         }}
         onFocus={() => {
-          if (query.length >= minQueryLength && options.length > 0) {
+          if (
+            query.trim().length >= minQueryLength &&
+            (options.length > 0 || loading || error)
+          ) {
             setShowDropdown(true);
           }
         }}

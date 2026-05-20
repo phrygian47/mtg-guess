@@ -81,7 +81,7 @@ export default function ClassicPage() {
           <h1 className={styles.title}>Guess the Card!</h1>
           {infoGrid.length === 0 && !showVictory && (
             <div>
-              <h3>Start typing to submit a guess!</h3>
+              <h3>Start typing to submit a guess</h3>
             </div>
           )}
           <div>

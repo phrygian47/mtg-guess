@@ -73,10 +73,13 @@ export default function InfoGrid({ rows }: InfoGridProps) {
               {value.map((set) => (
                 <span key={set.code} className={styles.setItem}>
                   {set.image_uri && (
-                    <img
-                      src={set.image_uri}
-                      alt={`${set.code} set icon`}
+                    <span
                       className={styles.set_icon}
+                      style={
+                        {
+                          "--icon-url": `url(${set.image_uri})`,
+                        } as React.CSSProperties
+                      }
                     />
                   )}
                   <span className={styles.set_name}>
