@@ -43,6 +43,10 @@ a {
   text-decoration: none;
 }
 
+input {
+  color: #eee;
+}
+
 /* @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;

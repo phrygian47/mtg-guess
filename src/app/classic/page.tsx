@@ -101,13 +101,13 @@ export default function ClassicPage() {
                 onSelect={(card) => setSelectedGuessCard(card.oracle_id)}
               />
 
-              <button
+              {/* <button
                 type="submit"
                 className={styles.button}
                 disabled={gameWon}
               >
                 Submit
-              </button>
+              </button> */}
             </form>
           </div>
         </div>

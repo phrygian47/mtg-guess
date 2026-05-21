@@ -219,32 +219,36 @@ function SearchableDropdownInner<T>(
   ]);
   return (
     <div className={styles.searchable_dropdown} ref={dropdownRef}>
-      <input
-        ref={ref}
-        id={id}
-        name={name}
-        type="text"
-        placeholder={placeholder}
-        value={query}
-        autoComplete="off"
-        onChange={(e) => {
-          selectedDisplayValueRef.current = null;
-          setQuery(e.target.value);
-        }}
-        onFocus={() => {
-          if (
-            query.trim().length >= minQueryLength &&
-            (options.length > 0 || loading || error)
-          ) {
-            setShowDropdown(true);
-          }
-        }}
-        onKeyDown={handleKeyDown}
-        aria-autocomplete="list"
-        aria-expanded={showDropdown}
-        aria-controls="dropdown-listbox"
-        className={styles.searchable_input}
-      />
+      <div className={styles.searchable_container}>
+        <input
+          ref={ref}
+          id={id}
+          name={name}
+          type="text"
+          placeholder={placeholder}
+          value={query}
+          autoComplete="off"
+          onChange={(e) => {
+            selectedDisplayValueRef.current = null;
+            setQuery(e.target.value);
+          }}
+          onFocus={() => {
+            if (
+              query.trim().length >= minQueryLength &&
+              (options.length > 0 || loading || error)
+            ) {
+              setShowDropdown(true);
+            }
+          }}
+          onKeyDown={handleKeyDown}
+          aria-autocomplete="list"
+          aria-expanded={showDropdown}
+          aria-controls="dropdown-listbox"
+          className={styles.searchable_input}
+        />
+
+        <button type="submit" className={styles.btn}></button>
+      </div>
 
       {showDropdown && (
         <ul
