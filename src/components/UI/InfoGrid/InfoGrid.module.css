@@ -29,7 +29,7 @@
 .infoCell {
   color: #eee;
   font-size: 1.2rem;
-  font-weight: 600;
+  text-align: center;
   display: flex;
   align-items: center;
   justify-content: center;

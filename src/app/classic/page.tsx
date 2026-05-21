@@ -7,6 +7,7 @@ import InfoGrid from "@/components/UI/InfoGrid/InfoGrid";
 import { submitGuess } from "@/lib/game/submitGuess";
 import CustomSearchable from "@/components/UI/CustomSearchable/CustomSearchable";
 import { submitCard } from "@/lib/game/submitCard";
+import ClassicInfo from "@/components/Info/Classic-Info/Classic-Info";
 
 type DisplayInfoGridRow = {
   id: string;
@@ -76,9 +77,10 @@ export default function ClassicPage() {
 
   return (
     <div className={styles.page}>
-      <main className={styles.main}>
+      <main className="main">
         <div className={styles.title}>
           <h1 className={styles.title}>Guess the Card!</h1>
+          <ClassicInfo />
           {infoGrid.length === 0 && !showVictory && (
             <div>
               <h3>Start typing to submit a guess</h3>

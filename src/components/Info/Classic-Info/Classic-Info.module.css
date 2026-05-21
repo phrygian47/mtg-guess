@@ -1,0 +1,83 @@
+.container {
+  position: relative;
+  max-width: 200px;
+  width: 100%;
+  border: 1px solid var(--gold);
+  border-radius: 1rem;
+  background-color: var(--brown);
+  margin: 1rem;
+}
+
+.info {
+  display: flex;
+  list-style: none;
+  padding: 1rem;
+  margin: 0;
+  justify-content: space-around;
+  width: 100%;
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  color: var(--foreground);
+  cursor: pointer;
+  padding: 0.35rem;
+  border-radius: 999px;
+}
+
+.iconButton:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.window {
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(320px, 90vw);
+  border: 1px solid var(--gold);
+  border-radius: 1rem;
+  background-color: var(--brown);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  z-index: 50;
+  overflow: hidden;
+}
+
+.windowHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--gold);
+}
+
+.windowTitle {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  color: var(--foreground);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 999px;
+}
+
+.closeButton:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.windowBody {
+  padding: 1rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}

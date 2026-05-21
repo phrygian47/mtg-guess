@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <div className={styles.page}>
-      <main className={styles.main}>
+      <main className="main">
         <section className={styles.hero}>
           <h1 className={styles.title}>MTGDLE</h1>
           <p className={styles.subtitle}>
