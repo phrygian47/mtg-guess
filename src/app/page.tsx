@@ -16,10 +16,12 @@ export default function Home() {
     <div className={styles.page}>
       <main className="main">
         <section className={styles.hero}>
-          <h1 className={styles.title}>MTGDLE</h1>
-          <p className={styles.subtitle}>
-            A daily Magic: The Gathering card guessing game.
-          </p>
+          <div className={styles.heading}>
+            <h1 className={styles.title}>MTGDLE</h1>
+            <p className={styles.subtitle}>
+              A daily Magic: The Gathering card guessing game.
+            </p>
+          </div>
 
           <div className={styles.games}>
             <Link href="/classic" className={styles.button}>
