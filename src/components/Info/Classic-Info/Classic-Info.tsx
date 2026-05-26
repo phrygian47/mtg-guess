@@ -8,6 +8,7 @@ import {
   Info,
   X,
 } from "lucide-react";
+import TutorialSection from "@/components/Sections/Classic-How-To/Tutorial-Section";
 
 type InfoWindow = "stats" | "how-to-play" | "disclaimers" | null;
 
@@ -92,13 +93,7 @@ export default function ClassicInfo() {
           <div className={styles.windowBody}>
             {openWindow === "stats" && <p>Put your stats content here.</p>}
 
-            {openWindow === "how-to-play" && (
-              <p>
-                Guess the hidden card. Each guess reveals clue feedback for
-                color, mana value, type line, set, rarity, tags, and release
-                year.
-              </p>
-            )}
+            {openWindow === "how-to-play" && <TutorialSection />}
 
             {openWindow === "disclaimers" && (
               <p>

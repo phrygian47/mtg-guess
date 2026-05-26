@@ -76,7 +76,7 @@ export default function ClassicPage() {
   );
 
   return (
-    <div className={styles.page}>
+    <div className="page">
       <main className="main">
         <div className={styles.title}>
           <h1 className={styles.title}>Guess the Card!</h1>
