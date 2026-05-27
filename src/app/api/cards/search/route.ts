@@ -18,44 +18,27 @@ export async function GET(req: NextRequest) {
     return NextResponse.json([]);
   }
 
+  const searchPattern = query.length <= 2 ? `${query}%` : `%${query}%`;
+
   const cards = await sql`
-  WITH ranked_cards AS (
-    SELECT
-      id,
-      oracle_id,
-      name,
-      normalized_name,
+    SELECT id, oracle_id, name
+    FROM cards
+    WHERE normalized_name LIKE ${searchPattern}
+    ORDER BY
       CASE
         WHEN normalized_name = ${query} THEN 0
         WHEN normalized_name LIKE ${`${query}%`} THEN 1
-        WHEN normalized_name ILIKE ${`% ${query}%`} THEN 2
+        WHEN normalized_name LIKE ${`% ${query}%`} THEN 2
         ELSE 3
-      END AS match_rank,
-      ROW_NUMBER() OVER (
-        PARTITION BY oracle_id
-        ORDER BY
-          CASE
-            WHEN normalized_name = ${query} THEN 0
-            WHEN normalized_name LIKE ${`${query}%`} THEN 1
-            WHEN normalized_name ILIKE ${`% ${query}%`} THEN 2
-            ELSE 3
-          END,
-          LENGTH(normalized_name) ASC,
-          name ASC,
-          id ASC
-      ) AS rn
-    FROM cards
-    WHERE normalized_name ILIKE ${`%${query}%`}
-  )
-  SELECT id, oracle_id, name
-  FROM ranked_cards
-  WHERE rn = 1
-  ORDER BY
-    match_rank ASC,
-    LENGTH(normalized_name) ASC,
-    name ASC
-  LIMIT 20
-`;
+      END,
+      LENGTH(normalized_name),
+      name
+    LIMIT 20
+  `;
 
-  return NextResponse.json(cards);
+  return NextResponse.json(cards, {
+    headers: {
+      "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+    },
+  });
 }
