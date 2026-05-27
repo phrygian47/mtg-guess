@@ -73,24 +73,17 @@ export default function ClassicInfo() {
 
       {openWindow && (
         <div className={styles.window}>
-          <div className={styles.windowHeader}>
-            <h3 className={styles.windowTitle}>
-              {openWindow === "stats" && "Stats"}
-              {openWindow === "how-to-play" && "How to Play"}
-              {openWindow === "disclaimers" && "About the Data"}
-            </h3>
-
-            <button
-              type="button"
-              aria-label="Close"
-              onClick={() => setOpenWindow(null)}
-              className={styles.closeButton}
-            >
-              <X size={16} />
-            </button>
-          </div>
-
           <div className={styles.windowBody}>
+            <div className={styles.exit_btn}>
+              <button
+                type="button"
+                aria-label="Close"
+                onClick={() => setOpenWindow(null)}
+                className={styles.closeButton}
+              >
+                <X size={16} />
+              </button>
+            </div>
             {openWindow === "stats" && <p>Put your stats content here.</p>}
 
             {openWindow === "how-to-play" && <TutorialSection />}

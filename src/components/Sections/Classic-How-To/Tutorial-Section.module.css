@@ -1,0 +1,176 @@
+.container {
+  color: var(--foreground);
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 0.35rem;
+}
+
+/* Scrollbar */
+.container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 999px;
+}
+
+.container::-webkit-scrollbar-thumb {
+  background: var(--gold);
+  border-radius: 999px;
+}
+
+.container h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.35rem;
+  line-height: 1.1;
+  color: var(--gold);
+  text-align: center;
+  letter-spacing: 0.03em;
+}
+
+.container h2:not(:first-child) {
+  margin-top: 1.5rem;
+}
+
+.container hr {
+  border: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  margin: 0.75rem 0 1rem;
+}
+
+.container p {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.container ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+}
+
+.container li {
+  margin-bottom: 0.75rem;
+}
+
+.timer {
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--gold);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  margin: 1rem 0;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+/* Clue explanation cards */
+.clueList {
+  display: grid;
+  gap: 0.6rem;
+  margin: 1rem 0;
+}
+
+.clueItem {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.045);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  line-height: 1.45;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 4.5rem;
+  padding: 0.2rem 0.55rem;
+  margin-right: 0.35rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.green {
+  background: var(--correct);
+  color: #1f1600;
+}
+
+.yellow {
+  background: var(--partial);
+  color: #1f1600;
+}
+
+.red {
+  background: var(--incorrect);
+  color: #1f1600;
+}
+
+/* Property section */
+.propertyList {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.propertyCard {
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.055),
+    rgba(0, 0, 0, 0.1)
+  );
+  border-radius: 0.85rem;
+  padding: 0.85rem;
+}
+
+.propertyCard h3 {
+  margin: 0 0 0.25rem;
+  color: var(--gold);
+  font-size: 1rem;
+}
+
+.propertyCard h4 {
+  margin: 0 0 0.6rem;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.propertyCard p {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.label {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+/* Mobile / very narrow popup */
+@media (max-width: 420px) {
+  .container {
+    max-height: 72vh;
+  }
+
+  .container h2 {
+    font-size: 1.2rem;
+  }
+
+  .propertyCard,
+  .clueItem {
+    padding: 0.7rem;
+  }
+
+  .badge {
+    display: flex;
+    width: fit-content;
+    margin-bottom: 0.35rem;
+  }
+}
