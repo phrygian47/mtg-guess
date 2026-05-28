@@ -9,10 +9,11 @@ import {
   X,
 } from "lucide-react";
 import TutorialSection from "@/components/Sections/Classic-How-To/Tutorial-Section";
+import ClassicInfo from "@/components/Sections/Classic-Info/ClassicInfo";
 
 type InfoWindow = "stats" | "how-to-play" | "disclaimers" | null;
 
-export default function ClassicInfo() {
+export default function ClassicInfoBar() {
   const [openWindow, setOpenWindow] = useState<InfoWindow>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -88,12 +89,7 @@ export default function ClassicInfo() {
 
             {openWindow === "how-to-play" && <TutorialSection />}
 
-            {openWindow === "disclaimers" && (
-              <p>
-                Some tags are derived from community tagging data and may be
-                incomplete or inconsistent.
-              </p>
-            )}
+            {openWindow === "disclaimers" && <ClassicInfo />}
           </div>
         </div>
       )}

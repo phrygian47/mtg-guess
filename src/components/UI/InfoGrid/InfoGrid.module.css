@@ -37,6 +37,7 @@
   width: 100%;
   height: 100%;
   border-radius: 7px;
+  overflow-y: auto;
 }
 
 .otherCell {
@@ -76,6 +77,7 @@
 
 .cardCell {
   padding: 0;
+  background: transparent;
 }
 
 .cardImage {

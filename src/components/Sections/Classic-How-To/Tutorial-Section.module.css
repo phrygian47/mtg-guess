@@ -5,7 +5,13 @@
   padding-right: 0.35rem;
 }
 
-/* Scrollbar */
+.container {
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold) rgba(0, 0, 0, 0.25);
+}
+
+/* Chrome, Edge, Safari */
 .container::-webkit-scrollbar {
   width: 8px;
 }

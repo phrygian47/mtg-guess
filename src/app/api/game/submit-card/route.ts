@@ -178,7 +178,7 @@ function compareYear(answer: number | null, guess: number | null): CellTone {
     return "correct";
   }
 
-  return Math.abs(answer - guess) <= 1 ? "partial" : "wrong";
+  return Math.abs(answer - guess) <= 2 ? "partial" : "wrong";
 }
 
 function formatTypeLine(typeLine: string | null): string {
