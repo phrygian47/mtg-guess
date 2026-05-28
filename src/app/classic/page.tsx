@@ -27,7 +27,7 @@ export default function ClassicPage() {
 
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  const handleSubmitGuess = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmitGuess = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!selectedGuessCard || gameWon) return;

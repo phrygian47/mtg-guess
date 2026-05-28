@@ -1,6 +1,9 @@
 import styles from "./Tutorial-Section.module.css";
+import { formatCountdown, useNextPuzzleCountdown } from "@/lib/game/countdown";
 
 export default function TutorialSection() {
+  const countdown = useNextPuzzleCountdown();
+
   return (
     <div className={styles.container}>
       <h2>How to Play</h2>
@@ -12,7 +15,13 @@ export default function TutorialSection() {
         every 24 hours.
       </p>
 
-      <div className={styles.timer}>Timer Section for Next Card</div>
+      <div className={styles.timer}>
+        <span className={styles.timer_text}>Next card in: </span>
+        <span className={styles.timer_clock}>{formatCountdown(countdown)}</span>
+        <span>
+          <em>New card every local midnight</em>
+        </span>
+      </div>
 
       <p>
         In Classic mode, type a guess into the search bar and submit it to
