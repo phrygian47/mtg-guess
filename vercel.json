@@ -1,10 +1,6 @@
 {
   "crons": [
     {
-      "path": "/api/cron/select-daily-card",
-      "schedule": "0 8 * * *"
-    },
-    {
       "path": "/api/cron/select-from-card-pool",
       "schedule": "0 8 * * *"
     }
