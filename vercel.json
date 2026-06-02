@@ -3,10 +3,6 @@
     {
       "path": "/api/cron/select-from-card-pool",
       "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/cron/keep-warm",
-      "schedule": "*/4 * * * *"
     }
   ]
 }
