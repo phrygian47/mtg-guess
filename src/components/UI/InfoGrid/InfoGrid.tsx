@@ -12,7 +12,7 @@ type InfoGridProps = {
   manaSymbolsBySymbol: ManaSymbolMap;
 };
 
-type CellType = "card" | "set" | "colors";
+type CellType = "card" | "set" | "colors" | "rarity";
 
 const CELL_ORDER: Array<{
   key: keyof InfoGridRow;
@@ -24,9 +24,8 @@ const CELL_ORDER: Array<{
   { key: "mana_value", label: "Mana Value" },
   { key: "type_line", label: "Type Line" },
   { key: "set", label: "Set", type: "set" },
-  { key: "rarity", label: "Rarity" },
+  { key: "rarity", label: "Rarity", type: "rarity" },
   { key: "tags", label: "Tags" },
-  { key: "release_year", label: "Release Year" },
 ];
 
 const formatTypeLine = (value: InfoCell["value"]): string => {
@@ -35,6 +34,22 @@ const formatTypeLine = (value: InfoCell["value"]): string => {
   }
 
   return value.replace(/\s+—\s+/g, " ");
+};
+
+const getSetDirectionClass = (value: string | SetInfo) => {
+  if (typeof value !== "object" || value === null) {
+    return "";
+  }
+
+  if (value.release_year_direction === "higher") {
+    return styles.yearHigher;
+  }
+
+  if (value.release_year_direction === "lower") {
+    return styles.yearLower;
+  }
+
+  return "";
 };
 
 const normalizeColorSymbols = (value: unknown): string[] => {
@@ -59,6 +74,24 @@ const normalizeColorSymbols = (value: unknown): string[] => {
     .filter(Boolean);
 };
 
+const getRarityClass = (value: unknown) => {
+  if (typeof value !== "string") return "";
+
+  switch (value.toLowerCase()) {
+    case "common":
+      return styles.rarityCommon;
+    case "uncommon":
+      return styles.rarityUncommon;
+    case "rare":
+      return styles.rarityRare;
+    case "mythic":
+    case "mythic rare":
+      return styles.rarityMythic;
+    default:
+      return "";
+  }
+};
+
 export default function InfoGrid({ rows, manaSymbolsBySymbol }: InfoGridProps) {
   if (rows.length === 0) return null;
 
@@ -81,12 +114,18 @@ export default function InfoGrid({ rows, manaSymbolsBySymbol }: InfoGridProps) {
     const displayValue =
       key === "type_line" ? formatTypeLine(cell.value) : cell.value;
 
+    const columnClass = key === "mana_value" ? styles.manaValueCell : "";
+
     return (
       <div
         className={getRevealClass(shouldAnimate)}
         style={getRevealStyle(revealIndex, shouldAnimate)}
       >
-        <div className={`${styles.infoCell} ${styles[cell.tone ?? "neutral"]}`}>
+        <div
+          className={`${styles.infoCell} ${
+            styles[cell.tone ?? "neutral"]
+          } ${columnClass}`}
+        >
           {displayValue}
         </div>
       </div>
@@ -133,11 +172,103 @@ export default function InfoGrid({ rows, manaSymbolsBySymbol }: InfoGridProps) {
   };
 
   const renderSetCell = (
-    cell: InfoCell<string | SetInfo[]>,
+    cell: InfoCell<string | SetInfo>,
     revealIndex: number,
     shouldAnimate: boolean,
   ) => {
     const value = cell.value;
+
+    const getReleaseYearDirectionIcon = (
+      direction?: SetInfo["release_year_direction"],
+    ) => {
+      if (direction === "higher") {
+        return {
+          src: "/icons/chevrons-up.svg",
+          alt: "Answer was released later",
+        };
+      }
+
+      if (direction === "lower") {
+        return {
+          src: "/icons/chevrons-down.svg",
+          alt: "Answer was released earlier",
+        };
+      }
+
+      return null;
+    };
+
+    const isSetInfo = typeof value === "object" && value !== null;
+
+    if (!isSetInfo) {
+      return (
+        <div
+          className={getRevealClass(shouldAnimate)}
+          style={getRevealStyle(revealIndex, shouldAnimate)}
+        >
+          <div
+            className={`${styles.infoCell} ${styles[cell.tone ?? "neutral"]}`}
+          >
+            {value}
+          </div>
+        </div>
+      );
+    }
+
+    const directionIcon = getReleaseYearDirectionIcon(
+      value.release_year_direction,
+    );
+
+    return (
+      <div
+        className={getRevealClass(shouldAnimate)}
+        style={getRevealStyle(revealIndex, shouldAnimate)}
+      >
+        <div
+          className={`${styles.infoCell} ${styles.setCell} ${
+            styles[cell.tone ?? "neutral"]
+          }`}
+        >
+          {directionIcon && (
+            <img
+              src={directionIcon.src}
+              alt={directionIcon.alt}
+              title={directionIcon.alt}
+              className={styles.setYearDirectionOverlay}
+            />
+          )}
+
+          <div className={styles.setItem}>
+            {value.image_uri && (
+              <span
+                className={styles.set_icon}
+                style={
+                  {
+                    "--icon-url": `url(${value.image_uri})`,
+                  } as React.CSSProperties
+                }
+              />
+            )}
+
+            <span className={styles.set_name}>{value.name ?? value.code}</span>
+
+            {value.release_year && (
+              <span className={styles.setYear}>{value.release_year}</span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderRarityCell = (
+    cell: InfoCell,
+    revealIndex: number,
+    shouldAnimate: boolean,
+  ) => {
+    const rarityIcon = "/card-symbols/sym-pw.svg";
+    const rarityClass = getRarityClass(cell.value);
+    const value = cell.value as string;
 
     return (
       <div
@@ -145,29 +276,19 @@ export default function InfoGrid({ rows, manaSymbolsBySymbol }: InfoGridProps) {
         style={getRevealStyle(revealIndex, shouldAnimate)}
       >
         <div className={`${styles.infoCell} ${styles[cell.tone ?? "neutral"]}`}>
-          {Array.isArray(value) ? (
-            <div className={styles.setList}>
-              {value.map((set) => (
-                <span key={set.code} className={styles.setItem}>
-                  {set.image_uri && (
-                    <span
-                      className={styles.set_icon}
-                      style={
-                        {
-                          "--icon-url": `url(${set.image_uri})`,
-                        } as React.CSSProperties
-                      }
-                    />
-                  )}
-                  <span className={styles.set_name}>
-                    {set.name ?? set.code}
-                  </span>
-                </span>
-              ))}
-            </div>
-          ) : (
-            value
-          )}
+          <div className={styles.rarityContent}>
+            <span
+              className={`${styles.rarityIcon} ${rarityClass}`}
+              style={
+                {
+                  "--rarity-icon-url": `url(${rarityIcon})`,
+                } as React.CSSProperties
+              }
+              aria-hidden="true"
+            />
+
+            <span>{value.charAt(0).toUpperCase() + value.slice(1)}</span>
+          </div>
         </div>
       </div>
     );
@@ -250,6 +371,14 @@ export default function InfoGrid({ rows, manaSymbolsBySymbol }: InfoGridProps) {
                   return (
                     <div key={cell.key}>
                       {renderSetCell(row.set, revealIndex, shouldAnimate)}
+                    </div>
+                  );
+                }
+
+                if (cell.type === "rarity") {
+                  return (
+                    <div key={cell.key}>
+                      {renderRarityCell(row.rarity, revealIndex, shouldAnimate)}
                     </div>
                   );
                 }

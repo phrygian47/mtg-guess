@@ -9,9 +9,15 @@
 .infoGridRow {
   margin: 1rem;
   display: grid;
-  grid-template-columns: repeat(8, minmax(140px, 1fr));
+  grid-template-columns: repeat(7, minmax(140px, 1fr));
   gap: 0.25rem;
   align-items: stretch;
+}
+
+.setYear {
+  font-size: 0.85rem;
+  opacity: 0.85;
+  margin-top: 0.15rem;
 }
 
 .infoGridRow > div {
@@ -29,7 +35,7 @@
 }
 
 .infoCell {
-  color: #eee;
+  color: var(--text);
   font-size: 1.2rem;
   text-align: center;
   display: flex;
@@ -50,6 +56,61 @@
   overflow-wrap: break-word;
 }
 
+.manaValueCell {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.rarityContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.rarityIcon {
+  width: 4rem;
+  height: 4rem;
+  display: block;
+  mask: var(--rarity-icon-url) center / contain no-repeat;
+  -webkit-mask: var(--rarity-icon-url) center / contain no-repeat;
+}
+
+.rarityCommon {
+  background: rgb(33, 33, 33);
+  color: #fff;
+}
+
+.rarityUncommon {
+  background: linear-gradient(
+    45deg,
+    rgb(70, 100, 110),
+    rgb(185, 220, 235),
+    rgb(70, 100, 110)
+  );
+  color: #111;
+}
+
+.rarityRare {
+  background: linear-gradient(
+    45deg,
+    rgb(118, 98, 55),
+    rgb(230, 205, 140),
+    rgb(118, 98, 55)
+  );
+  color: #111;
+}
+
+.rarityMythic {
+  background: linear-gradient(
+    45deg,
+    rgb(180, 50, 25),
+    rgb(245, 145, 5),
+    rgb(180, 50, 25)
+  );
+  color: #fff;
+}
+
 .manaSymbols {
   display: flex;
   align-items: center;
@@ -59,8 +120,8 @@
 }
 
 .manaSymbol {
-  width: 1.35rem;
-  height: 1.35rem;
+  width: 2rem;
+  height: 2rem;
   display: inline-block;
 }
 
@@ -147,7 +208,25 @@
   padding: auto;
 }
 
+.setCell {
+  position: relative;
+  overflow: hidden;
+}
+
+.setYearDirectionOverlay {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 100%;
+  height: 100%;
+  transform: translate(-50%, -50%);
+  opacity: 0.33;
+  pointer-events: none;
+  z-index: 0;
+}
+
 .setItem {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;

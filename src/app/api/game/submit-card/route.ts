@@ -1,13 +1,18 @@
 import { sql } from "@/lib/db/db";
 
-import type { CellTone, InfoGridRow, SetInfo } from "@/lib/game/types";
+import type {
+  CellTone,
+  InfoGridRow,
+  SetInfo,
+  ReleaseYearDirection,
+} from "@/lib/game/types";
 
 type DailyCardSelectionRow = {
   image_small: string | null;
   colors: string[] | null;
   cmc: number | null;
   type_line: string | null;
-  sets: SetInfo[] | null;
+  set: SetInfo | null;
   rarity: string | null;
   tags: string[] | null;
   release_year: number | null;
@@ -34,15 +39,14 @@ export async function GET(req: Request) {
       , c.cmc
       , c.type_line
       , case
-          when c.set_code is null then '[]'::jsonb
-          else jsonb_build_array(
-            jsonb_build_object(
-              'code', c.set_code,
-              'name', s.name,
-              'image_uri', s.imageuri
-            )
+          when c.set_code is null then null
+          else jsonb_build_object(
+            'code', c.set_code,
+            'name', s.name,
+            'image_uri', s.imageuri,
+            'release_year', extract(year from c.released_at)::int
           )
-        end as sets
+        end as set
       , extract(year from c.released_at)::int as release_year
       , c.rarity
       , array_remove(array_agg(distinct t.slug order by t.slug), null) as tags
@@ -78,15 +82,14 @@ export async function GET(req: Request) {
       , c.cmc
       , c.type_line
       , case
-          when c.set_code is null then '[]'::jsonb
-          else jsonb_build_array(
-            jsonb_build_object(
-              'code', c.set_code,
-              'name', s.name,
-              'image_uri', s.imageuri
-            )
+          when c.set_code is null then null
+          else jsonb_build_object(
+            'code', c.set_code,
+            'name', s.name,
+            'image_uri', s.imageuri,
+            'release_year', extract(year from c.released_at)::int
           )
-        end as sets
+        end as set
       , extract(year from c.released_at)::int as release_year
       , c.rarity
       , (
@@ -145,8 +148,8 @@ function mapGuessToInfoGridRow(
       tone: compareTypeLine(answer.type_line, guess.type_line),
     },
     set: {
-      value: formatSets(guess.sets),
-      tone: compareSets(answer.sets, guess.sets),
+      value: formatSetWithYear(guess.set, answer.release_year),
+      tone: compareSetWithYear(answer.set, guess.set),
     },
 
     rarity: {
@@ -161,24 +164,65 @@ function mapGuessToInfoGridRow(
       value: formatTags(guess.tags),
       tone: compareOptionalArray(answer.tags, guess.tags),
     },
-
-    release_year: {
-      value: formatYearWithArrow(answer.release_year, guess.release_year),
-      tone: compareYear(answer.release_year, guess.release_year),
-    },
   };
 }
 
-function compareYear(answer: number | null, guess: number | null): CellTone {
-  if (answer == null || guess == null) {
+function getReleaseYearDirection(
+  answerYear: number | null,
+  guessYear: number | null,
+): ReleaseYearDirection {
+  if (answerYear == null || guessYear == null) {
+    return null;
+  }
+
+  if (answerYear === guessYear) {
+    return "same";
+  }
+
+  return answerYear > guessYear ? "higher" : "lower";
+}
+
+function formatSetWithYear(
+  set: SetInfo | null,
+  answerReleaseYear: number | null,
+): SetInfo | string {
+  if (!set) {
+    return "—";
+  }
+
+  return {
+    code: set.code.toUpperCase(),
+    name: set.name,
+    image_uri: set.image_uri,
+    release_year: set.release_year,
+    release_year_direction: getReleaseYearDirection(
+      answerReleaseYear,
+      set.release_year ?? null,
+    ),
+  };
+}
+
+function compareSetWithYear(
+  answer: SetInfo | null,
+  guess: SetInfo | null,
+): CellTone {
+  if (!answer || !guess) {
     return "neutral";
   }
 
-  if (answer === guess) {
+  if (normalize(answer.code) === normalize(guess.code)) {
     return "correct";
   }
 
-  return Math.abs(answer - guess) <= 2 ? "partial" : "wrong";
+  if (
+    answer.release_year != null &&
+    guess.release_year != null &&
+    answer.release_year === guess.release_year
+  ) {
+    return "partial";
+  }
+
+  return "wrong";
 }
 
 function formatTypeLine(typeLine: string | null): string {
@@ -226,21 +270,6 @@ function getTypeLineParts(typeLine: string | null): {
     main: mainPart ? mainPart.split(/\s+/).map(normalize) : [],
     sub: subPart ? subPart.split(/\s+/).map(normalize) : [],
   };
-}
-
-function formatYearWithArrow(
-  answer: number | null,
-  guess: number | null,
-): string {
-  if (guess == null) {
-    return "—";
-  }
-
-  if (answer == null || answer === guess) {
-    return String(guess);
-  }
-
-  return answer > guess ? `${guess} ↑` : `${guess} ↓`;
 }
 
 function compareValue(
@@ -321,28 +350,6 @@ function compareArray(
 
 function normalizeArray(values: string[] | null): string[] {
   return values?.map(normalize).filter(Boolean) ?? [];
-}
-
-function formatSets(sets: SetInfo[] | null): SetInfo[] | string {
-  if (!sets || sets.length === 0) {
-    return "—";
-  }
-
-  return sets.map((set) => ({
-    code: set.code.toUpperCase(),
-    name: set.name,
-    image_uri: set.image_uri,
-  }));
-}
-
-function compareSets(
-  answer: SetInfo[] | null,
-  guess: SetInfo[] | null,
-): CellTone {
-  return compareArray(
-    answer?.map((set) => set.code) ?? null,
-    guess?.map((set) => set.code) ?? null,
-  );
 }
 
 function formatColors(colors: string[] | null): string {
