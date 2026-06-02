@@ -140,7 +140,7 @@ function mapGuessToInfoGridRow(
 
     mana_value: {
       value: guess.cmc ?? "—",
-      tone: compareValue(answer.cmc, guess.cmc),
+      tone: compareManaValue(answer.cmc, guess.cmc),
     },
 
     type_line: {
@@ -281,6 +281,29 @@ function compareValue(
   }
 
   return answer === guess ? "correct" : "wrong";
+}
+
+function compareManaValue(
+  answer: string | number | null,
+  guess: string | number | null,
+): CellTone {
+  if (answer == null || guess == null) {
+    return "neutral";
+  }
+
+  if (answer === guess) {
+    return "correct";
+  }
+
+  if (
+    typeof answer === "number" &&
+    typeof guess === "number" &&
+    Math.abs(answer - guess) <= 1
+  ) {
+    return "partial";
+  }
+
+  return "wrong";
 }
 
 function formatTags(tags: string[] | null): string {

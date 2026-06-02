@@ -37,11 +37,10 @@ export default function TutorialSection() {
 
         <li className={styles.clueItem}>
           <span className={`${styles.badge} ${styles.yellow}`}>Yellow</span>
-          Indicates the property is close. For Colors, at least one color
-          matches. For Type Line, at least one subtype or main type is correct.
-          For Tags, at least one tag is correct. For Release Year, the guessed
-          year is within 2 years of the target.
+          Indicates the guessed card property is close to the target card. Each
+          property explains what counts as close below.
         </li>
+
         <li className={styles.clueItem}>
           <span className={`${styles.badge} ${styles.red}`}>Red</span>
           Indicates the guessed card property has no matches with the target
@@ -55,6 +54,14 @@ export default function TutorialSection() {
         <li className={styles.propertyCard}>
           <h3>Color</h3>
           <p>
+            If this property is{" "}
+            <span className={`${styles.mini_badge} ${styles.mini_yellow}`}>
+              Yellow
+            </span>{" "}
+            then at least one color matches with the target.
+          </p>
+          <br />
+          <p>
             <span className={styles.label}>Possible Values:</span> White, Blue,
             Black, Red, Green, Colorless.
           </p>
@@ -62,37 +69,79 @@ export default function TutorialSection() {
 
         <li className={styles.propertyCard}>
           <h3>Mana Value</h3>
+          <h4>Represents the total mana value of the card.</h4>
           <p>
-            <span className={styles.label}>Possible Values:</span> A decimal
-            value ranging from 0-20.
+            If this property is{" "}
+            <span className={`${styles.mini_badge} ${styles.mini_yellow}`}>
+              Yellow
+            </span>{" "}
+            then the guessed card is within +/- 1 mana value of the target.
+          </p>
+          <br />
+          <p>
+            <span className={styles.label}>Possible Values:</span> A numeric
+            value, usually ranging from 0 upward.
           </p>
         </li>
 
         <li className={styles.propertyCard}>
           <h3>Type Line</h3>
           <h4>
-            Represents supertype, main type, and subtype. A card may have
-            multiple subtypes.
+            Represents supertypes, card types, and subtypes. A card may have
+            multiple types and subtypes.
           </h4>
           <p>
-            <span className={styles.label}>Possible Values:</span> Instant,
-            Sorcery, Creature, Human, Goblin, Land, etc.
+            If this property is{" "}
+            <span className={`${styles.mini_badge} ${styles.mini_yellow}`}>
+              Yellow
+            </span>{" "}
+            then the guessed card shares at least one supertype, type, or
+            subtype with the target.
+          </p>
+          <br />
+          <p>
+            <span className={styles.label}>Possible Values:</span> Legendary,
+            Creature, Instant, Sorcery, Artifact, Human, Goblin, Land, etc.
           </p>
         </li>
 
         <li className={styles.propertyCard}>
           <h3>Set</h3>
-          <h4>Set name and symbol.</h4>
+          <h4>Shows the set name, set symbol, and release year.</h4>
           <p>
-            <span className={styles.label}>Possible Values:</span> Any official
-            MTG set, such as Strixhaven, Ravnica, Avatar: The Last Airbender,
-            etc.
+            If this property is{" "}
+            <span className={`${styles.mini_badge} ${styles.mini_yellow}`}>
+              Yellow
+            </span>{" "}
+            then the guessed card is from a different set released in the same
+            year as the target.
+          </p>
+          <p>
+            If this property is{" "}
+            <span className={`${styles.mini_badge} ${styles.mini_red}`}>
+              Red
+            </span>{" "}
+            then a chevron hint shows whether the target card&apos;s release
+            year is higher or lower than the guessed card&apos;s release year.
+          </p>
+          <br />
+          <p>
+            <span className={styles.label}>Possible Values:</span> Any set
+            included in the game&apos;s card pool, plus its release year.
           </p>
         </li>
 
         <li className={styles.propertyCard}>
           <h3>Rarity</h3>
           <h4>Card rarity in its most recent printing.</h4>
+          <p>
+            If this property is{" "}
+            <span className={`${styles.mini_badge} ${styles.mini_yellow}`}>
+              Yellow
+            </span>{" "}
+            then something is wrong because this should not be possible.
+          </p>
+          <br />
           <p>
             <span className={styles.label}>Possible Values:</span> Common,
             Uncommon, Rare, Mythic.
@@ -106,20 +155,19 @@ export default function TutorialSection() {
             Project.
           </h4>
           <p>
+            If this property is{" "}
+            <span className={`${styles.mini_badge} ${styles.mini_yellow}`}>
+              Yellow
+            </span>{" "}
+            then the card shares at least one tag with the target.
+          </p>
+          <br />
+          <p>
             <span className={styles.label}>Possible Values:</span> Activated
             Ability, Anthem, Attack Trigger, Block Trigger, Card Draw, Cost
             Reducer, Counterspell, Death Trigger, Evasion, Impulse Draw, Mana
-            Dork, Mana Rock, Mill, Ramp, Recursion, Spot Removal, Board Wipe,
-            Triggered Ability, Tutor.
-          </p>
-        </li>
-
-        <li className={styles.propertyCard}>
-          <h3>Release Year</h3>
-          <h4>Most recent printing year, not including promos.</h4>
-          <p>
-            <span className={styles.label}>Possible Values:</span> Any year from
-            Magic&apos;s release to the current day.
+            Dork, Mana Rock, Mill, Ramp, Recursion, Spot Removal, Sac Outlet,
+            Board Wipe, Triggered Ability, Tutor.
           </p>
         </li>
       </ul>

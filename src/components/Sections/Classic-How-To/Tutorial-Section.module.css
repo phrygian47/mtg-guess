@@ -117,6 +117,18 @@
   letter-spacing: 0.04em;
 }
 
+.mini_badge {
+  font-weight: 800;
+}
+
+.mini_yellow {
+  color: var(--partial);
+}
+
+.mini_red {
+  color: var(--incorrect);
+}
+
 .green {
   background: var(--correct);
   color: #1f1600;
