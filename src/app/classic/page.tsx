@@ -20,6 +20,7 @@ const REVEAL_TOTAL_MS = 1300;
 export default function ClassicPage() {
   const [infoGrid, setInfoGrid] = useState<DisplayInfoGridRow[]>([]);
   const [selectedGuessCard, setSelectedGuessCard] = useState<string>("");
+  const [searchClearSignal, setSearchClearSignal] = useState(0);
 
   const [gameWon, setGameWon] = useState(false);
   const [showVictory, setShowVictory] = useState(false);
@@ -49,6 +50,7 @@ export default function ClassicPage() {
       ]);
 
       setSelectedGuessCard("");
+      setSearchClearSignal((value) => value + 1);
 
       if (result.answer) {
         setGameWon(true);
@@ -127,6 +129,7 @@ export default function ClassicPage() {
                 placeholder="Search for a card..."
                 minQueryLength={2}
                 onSelect={(card) => setSelectedGuessCard(card.oracle_id)}
+                clearSignal={searchClearSignal}
               />
 
               {/* <button

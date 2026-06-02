@@ -27,6 +27,7 @@ export interface CustomSearchableProps<T> {
   onSelect?: (item: T) => void;
   name?: string;
   id?: string;
+  clearSignal?: number;
 }
 
 function SearchableDropdownInner<T>(
@@ -39,6 +40,7 @@ function SearchableDropdownInner<T>(
     onSelect,
     name,
     id,
+    clearSignal,
   }: CustomSearchableProps<T>,
   ref: React.ForwardedRef<HTMLInputElement>,
 ) {
@@ -53,6 +55,16 @@ function SearchableDropdownInner<T>(
   const selectedDisplayValueRef = useRef<string | null>(null);
 
   const debouncedQuery = useDebounce(query, 500);
+
+  useEffect(() => {
+    selectedDisplayValueRef.current = null;
+    setQuery("");
+    setOptions([]);
+    setShowDropdown(false);
+    setFocusedIndex(-1);
+    setError(null);
+    setLoading(false);
+  }, [clearSignal]);
 
   useEffect(() => {
     const trimmedQuery = debouncedQuery.trim();
