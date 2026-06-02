@@ -23,7 +23,7 @@
   justify-content: center;
   background: transparent;
   border: 0;
-  color: var(--foreground);
+  color: var(--text);
   cursor: pointer;
   padding: 0.35rem;
   border-radius: 999px;

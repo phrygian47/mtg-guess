@@ -85,7 +85,7 @@ export default function ClassicInfoBar() {
                 <X size={16} />
               </button>
             </div>
-            {openWindow === "stats" && <p>Put your stats content here.</p>}
+            {openWindow === "stats" && <p>Put stats content here.</p>}
 
             {openWindow === "how-to-play" && <TutorialSection />}
 
