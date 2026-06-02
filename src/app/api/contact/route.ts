@@ -145,24 +145,33 @@ export async function POST(req: Request) {
     const safeEmail = escapeHtml(email ?? "Not provided");
     const safeMessage = escapeHtml(message).replaceAll("\n", "<br />");
 
-    await resend.emails.send({
+    const { data, error } = await resend.emails.send({
       from: fromEmail,
       to: toEmail,
       ...(email ? { replyTo: email } : {}),
       subject: emailSubject,
       html: `
-        <h2>New contact form submission</h2>
+    <h2>New contact form submission</h2>
 
-        <p><strong>Type:</strong> ${safeType}</p>
-        <p><strong>Subject:</strong> ${safeSubject}</p>
-        <p><strong>Email:</strong> ${safeEmail}</p>
+    <p><strong>Type:</strong> ${safeType}</p>
+    <p><strong>Subject:</strong> ${safeSubject}</p>
+    <p><strong>Email:</strong> ${safeEmail}</p>
 
-        <h3>Message</h3>
-        <p>${safeMessage}</p>
-      `,
+    <h3>Message</h3>
+    <p>${safeMessage}</p>
+  `,
     });
 
-    return NextResponse.json({ ok: true });
+    console.log("Resend response:", { data, error });
+
+    if (error) {
+      return NextResponse.json(
+        { error: error.message ?? "Resend failed to send email." },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ ok: true, emailId: data?.id });
   } catch (err) {
     console.error("Contact form error:", err);
 
