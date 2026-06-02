@@ -1,14 +1,39 @@
-import { Resend } from "resend";
 import { NextResponse } from "next/server";
+import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+export const runtime = "nodejs";
 
-type TurnstileResponse = {
-  success: boolean;
-  "error-codes"?: string[];
+type ContactRequestBody = {
+  type?: string;
+  name?: string;
+  email?: string;
+  message?: string;
+  turnstileToken?: string;
 };
 
+function getResendClient() {
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("RESEND_API_KEY is not configured");
+  }
+
+  return new Resend(apiKey);
+}
+
+function getRequiredEnv(name: string) {
+  const value = process.env[name];
+
+  if (!value) {
+    throw new Error(`${name} is not configured`);
+  }
+
+  return value;
+}
+
 async function verifyTurnstileToken(token: string) {
+  const secretKey = getRequiredEnv("TURNSTILE_SECRET_KEY");
+
   const response = await fetch(
     "https://challenges.cloudflare.com/turnstile/v0/siteverify",
     {
@@ -17,123 +42,97 @@ async function verifyTurnstileToken(token: string) {
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: new URLSearchParams({
-        secret: process.env.TURNSTILE_SECRET_KEY as string,
+        secret: secretKey,
         response: token,
       }),
     },
   );
 
-  const data = (await response.json()) as TurnstileResponse;
-
-  if (!data.success) {
-    console.error("Turnstile failed:", data["error-codes"]);
+  if (!response.ok) {
+    return false;
   }
 
-  return data.success;
+  const data = await response.json();
+
+  return Boolean(data.success);
 }
 
-export async function POST(request: Request) {
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+export async function POST(req: Request) {
   try {
-    if (!process.env.RESEND_API_KEY) {
+    const body = (await req.json()) as ContactRequestBody;
+
+    const type = body.type?.trim();
+    const name = body.name?.trim();
+    const email = body.email?.trim();
+    const message = body.message?.trim();
+    const turnstileToken = body.turnstileToken?.trim();
+
+    if (!type || !name || !email || !message) {
       return NextResponse.json(
-        { error: "Missing RESEND_API_KEY." },
-        { status: 500 },
-      );
-    }
-
-    if (!process.env.TURNSTILE_SECRET_KEY) {
-      return NextResponse.json(
-        { error: "Missing TURNSTILE_SECRET_KEY." },
-        { status: 500 },
-      );
-    }
-
-    if (!process.env.CONTACT_EMAIL) {
-      return NextResponse.json(
-        { error: "Missing CONTACT_EMAIL." },
-        { status: 500 },
-      );
-    }
-
-    const body = await request.json();
-
-    const { type, email, subject, message, turnstileToken } = body;
-
-    if (!type || !message) {
-      return NextResponse.json(
-        { error: "Message type and message are required." },
+        { error: "Missing required fields." },
         { status: 400 },
       );
     }
 
     if (!turnstileToken) {
       return NextResponse.json(
-        { error: "Security check is required." },
+        { error: "Missing Turnstile verification token." },
         { status: 400 },
       );
     }
 
-    const isHuman = await verifyTurnstileToken(turnstileToken);
+    const isTurnstileValid = await verifyTurnstileToken(turnstileToken);
 
-    if (!isHuman) {
+    if (!isTurnstileValid) {
       return NextResponse.json(
-        { error: "Security check failed. Please try again." },
-        { status: 403 },
+        { error: "Turnstile verification failed." },
+        { status: 400 },
       );
     }
 
-    const emailSubject = subject?.trim()
-      ? `[Contact Form] ${subject}`
-      : `[Contact Form] ${type}`;
+    const resend = getResendClient();
 
-    const emailBody = `
-New contact form submission
+    const toEmail = getRequiredEnv("CONTACT_TO_EMAIL");
+    const fromEmail =
+      process.env.CONTACT_FROM_EMAIL ?? "MTG Guess <onboarding@resend.dev>";
 
-Type:
-${type}
+    const safeType = escapeHtml(type);
+    const safeName = escapeHtml(name);
+    const safeEmail = escapeHtml(email);
+    const safeMessage = escapeHtml(message).replaceAll("\n", "<br />");
 
-Email:
-${email || "Not provided"}
+    await resend.emails.send({
+      from: fromEmail,
+      to: toEmail,
+      replyTo: email,
+      subject: `MTG Guess Contact Form: ${type}`,
+      html: `
+        <h2>New contact form submission</h2>
 
-Subject:
-${subject || "Not provided"}
+        <p><strong>Type:</strong> ${safeType}</p>
+        <p><strong>Name:</strong> ${safeName}</p>
+        <p><strong>Email:</strong> ${safeEmail}</p>
 
-Message:
-${message}
-    `.trim();
-
-    const { data, error } = await resend.emails.send({
-      from: "Contact Form <onboarding@resend.dev>",
-      to: process.env.CONTACT_EMAIL,
-      subject: emailSubject,
-      text: emailBody,
-      replyTo: email || undefined,
+        <h3>Message</h3>
+        <p>${safeMessage}</p>
+      `,
     });
 
-    if (error) {
-      console.error("Resend error:", error);
-
-      return NextResponse.json(
-        {
-          error:
-            "The message could not be sent. Check your Resend configuration.",
-          details: error.message,
-        },
-        { status: 500 },
-      );
-    }
-
-    console.log("Email sent:", data);
-
-    return NextResponse.json({
-      message: "Message sent successfully.",
-      id: data?.id,
-    });
-  } catch (error) {
-    console.error("Contact form error:", error);
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error("Contact form error:", err);
 
     return NextResponse.json(
-      { error: "Something went wrong. Please try again later." },
+      { error: "Failed to send contact message." },
       { status: 500 },
     );
   }
