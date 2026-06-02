@@ -5,8 +5,8 @@ export const runtime = "nodejs";
 
 type ContactRequestBody = {
   type?: string;
-  name?: string;
   email?: string;
+  subject?: string;
   message?: string;
   turnstileToken?: string;
 };
@@ -66,19 +66,48 @@ function escapeHtml(value: string) {
     .replaceAll("'", "&#039;");
 }
 
+function normalizeOptional(value: string | undefined) {
+  const trimmed = value?.trim();
+  return trimmed && trimmed.length > 0 ? trimmed : null;
+}
+
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function formatTypeLabel(type: string) {
+  switch (type) {
+    case "question":
+      return "Question";
+    case "suggestion":
+      return "Suggestion";
+    case "bug":
+      return "Bug Report";
+    default:
+      return type;
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as ContactRequestBody;
 
-    const type = body.type?.trim();
-    const name = body.name?.trim();
-    const email = body.email?.trim();
-    const message = body.message?.trim();
-    const turnstileToken = body.turnstileToken?.trim();
+    const type = normalizeOptional(body.type);
+    const email = normalizeOptional(body.email);
+    const subject = normalizeOptional(body.subject);
+    const message = normalizeOptional(body.message);
+    const turnstileToken = normalizeOptional(body.turnstileToken);
 
-    if (!type || !name || !email || !message) {
+    if (!type || !message) {
       return NextResponse.json(
-        { error: "Missing required fields." },
+        { error: "Message is required." },
+        { status: 400 },
+      );
+    }
+
+    if (email && !isValidEmail(email)) {
+      return NextResponse.json(
+        { error: "Please enter a valid email address." },
         { status: 400 },
       );
     }
@@ -105,21 +134,27 @@ export async function POST(req: Request) {
     const fromEmail =
       process.env.CONTACT_FROM_EMAIL ?? "MTG Guess <onboarding@resend.dev>";
 
-    const safeType = escapeHtml(type);
-    const safeName = escapeHtml(name);
-    const safeEmail = escapeHtml(email);
+    const typeLabel = formatTypeLabel(type);
+
+    const emailSubject = subject
+      ? `MTG Guess ${typeLabel}: ${subject}`
+      : `MTG Guess ${typeLabel}`;
+
+    const safeType = escapeHtml(typeLabel);
+    const safeSubject = escapeHtml(subject ?? "Not provided");
+    const safeEmail = escapeHtml(email ?? "Not provided");
     const safeMessage = escapeHtml(message).replaceAll("\n", "<br />");
 
     await resend.emails.send({
       from: fromEmail,
       to: toEmail,
-      replyTo: email,
-      subject: `MTG Guess Contact Form: ${type}`,
+      ...(email ? { replyTo: email } : {}),
+      subject: emailSubject,
       html: `
         <h2>New contact form submission</h2>
 
         <p><strong>Type:</strong> ${safeType}</p>
-        <p><strong>Name:</strong> ${safeName}</p>
+        <p><strong>Subject:</strong> ${safeSubject}</p>
         <p><strong>Email:</strong> ${safeEmail}</p>
 
         <h3>Message</h3>
