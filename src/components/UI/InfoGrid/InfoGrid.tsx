@@ -1,4 +1,5 @@
 import { InfoGridRow, InfoCell, SetInfo } from "@/lib/game/types";
+import { ManaSymbolMap } from "@/lib/game/manaSymbols";
 import styles from "./InfoGrid.module.css";
 
 type DisplayInfoGridRow = {
@@ -8,15 +9,18 @@ type DisplayInfoGridRow = {
 
 type InfoGridProps = {
   rows: DisplayInfoGridRow[];
+  manaSymbolsBySymbol: ManaSymbolMap;
 };
+
+type CellType = "card" | "set" | "colors";
 
 const CELL_ORDER: Array<{
   key: keyof InfoGridRow;
   label: string;
-  type?: "card" | "set";
+  type?: CellType;
 }> = [
   { key: "card", label: "Card", type: "card" },
-  { key: "colors", label: "Colors" },
+  { key: "colors", label: "Colors", type: "colors" },
   { key: "mana_value", label: "Mana Value" },
   { key: "type_line", label: "Type Line" },
   { key: "set", label: "Set", type: "set" },
@@ -25,7 +29,37 @@ const CELL_ORDER: Array<{
   { key: "release_year", label: "Release Year" },
 ];
 
-export default function InfoGrid({ rows }: InfoGridProps) {
+const formatTypeLine = (value: InfoCell["value"]): string => {
+  if (typeof value !== "string") {
+    return String(value ?? "");
+  }
+
+  return value.replace(/\s+—\s+/g, " ");
+};
+
+const normalizeColorSymbols = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value
+      .map(String)
+      .map((color) => color.trim().toUpperCase())
+      .filter(Boolean);
+  }
+
+  if (typeof value !== "string") return [];
+
+  const normalized = value.trim().toUpperCase();
+
+  if (normalized === "COLORLESS" || normalized === "NONE") {
+    return ["C"];
+  }
+
+  return normalized
+    .replace(/[^WUBRGC]/g, "")
+    .split("")
+    .filter(Boolean);
+};
+
+export default function InfoGrid({ rows, manaSymbolsBySymbol }: InfoGridProps) {
   if (rows.length === 0) return null;
 
   const getRevealStyle = (revealIndex: number, shouldAnimate: boolean) =>
@@ -42,14 +76,57 @@ export default function InfoGrid({ rows }: InfoGridProps) {
     cell: InfoCell,
     revealIndex: number,
     shouldAnimate: boolean,
+    key?: keyof InfoGridRow,
   ) => {
+    const displayValue =
+      key === "type_line" ? formatTypeLine(cell.value) : cell.value;
+
     return (
       <div
         className={getRevealClass(shouldAnimate)}
         style={getRevealStyle(revealIndex, shouldAnimate)}
       >
         <div className={`${styles.infoCell} ${styles[cell.tone ?? "neutral"]}`}>
-          {cell.value}
+          {displayValue}
+        </div>
+      </div>
+    );
+  };
+
+  const renderColorsCell = (
+    cell: InfoCell,
+    revealIndex: number,
+    shouldAnimate: boolean,
+  ) => {
+    const colors = normalizeColorSymbols(cell.value);
+
+    return (
+      <div
+        className={getRevealClass(shouldAnimate)}
+        style={getRevealStyle(revealIndex, shouldAnimate)}
+      >
+        <div className={`${styles.infoCell} ${styles[cell.tone ?? "neutral"]}`}>
+          {colors.length > 0 ? (
+            <div className={styles.manaSymbols}>
+              {colors.map((color) => {
+                const symbol = manaSymbolsBySymbol[color];
+
+                return symbol?.svg_uri ? (
+                  <img
+                    key={color}
+                    src={symbol.svg_uri}
+                    alt={symbol.english ?? `${color} mana`}
+                    title={symbol.english ?? color}
+                    className={styles.manaSymbol}
+                  />
+                ) : (
+                  <span key={color}>{color}</span>
+                );
+              })}
+            </div>
+          ) : (
+            cell.value
+          )}
         </div>
       </div>
     );
@@ -157,6 +234,18 @@ export default function InfoGrid({ rows }: InfoGridProps) {
                   );
                 }
 
+                if (cell.type === "colors") {
+                  return (
+                    <div key={cell.key}>
+                      {renderColorsCell(
+                        row.colors as InfoCell,
+                        revealIndex,
+                        shouldAnimate,
+                      )}
+                    </div>
+                  );
+                }
+
                 if (cell.type === "set") {
                   return (
                     <div key={cell.key}>
@@ -171,6 +260,7 @@ export default function InfoGrid({ rows }: InfoGridProps) {
                       row[cell.key] as InfoCell,
                       revealIndex,
                       shouldAnimate,
+                      cell.key,
                     )}
                   </div>
                 );

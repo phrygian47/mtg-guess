@@ -1,6 +1,7 @@
 "use client";
 import styles from "./page.module.css";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { fetchManaSymbols, ManaSymbolMap } from "@/lib/game/manaSymbols";
 import { CardGuess } from "@/lib/question/types";
 import { InfoGridRow } from "@/lib/game/types";
 import InfoGrid from "@/components/UI/InfoGrid/InfoGrid";
@@ -24,6 +25,9 @@ export default function ClassicPage() {
   const [showVictory, setShowVictory] = useState(false);
   const [winningCardName, setWinningCardName] = useState<string | null>(null);
   const [winningCardImage, setWinningCardImage] = useState<string | null>(null);
+  const [manaSymbolsBySymbol, setManaSymbolsBySymbol] = useState<ManaSymbolMap>(
+    {},
+  );
 
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -75,6 +79,28 @@ export default function ClassicPage() {
     [],
   );
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadManaSymbols() {
+      try {
+        const symbols = await fetchManaSymbols();
+
+        if (!cancelled) {
+          setManaSymbolsBySymbol(symbols);
+        }
+      } catch (error) {
+        console.error("Could not load mana symbols:", error);
+      }
+    }
+
+    loadManaSymbols();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <div className="page">
       <main className="main">
@@ -114,7 +140,7 @@ export default function ClassicPage() {
           </div>
         </div>
         <div>
-          <InfoGrid rows={infoGrid} />
+          <InfoGrid rows={infoGrid} manaSymbolsBySymbol={manaSymbolsBySymbol} />
 
           {showVictory && (
             <section className={styles.victorySection}>
