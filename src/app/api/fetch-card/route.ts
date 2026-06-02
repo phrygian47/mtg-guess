@@ -1,10 +1,5 @@
 import { sql } from "@/lib/db/db";
 import type { QuestionYN } from "@/lib/question/types";
-import type { Card } from "@/lib/scryfall/types";
-
-type QuestionRequest = QuestionYN & {
-  timezone?: string;
-};
 
 export async function GET(req: Request) {
   try {
@@ -20,7 +15,7 @@ export async function GET(req: Request) {
       limit 1
     `;
 
-    const card = rows[0] as Card | undefined;
+    const card = rows[0];
 
     if (!card) {
       return Response.json(
