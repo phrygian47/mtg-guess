@@ -11,7 +11,7 @@
     "import:tags": "tsx src/scripts/import-tags.ts",
     "import:sets": "tsx src/scripts/import-sets.ts",
     "import:card-pool": "tsx src/scripts/import-card-pool.ts",
-    "import:symbology": "tsx scripts/import-symbology.ts"
+    "import:symbology": "tsx src/scripts/import-symbology.ts"
   },
   "dependencies": {
     "@azure/msal-node": "^5.1.5",
