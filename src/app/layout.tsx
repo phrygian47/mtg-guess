@@ -29,6 +29,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <head>
+        <link
+          rel="preload"
+          as="image"
+          href="/card_back.webp"
+          type="image/webp"
+        />
+      </head>
       <body>
         {children}
         <Analytics />
