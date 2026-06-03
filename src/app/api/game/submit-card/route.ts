@@ -5,6 +5,8 @@ import type {
   InfoGridRow,
   SetInfo,
   ReleaseYearDirection,
+  SupplementalInfoBadge,
+  NumberDirection,
 } from "@/lib/game/types";
 
 type DailyCardSelectionRow = {
@@ -12,6 +14,9 @@ type DailyCardSelectionRow = {
   colors: string[] | null;
   cmc: number | null;
   type_line: string | null;
+  layout: string | null;
+  keywords: string[] | null;
+  produced_mana: string[] | null;
   set: SetInfo | null;
   rarity: string | null;
   tags: string[] | null;
@@ -38,6 +43,9 @@ export async function GET(req: Request) {
       , c.colors
       , c.cmc
       , c.type_line
+      , c.layout
+      , c.keywords
+      , c.produced_mana
       , case
           when c.set_code is null then null
           else jsonb_build_object(
@@ -72,6 +80,9 @@ export async function GET(req: Request) {
       , s.imageuri
       , c.released_at
       , c.rarity
+      , c.layout
+      , c.keywords
+      , c.produced_mana
     limit 1
   `,
 
@@ -81,6 +92,9 @@ export async function GET(req: Request) {
       , c.colors
       , c.cmc
       , c.type_line
+      , c.layout
+      , c.keywords
+      , c.produced_mana
       , case
           when c.set_code is null then null
           else jsonb_build_object(
@@ -141,12 +155,14 @@ function mapGuessToInfoGridRow(
     mana_value: {
       value: guess.cmc ?? "—",
       tone: compareManaValue(answer.cmc, guess.cmc),
+      direction: getNumberDirection(answer.cmc, guess.cmc),
     },
 
     type_line: {
       value: formatTypeLine(guess.type_line),
       tone: compareTypeLine(answer.type_line, guess.type_line),
     },
+
     set: {
       value: formatSetWithYear(guess.set, answer.release_year),
       tone: compareSetWithYear(answer.set, guess.set),
@@ -164,7 +180,151 @@ function mapGuessToInfoGridRow(
       value: formatTags(guess.tags),
       tone: compareOptionalArray(answer.tags, guess.tags),
     },
+
+    supplemental_info: {
+      value: formatSupplementalInfo(answer, guess),
+      tone: compareSupplementalInfo(answer, guess),
+    },
   };
+}
+
+function getNumberDirection(
+  answerValue: string | number | null,
+  guessValue: string | number | null,
+): ReleaseYearDirection {
+  if (answerValue == null || guessValue == null) {
+    return null;
+  }
+
+  const answerNumber = Number(answerValue);
+  const guessNumber = Number(guessValue);
+
+  if (Number.isNaN(answerNumber) || Number.isNaN(guessNumber)) {
+    return null;
+  }
+
+  if (answerNumber === guessNumber) {
+    return "same";
+  }
+
+  return answerNumber > guessNumber ? "higher" : "lower";
+}
+
+function formatSupplementalInfo(
+  answer: DailyCardSelectionRow,
+  guess: DailyCardSelectionRow,
+): SupplementalInfoBadge[] {
+  const badges: SupplementalInfoBadge[] = [
+    {
+      label: "Layout",
+      value: formatLayout(guess.layout),
+      kind: "text",
+      tone: compareValue(
+        normalizeNullable(answer.layout),
+        normalizeNullable(guess.layout),
+      ),
+    },
+    {
+      label: "Keywords",
+      value: formatList(guess.keywords),
+      kind: "text",
+      tone: compareOptionalArray(answer.keywords, guess.keywords),
+    },
+    {
+      label: "Produces",
+      value: formatProducedMana(guess.produced_mana),
+      kind: "mana",
+      tone: compareOptionalArray(answer.produced_mana, guess.produced_mana),
+    },
+  ];
+
+  return badges;
+}
+
+function compareSupplementalInfo(
+  answer: DailyCardSelectionRow,
+  guess: DailyCardSelectionRow,
+): CellTone {
+  const layoutTone = compareValue(
+    normalizeNullable(answer.layout),
+    normalizeNullable(guess.layout),
+  );
+
+  const keywordsTone = compareOptionalArray(answer.keywords, guess.keywords);
+
+  const producedManaTone = compareOptionalArray(
+    answer.produced_mana,
+    guess.produced_mana,
+  );
+
+  const tones = [layoutTone, keywordsTone, producedManaTone];
+
+  if (tones.every((tone) => tone === "correct")) {
+    return "correct";
+  }
+
+  if (tones.some((tone) => tone === "correct" || tone === "partial")) {
+    return "partial";
+  }
+
+  if (tones.every((tone) => tone === "neutral")) {
+    return "neutral";
+  }
+
+  return "wrong";
+}
+
+const LAYOUT_LABELS: Record<string, string> = {
+  normal: "Normal",
+  split: "Split",
+  flip: "Flip",
+  transform: "Transform",
+  modal_dfc: "Modal DFC",
+  meld: "Meld",
+  leveler: "Leveler",
+  class: "Class",
+  case: "Case",
+  saga: "Saga",
+  adventure: "Adventure",
+  prepare: "Prepare",
+  mutate: "Mutate",
+  battle: "Battle",
+  planar: "Planar",
+  scheme: "Scheme",
+  vanguard: "Vanguard",
+  reversible_card: "Reversible Card",
+};
+
+function formatLayout(layout: string | null): string {
+  if (!layout) {
+    return "—";
+  }
+
+  return LAYOUT_LABELS[layout] ?? layout.split("_").map(capitalize).join(" ");
+}
+
+function formatList(values: string[] | null): string {
+  const normalizedValues = normalizeArray(values);
+
+  if (normalizedValues.length === 0) {
+    return "—";
+  }
+
+  return normalizedValues
+    .map((value) => value.split(/[-_]/).map(capitalize).join(" "))
+    .join(", ");
+}
+
+function formatProducedMana(values: string[] | null): string {
+  if (!values || values.length === 0) {
+    return "—";
+  }
+
+  return values.join(", ");
+}
+
+function capitalize(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 function getReleaseYearDirection(
@@ -291,15 +451,18 @@ function compareManaValue(
     return "neutral";
   }
 
-  if (answer === guess) {
+  const answerNumber = Number(answer);
+  const guessNumber = Number(guess);
+
+  if (Number.isNaN(answerNumber) || Number.isNaN(guessNumber)) {
+    return answer === guess ? "correct" : "wrong";
+  }
+
+  if (answerNumber === guessNumber) {
     return "correct";
   }
 
-  if (
-    typeof answer === "number" &&
-    typeof guess === "number" &&
-    Math.abs(answer - guess) <= 1
-  ) {
+  if (Math.abs(answerNumber - guessNumber) <= 1) {
     return "partial";
   }
 

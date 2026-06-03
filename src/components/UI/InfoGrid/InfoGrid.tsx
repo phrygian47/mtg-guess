@@ -1,7 +1,12 @@
 "use client";
 
 import { type ReactNode, useEffect, useState } from "react";
-import { InfoGridRow, InfoCell, SetInfo } from "@/lib/game/types";
+import {
+  InfoGridRow,
+  InfoCell,
+  SetInfo,
+  SupplementalInfoBadge,
+} from "@/lib/game/types";
 import { ManaSymbolMap } from "@/lib/game/manaSymbols";
 import styles from "./InfoGrid.module.css";
 
@@ -15,7 +20,13 @@ type InfoGridProps = {
   manaSymbolsBySymbol: ManaSymbolMap;
 };
 
-type CellType = "card" | "set" | "colors" | "rarity";
+type CellType =
+  | "card"
+  | "set"
+  | "colors"
+  | "rarity"
+  | "supplemental"
+  | "mana_value";
 
 const CELL_ORDER: Array<{
   key: keyof InfoGridRow;
@@ -24,11 +35,12 @@ const CELL_ORDER: Array<{
 }> = [
   { key: "card", label: "Card", type: "card" },
   { key: "colors", label: "Colors", type: "colors" },
-  { key: "mana_value", label: "Mana Value" },
+  { key: "mana_value", label: "Mana Value", type: "mana_value" },
   { key: "type_line", label: "Type Line" },
   { key: "set", label: "Set", type: "set" },
   { key: "rarity", label: "Rarity", type: "rarity" },
   { key: "tags", label: "Tags" },
+  { key: "supplemental_info", label: "Other Info", type: "supplemental" },
 ];
 
 const CELL_SWEEP_STAGGER_MS = 50;
@@ -44,22 +56,6 @@ const formatTypeLine = (value: InfoCell["value"]): string => {
   }
 
   return value.replace(/\s+—\s+/g, " ");
-};
-
-const getSetDirectionClass = (value: string | SetInfo) => {
-  if (typeof value !== "object" || value === null) {
-    return "";
-  }
-
-  if (value.release_year_direction === "higher") {
-    return styles.yearHigher;
-  }
-
-  if (value.release_year_direction === "lower") {
-    return styles.yearLower;
-  }
-
-  return "";
 };
 
 const normalizeColorSymbols = (value: unknown): string[] => {
@@ -204,6 +200,119 @@ export default function InfoGrid({ rows, manaSymbolsBySymbol }: InfoGridProps) {
           <div className={`${styles.cellFace} ${styles.hintFace}`}>
             {content}
           </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderManaValueCell = (
+    cell: InfoGridRow["mana_value"],
+    revealIndex: number,
+    shouldAnimate: boolean,
+  ) => {
+    const getManaValueDirectionIcon = (
+      direction?: InfoGridRow["mana_value"]["direction"],
+    ) => {
+      if (direction === "higher") {
+        return {
+          src: "/icons/chevrons-up.svg",
+          alt: "Answer mana value is higher",
+        };
+      }
+
+      if (direction === "lower") {
+        return {
+          src: "/icons/chevrons-down.svg",
+          alt: "Answer mana value is lower",
+        };
+      }
+
+      return null;
+    };
+
+    const directionIcon = getManaValueDirectionIcon(cell.direction);
+
+    return (
+      <div
+        className={getRevealClass(shouldAnimate)}
+        style={getRevealStyle(revealIndex, shouldAnimate)}
+      >
+        <div
+          className={`${styles.infoCell} ${styles.manaValueCell} ${
+            styles[cell.tone ?? "neutral"]
+          }`}
+        >
+          {directionIcon && (
+            <img
+              src={directionIcon.src}
+              alt={directionIcon.alt}
+              title={directionIcon.alt}
+              className={styles.manaValueDirectionOverlay}
+            />
+          )}
+
+          <span className={styles.manaValueText}>{cell.value}</span>
+        </div>
+      </div>
+    );
+  };
+
+  const renderSupplementalInfoCell = (
+    cell: InfoCell<SupplementalInfoBadge[]>,
+    revealIndex: number,
+    shouldAnimate: boolean,
+  ) => {
+    return (
+      <div
+        className={getRevealClass(shouldAnimate)}
+        style={getRevealStyle(revealIndex, shouldAnimate)}
+      >
+        <div className={`${styles.infoCell} ${styles[cell.tone ?? "neutral"]}`}>
+          {cell.value.length > 0 ? (
+            <div className={styles.supplementalBadges}>
+              {cell.value.map((badge) => (
+                <div key={badge.label} className={styles.supplementalItem}>
+                  <span
+                    className={`${styles.supplementalBadgeLabel} ${
+                      styles[badge.tone ?? "neutral"]
+                    }`}
+                  >
+                    {badge.label}
+                  </span>
+
+                  <span className={styles.supplementalBadgeValue}>
+                    {badge.kind === "mana" ? (
+                      badge.value === "—" ? (
+                        "—"
+                      ) : (
+                        <div className={styles.manaSymbols}>
+                          {normalizeColorSymbols(badge.value).map((color) => {
+                            const symbol = manaSymbolsBySymbol[color];
+
+                            return symbol?.svg_uri ? (
+                              <img
+                                key={color}
+                                src={symbol.svg_uri}
+                                alt={symbol.english ?? `${color} mana`}
+                                title={symbol.english ?? color}
+                                className={styles.smallManaSymbol}
+                              />
+                            ) : (
+                              <span key={color}>{color}</span>
+                            );
+                          })}
+                        </div>
+                      )
+                    ) : (
+                      badge.value
+                    )}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            "—"
+          )}
         </div>
       </div>
     );
@@ -497,6 +606,44 @@ export default function InfoGrid({ rows, manaSymbolsBySymbol }: InfoGridProps) {
                 if (cell.type === "set") {
                   const content = renderSetCell(
                     row.set,
+                    revealIndex,
+                    shouldAnimate,
+                  );
+
+                  return (
+                    <div key={cell.key}>
+                      {renderAnimatedCell(
+                        content,
+                        cellIndex,
+                        shouldAnimate,
+                        canFlip,
+                      )}
+                    </div>
+                  );
+                }
+
+                if (cell.type === "supplemental") {
+                  const content = renderSupplementalInfoCell(
+                    row.supplemental_info,
+                    revealIndex,
+                    shouldAnimate,
+                  );
+
+                  return (
+                    <div key={cell.key}>
+                      {renderAnimatedCell(
+                        content,
+                        cellIndex,
+                        shouldAnimate,
+                        canFlip,
+                      )}
+                    </div>
+                  );
+                }
+
+                if (cell.type === "mana_value") {
+                  const content = renderManaValueCell(
+                    row.mana_value,
                     revealIndex,
                     shouldAnimate,
                   );

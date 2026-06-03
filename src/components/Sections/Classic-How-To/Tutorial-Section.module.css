@@ -108,6 +108,7 @@
   align-items: center;
   justify-content: center;
   min-width: 4.5rem;
+  max-width: fit-content;
   padding: 0.2rem 0.55rem;
   margin-right: 0.35rem;
   border-radius: 999px;
@@ -115,6 +116,7 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  text-wrap: wrap;
 }
 
 .mini_badge {

@@ -170,6 +170,36 @@ export default function TutorialSection() {
             Board Wipe, Triggered Ability, Tutor.
           </p>
         </li>
+        <li className={styles.propertyCard}>
+          <h3>Other Info</h3>
+          <h4>
+            Card Layout, Keywords, and other properties like produced mana for
+            mana dorks and lands.
+          </h4>
+          <p>
+            If this property is{" "}
+            <span className={`${styles.mini_badge} ${styles.mini_yellow}`}>
+              Yellow
+            </span>{" "}
+            then the card shares one property with the target.
+          </p>
+          <br />
+          <p>
+            <span className={styles.label}>Possible Values:</span>
+            <br />
+            Layout: Normal, Split, Flip, Transform, Modal, DFC, Meld, Leveler,
+            Class, Case, Saga, Adventure, Prepare, Mutate, Battle, Planar,
+            Scheme, Vanguard, Reversible Card
+            <br />
+            <br />
+            Keywords: Any keyword ability listed as an official Keyword by
+            Wizards of the Coast. A list of ALL keywords can be found on the{" "}
+            <a href="https://mtg.fandom.com/wiki/Keyword_ability">MTG Wiki</a>
+            <br />
+            <br />
+            Produced Mana: White, Blue, Black, Red, Green, or Colorless.
+          </p>
+        </li>
       </ul>
     </div>
   );

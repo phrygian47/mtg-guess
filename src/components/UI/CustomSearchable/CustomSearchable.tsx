@@ -58,50 +58,36 @@ function SearchableDropdownInner<T>(
 
   useEffect(() => {
     selectedDisplayValueRef.current = null;
+
+    /* eslint-disable react-hooks/set-state-in-effect */
     setQuery("");
     setOptions([]);
     setShowDropdown(false);
     setFocusedIndex(-1);
     setError(null);
     setLoading(false);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [clearSignal]);
 
   useEffect(() => {
     const trimmedQuery = debouncedQuery.trim();
 
     if (trimmedQuery.length < minQueryLength) {
-      setOptions([]);
-      setShowDropdown(false);
-      setFocusedIndex(-1);
-      setLoading(false);
-      return;
-    }
-
-    if (selectedDisplayValueRef.current === trimmedQuery) {
-      setShowDropdown(false);
-      setOptions([]);
-      setFocusedIndex(-1);
-      setLoading(false);
       return;
     }
 
     let isActive = true;
 
     const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      setOptions([]);
-      setShowDropdown(true);
-
       try {
         const results = await fetchOptions(trimmedQuery);
         if (!isActive) return;
 
         setOptions(results || []);
-      } catch (err: any) {
+      } catch {
         if (!isActive) return;
 
-        setError(err.message || "Failed to load options");
+        setError("Failed to load options");
         setOptions([]);
       } finally {
         if (isActive) {
@@ -232,32 +218,54 @@ function SearchableDropdownInner<T>(
   return (
     <div className={styles.searchable_dropdown} ref={dropdownRef}>
       <div className={styles.searchable_container}>
-        <input
-          ref={ref}
-          id={id}
-          name={name}
-          type="text"
-          placeholder={placeholder}
-          value={query}
-          autoComplete="off"
-          onChange={(e) => {
-            selectedDisplayValueRef.current = null;
-            setQuery(e.target.value);
-          }}
-          onFocus={() => {
-            if (
-              query.trim().length >= minQueryLength &&
-              (options.length > 0 || loading || error)
-            ) {
-              setShowDropdown(true);
-            }
-          }}
-          onKeyDown={handleKeyDown}
-          aria-autocomplete="list"
+        <div
+          role="combobox"
           aria-expanded={showDropdown}
+          aria-haspopup="listbox"
           aria-controls="dropdown-listbox"
-          className={styles.searchable_input}
-        />
+        >
+          <input
+            ref={ref}
+            id={id}
+            name={name}
+            type="text"
+            placeholder={placeholder}
+            value={query}
+            autoComplete="off"
+            onChange={(e) => {
+              const nextQuery = e.target.value;
+              const trimmedNextQuery = nextQuery.trim();
+
+              selectedDisplayValueRef.current = null;
+              setQuery(nextQuery);
+              setFocusedIndex(-1);
+              setError(null);
+
+              if (trimmedNextQuery.length < minQueryLength) {
+                setOptions([]);
+                setShowDropdown(false);
+                setLoading(false);
+                return;
+              }
+
+              setOptions([]);
+              setShowDropdown(true);
+              setLoading(true);
+            }}
+            onFocus={() => {
+              if (
+                query.trim().length >= minQueryLength &&
+                (options.length > 0 || loading || error)
+              ) {
+                setShowDropdown(true);
+              }
+            }}
+            onKeyDown={handleKeyDown}
+            aria-autocomplete="list"
+            aria-controls="dropdown-listbox"
+            className={styles.searchable_input}
+          />
+        </div>
 
         <button type="submit" className={styles.btn}></button>
       </div>
