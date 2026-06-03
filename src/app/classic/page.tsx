@@ -14,6 +14,7 @@ import {
   GuessStats,
   recordGameCompletion,
 } from "@/lib/game/stats";
+import Image from "next/image";
 
 type DisplayInfoGridRow = {
   id: string;
@@ -218,10 +219,12 @@ export default function ClassicPage() {
 
               <div className={styles.victoryContent}>
                 {winningCardImage && (
-                  <img
+                  <Image
                     src={winningCardImage}
                     alt={winningCardName ?? "Winning card"}
                     className={styles.victoryCard}
+                    width={488}
+                    height={680}
                   />
                 )}
 

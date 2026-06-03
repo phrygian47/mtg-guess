@@ -9,6 +9,7 @@ import {
 } from "@/lib/game/types";
 import { ManaSymbolMap } from "@/lib/game/manaSymbols";
 import styles from "./InfoGrid.module.css";
+import Image from "next/image";
 
 type DisplayInfoGridRow = {
   id: string;
@@ -101,7 +102,7 @@ const getRarityClass = (value: unknown) => {
 async function preloadImage(src: string | null) {
   if (!src) return;
 
-  const image = new Image();
+  const image = new window.Image();
   image.decoding = "async";
   image.src = src;
 
@@ -187,13 +188,15 @@ export default function InfoGrid({ rows, manaSymbolsBySymbol }: InfoGridProps) {
       >
         <div className={styles.cellFlipper}>
           <div className={`${styles.cellFace} ${styles.cardBackFace}`}>
-            <img
+            <Image
               src="/card_back.webp"
               alt=""
               aria-hidden="true"
               decoding="async"
               loading="eager"
               className={styles.cardBackImage}
+              width={146}
+              height={204}
             />
           </div>
 
@@ -243,11 +246,13 @@ export default function InfoGrid({ rows, manaSymbolsBySymbol }: InfoGridProps) {
           }`}
         >
           {directionIcon && (
-            <img
+            <Image
               src={directionIcon.src}
               alt={directionIcon.alt}
               title={directionIcon.alt}
               className={styles.manaValueDirectionOverlay}
+              width={146}
+              height={204}
             />
           )}
 
@@ -290,12 +295,14 @@ export default function InfoGrid({ rows, manaSymbolsBySymbol }: InfoGridProps) {
                             const symbol = manaSymbolsBySymbol[color];
 
                             return symbol?.svg_uri ? (
-                              <img
+                              <Image
                                 key={color}
                                 src={symbol.svg_uri}
                                 alt={symbol.english ?? `${color} mana`}
                                 title={symbol.english ?? color}
                                 className={styles.smallManaSymbol}
+                                width={146}
+                                height={204}
                               />
                             ) : (
                               <span key={color}>{color}</span>
@@ -364,12 +371,14 @@ export default function InfoGrid({ rows, manaSymbolsBySymbol }: InfoGridProps) {
                 const symbol = manaSymbolsBySymbol[color];
 
                 return symbol?.svg_uri ? (
-                  <img
+                  <Image
                     key={color}
                     src={symbol.svg_uri}
                     alt={symbol.english ?? `${color} mana`}
                     title={symbol.english ?? color}
                     className={styles.manaSymbol}
+                    width={146}
+                    height={204}
                   />
                 ) : (
                   <span key={color}>{color}</span>
@@ -443,11 +452,13 @@ export default function InfoGrid({ rows, manaSymbolsBySymbol }: InfoGridProps) {
           }`}
         >
           {directionIcon && (
-            <img
+            <Image
               src={directionIcon.src}
               alt={directionIcon.alt}
               title={directionIcon.alt}
               className={styles.setYearDirectionOverlay}
+              width={146}
+              height={204}
             />
           )}
 
@@ -525,13 +536,15 @@ export default function InfoGrid({ rows, manaSymbolsBySymbol }: InfoGridProps) {
           }`}
         >
           {imageUrl ? (
-            <img
+            <Image
               src={imageUrl}
               alt="Guessed card"
               decoding="async"
               fetchPriority="high"
               loading="eager"
               className={styles.cardImage}
+              width={146}
+              height={204}
             />
           ) : (
             cell.value

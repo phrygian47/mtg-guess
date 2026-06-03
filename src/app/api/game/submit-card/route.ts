@@ -6,7 +6,6 @@ import type {
   SetInfo,
   ReleaseYearDirection,
   SupplementalInfoBadge,
-  NumberDirection,
 } from "@/lib/game/types";
 
 type DailyCardSelectionRow = {

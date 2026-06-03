@@ -23,8 +23,8 @@ export default function ClassicInfo() {
         that this project is <em>entirely</em> community driven. As such there
         may be some information that is not accurate and some cards that are
         missing tags. We also do not use <em>every</em> tag that is tracked, if
-        you would like to see what tags we currently use, see the "How To"
-        section.
+        you would like to see what tags we currently use, see the &quot;How
+        To&quot; section.
       </p>
       <p>
         If you would like to participate in the Scryfall Tagger program, visit
