@@ -1,3 +1,6 @@
+"use client";
+
+import { type ReactNode, useEffect, useState } from "react";
 import { InfoGridRow, InfoCell, SetInfo } from "@/lib/game/types";
 import { ManaSymbolMap } from "@/lib/game/manaSymbols";
 import styles from "./InfoGrid.module.css";
@@ -27,6 +30,13 @@ const CELL_ORDER: Array<{
   { key: "rarity", label: "Rarity", type: "rarity" },
   { key: "tags", label: "Tags" },
 ];
+
+const CELL_SWEEP_STAGGER_MS = 50;
+const CELL_SWEEP_DURATION_MS = 350;
+const CELL_FLIP_STAGGER_MS = 100;
+const CARD_IMAGE_PRELOAD_TIMEOUT_MS = 2500;
+const SWEEP_TOTAL_MS =
+  (CELL_ORDER.length - 1) * CELL_SWEEP_STAGGER_MS + CELL_SWEEP_DURATION_MS;
 
 const formatTypeLine = (value: InfoCell["value"]): string => {
   if (typeof value !== "string") {
@@ -92,18 +102,112 @@ const getRarityClass = (value: unknown) => {
   }
 };
 
+async function preloadImage(src: string | null) {
+  if (!src) return;
+
+  const image = new Image();
+  image.decoding = "async";
+  image.src = src;
+
+  const imageReady = image.decode
+    ? image.decode().catch(() => undefined)
+    : new Promise<void>((resolve) => {
+        image.onload = () => resolve();
+        image.onerror = () => resolve();
+      });
+
+  const timeout = new Promise<void>((resolve) => {
+    window.setTimeout(resolve, CARD_IMAGE_PRELOAD_TIMEOUT_MS);
+  });
+
+  await Promise.race([imageReady, timeout]);
+}
+
 export default function InfoGrid({ rows, manaSymbolsBySymbol }: InfoGridProps) {
+  const [flipReadyRowIds, setFlipReadyRowIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    const newestRow = rows[0];
+
+    if (!newestRow || flipReadyRowIds.includes(newestRow.id)) {
+      return;
+    }
+
+    let cancelled = false;
+    const cardImageUrl =
+      typeof newestRow.row.card.value === "string"
+        ? newestRow.row.card.value
+        : null;
+    const sweepFinished = new Promise<void>((resolve) => {
+      window.setTimeout(resolve, SWEEP_TOTAL_MS);
+    });
+
+    async function waitForFlip() {
+      await Promise.all([sweepFinished, preloadImage(cardImageUrl)]);
+
+      if (!cancelled) {
+        setFlipReadyRowIds((prev) =>
+          prev.includes(newestRow.id) ? prev : [...prev, newestRow.id],
+        );
+      }
+    }
+
+    waitForFlip();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [flipReadyRowIds, rows]);
+
   if (rows.length === 0) return null;
 
-  const getRevealStyle = (revealIndex: number, shouldAnimate: boolean) =>
-    shouldAnimate
-      ? {
-          animationDelay: `${revealIndex * 120}ms`,
-        }
-      : undefined;
+  const getRevealStyle = (_revealIndex: number, _shouldAnimate: boolean) =>
+    undefined;
 
-  const getRevealClass = (shouldAnimate: boolean) =>
-    `${styles.revealWrapper} ${shouldAnimate ? styles.revealCell : ""}`;
+  const getRevealClass = (_shouldAnimate: boolean) => styles.revealWrapper;
+
+  const renderAnimatedCell = (
+    content: ReactNode,
+    cellIndex: number,
+    shouldAnimate: boolean,
+    canFlip: boolean,
+    isCard = false,
+  ) => {
+    if (!shouldAnimate) {
+      return content;
+    }
+
+    return (
+      <div
+        className={`${styles.cellStage} ${
+          canFlip ? styles.cellStageFlipReady : ""
+        } ${isCard ? styles.cardStage : ""}`}
+        style={
+          {
+            "--sweep-delay": `${cellIndex * CELL_SWEEP_STAGGER_MS}ms`,
+            "--flip-delay": `${cellIndex * CELL_FLIP_STAGGER_MS}ms`,
+          } as React.CSSProperties
+        }
+      >
+        <div className={styles.cellFlipper}>
+          <div className={`${styles.cellFace} ${styles.cardBackFace}`}>
+            <img
+              src="/card_back.webp"
+              alt=""
+              aria-hidden="true"
+              decoding="async"
+              loading="eager"
+              className={styles.cardBackImage}
+            />
+          </div>
+
+          <div className={`${styles.cellFace} ${styles.hintFace}`}>
+            {content}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const renderInfoCell = (
     cell: InfoCell,
@@ -303,7 +407,7 @@ export default function InfoGrid({ rows, manaSymbolsBySymbol }: InfoGridProps) {
 
     return (
       <div
-        className={getRevealClass(shouldAnimate)}
+        className={`${getRevealClass(shouldAnimate)} ${styles.cardRevealWrapper}`}
         style={getRevealStyle(revealIndex, shouldAnimate)}
       >
         <div
@@ -315,6 +419,9 @@ export default function InfoGrid({ rows, manaSymbolsBySymbol }: InfoGridProps) {
             <img
               src={imageUrl}
               alt="Guessed card"
+              decoding="async"
+              fetchPriority="high"
+              loading="eager"
               className={styles.cardImage}
             />
           ) : (
@@ -340,6 +447,7 @@ export default function InfoGrid({ rows, manaSymbolsBySymbol }: InfoGridProps) {
 
         {rows.map(({ id, row }, rowIndex) => {
           const isNewestRow = rowIndex === 0;
+          const canFlip = flipReadyRowIds.includes(id);
 
           return (
             <div className={styles.infoGridRow} key={id}>
@@ -348,48 +456,96 @@ export default function InfoGrid({ rows, manaSymbolsBySymbol }: InfoGridProps) {
                 const revealIndex = isNewestRow ? cellIndex : 0;
 
                 if (cell.type === "card") {
+                  const content = renderCardCell(
+                    row.card,
+                    revealIndex,
+                    shouldAnimate,
+                  );
+
                   return (
                     <div key={cell.key}>
-                      {renderCardCell(row.card, revealIndex, shouldAnimate)}
+                      {renderAnimatedCell(
+                        content,
+                        cellIndex,
+                        shouldAnimate,
+                        canFlip,
+                        true,
+                      )}
                     </div>
                   );
                 }
 
                 if (cell.type === "colors") {
+                  const content = renderColorsCell(
+                    row.colors as InfoCell,
+                    revealIndex,
+                    shouldAnimate,
+                  );
+
                   return (
                     <div key={cell.key}>
-                      {renderColorsCell(
-                        row.colors as InfoCell,
-                        revealIndex,
+                      {renderAnimatedCell(
+                        content,
+                        cellIndex,
                         shouldAnimate,
+                        canFlip,
                       )}
                     </div>
                   );
                 }
 
                 if (cell.type === "set") {
+                  const content = renderSetCell(
+                    row.set,
+                    revealIndex,
+                    shouldAnimate,
+                  );
+
                   return (
                     <div key={cell.key}>
-                      {renderSetCell(row.set, revealIndex, shouldAnimate)}
+                      {renderAnimatedCell(
+                        content,
+                        cellIndex,
+                        shouldAnimate,
+                        canFlip,
+                      )}
                     </div>
                   );
                 }
 
                 if (cell.type === "rarity") {
+                  const content = renderRarityCell(
+                    row.rarity,
+                    revealIndex,
+                    shouldAnimate,
+                  );
+
                   return (
                     <div key={cell.key}>
-                      {renderRarityCell(row.rarity, revealIndex, shouldAnimate)}
+                      {renderAnimatedCell(
+                        content,
+                        cellIndex,
+                        shouldAnimate,
+                        canFlip,
+                      )}
                     </div>
                   );
                 }
 
+                const content = renderInfoCell(
+                  row[cell.key] as InfoCell,
+                  revealIndex,
+                  shouldAnimate,
+                  cell.key,
+                );
+
                 return (
                   <div key={cell.key}>
-                    {renderInfoCell(
-                      row[cell.key] as InfoCell,
-                      revealIndex,
+                    {renderAnimatedCell(
+                      content,
+                      cellIndex,
                       shouldAnimate,
-                      cell.key,
+                      canFlip,
                     )}
                   </div>
                 );

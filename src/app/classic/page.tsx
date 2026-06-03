@@ -9,13 +9,22 @@ import { submitGuess } from "@/lib/game/submitGuess";
 import CustomSearchable from "@/components/UI/CustomSearchable/CustomSearchable";
 import { submitCard } from "@/lib/game/submitCard";
 import ClassicInfoBar from "@/components/Info/Classic-Info/Classic-Info";
+import {
+  fetchGameStats,
+  GuessStats,
+  recordGameCompletion,
+} from "@/lib/game/stats";
 
 type DisplayInfoGridRow = {
   id: string;
   row: InfoGridRow;
 };
 
-const REVEAL_TOTAL_MS = 1300;
+const REVEAL_TOTAL_MS = 3000;
+
+function formatGuessLabel(guesses: number) {
+  return guesses === 1 ? "1 guess" : `${guesses} guesses`;
+}
 
 export default function ClassicPage() {
   const [infoGrid, setInfoGrid] = useState<DisplayInfoGridRow[]>([]);
@@ -26,6 +35,10 @@ export default function ClassicPage() {
   const [showVictory, setShowVictory] = useState(false);
   const [winningCardName, setWinningCardName] = useState<string | null>(null);
   const [winningCardImage, setWinningCardImage] = useState<string | null>(null);
+  const [dailyStats, setDailyStats] = useState<GuessStats | null>(null);
+  const [victoryStats, setVictoryStats] = useState<GuessStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [statsError, setStatsError] = useState<string | null>(null);
   const [manaSymbolsBySymbol, setManaSymbolsBySymbol] = useState<ManaSymbolMap>(
     {},
   );
@@ -38,8 +51,10 @@ export default function ClassicPage() {
     if (!selectedGuessCard || gameWon) return;
 
     try {
-      const result = await submitGuess(timezone, selectedGuessCard);
-      const newInfoGridRow = await submitCard(timezone, selectedGuessCard);
+      const guessedCardId = selectedGuessCard;
+      const guessesUsed = infoGrid.length + 1;
+      const result = await submitGuess(timezone, guessedCardId);
+      const newInfoGridRow = await submitCard(timezone, guessedCardId);
 
       setInfoGrid((prev) => [
         {
@@ -56,10 +71,29 @@ export default function ClassicPage() {
         setGameWon(true);
         setWinningCardName(result.name);
         setWinningCardImage(result.image_normal);
+        setVictoryStats(null);
+        setStatsError(null);
+        setStatsLoading(true);
 
         window.setTimeout(() => {
           setShowVictory(true);
         }, REVEAL_TOTAL_MS);
+
+        try {
+          const stats = await recordGameCompletion(
+            timezone,
+            guessedCardId,
+            guessesUsed,
+          );
+
+          setVictoryStats(stats);
+          setDailyStats(stats);
+        } catch (error) {
+          console.error("Could not record game stats:", error);
+          setStatsError("Stats are unavailable right now.");
+        } finally {
+          setStatsLoading(false);
+        }
       }
     } catch (error) {
       console.error("Could not submit guess:", error);
@@ -80,6 +114,28 @@ export default function ClassicPage() {
     },
     [],
   );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadDailyStats() {
+      try {
+        const stats = await fetchGameStats(timezone);
+
+        if (!cancelled) {
+          setDailyStats(stats);
+        }
+      } catch (error) {
+        console.error("Could not load game stats:", error);
+      }
+    }
+
+    loadDailyStats();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [timezone]);
 
   useEffect(() => {
     let cancelled = false;
@@ -140,6 +196,14 @@ export default function ClassicPage() {
                 Submit
               </button> */}
             </form>
+
+            <p className={styles.solvedCount} aria-live="polite">
+              {dailyStats
+                ? `${dailyStats.solvedCount} ${
+                    dailyStats.solvedCount === 1 ? "player has" : "players have"
+                  } solved today`
+                : "Loading solve count..."}
+            </p>
           </div>
         </div>
         <div>
@@ -152,13 +216,90 @@ export default function ClassicPage() {
                 The card was <strong>{winningCardName}</strong>.
               </p>
 
-              {winningCardImage && (
-                <img
-                  src={winningCardImage}
-                  alt={winningCardName ?? "Winning card"}
-                  className={styles.victoryCard}
-                />
-              )}
+              <div className={styles.victoryContent}>
+                {winningCardImage && (
+                  <img
+                    src={winningCardImage}
+                    alt={winningCardName ?? "Winning card"}
+                    className={styles.victoryCard}
+                  />
+                )}
+
+                <section className={styles.statsPanel} aria-live="polite">
+                  <div className={styles.statsHeader}>
+                    <h3>Today&apos;s Results</h3>
+                    <span>{formatGuessLabel(infoGrid.length)}</span>
+                  </div>
+
+                  {statsLoading && (
+                    <p className={styles.statsMessage}>Loading results...</p>
+                  )}
+
+                  {statsError && (
+                    <p className={styles.statsMessage}>{statsError}</p>
+                  )}
+
+                  {victoryStats && (
+                    <>
+                      <div className={styles.statsSummary}>
+                        <div>
+                          <span className={styles.statValue}>
+                            {victoryStats.solvedCount}
+                          </span>
+                          <span className={styles.statLabel}>
+                            players solved
+                          </span>
+                        </div>
+                        <div>
+                          <span className={styles.statValue}>
+                            {victoryStats.averageGuesses?.toFixed(1) ?? "—"}
+                          </span>
+                          <span className={styles.statLabel}>avg guesses</span>
+                        </div>
+                      </div>
+
+                      <div className={styles.distribution}>
+                        {victoryStats.distribution.map((bucket) => (
+                          <div className={styles.statRow} key={bucket.guesses}>
+                            <span className={styles.guessCount}>
+                              {bucket.guesses}
+                            </span>
+                            <div
+                              className={styles.barTrack}
+                              role="meter"
+                              aria-label={`${bucket.players} players solved in ${formatGuessLabel(
+                                bucket.guesses,
+                              )}`}
+                              aria-valuemin={0}
+                              aria-valuemax={Math.max(
+                                victoryStats.solvedCount,
+                                1,
+                              )}
+                              aria-valuenow={bucket.players}
+                            >
+                              <span
+                                className={styles.barFill}
+                                style={
+                                  {
+                                    "--bar-width": `${Math.max(
+                                      bucket.barWidth,
+                                      4,
+                                    )}%`,
+                                  } as React.CSSProperties
+                                }
+                              />
+                            </div>
+                            <span className={styles.playerCount}>
+                              {bucket.players}
+                              <small>{bucket.share}%</small>
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </section>
+              </div>
             </section>
           )}
         </div>
