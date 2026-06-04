@@ -1,6 +1,6 @@
 "use client";
 import styles from "./page.module.css";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { fetchManaSymbols, ManaSymbolMap } from "@/lib/game/manaSymbols";
 import { CardGuess } from "@/lib/question/types";
 import { InfoGridRow } from "@/lib/game/types";
@@ -9,6 +9,7 @@ import { submitGuess } from "@/lib/game/submitGuess";
 import CustomSearchable from "@/components/UI/CustomSearchable/CustomSearchable";
 import { submitCard } from "@/lib/game/submitCard";
 import ClassicInfoBar from "@/components/Info/Classic-Info/Classic-Info";
+import Stats from "@/components/Sections/Stats/Stats";
 import {
   fetchGameStats,
   GuessStats,
@@ -22,15 +23,18 @@ type DisplayInfoGridRow = {
 };
 
 const REVEAL_TOTAL_MS = 3000;
+const VICTORY_SCROLL_OFFSET_PX = 32;
+const VICTORY_SCROLL_DURATION_MS = 700;
 
-function formatGuessLabel(guesses: number) {
-  return guesses === 1 ? "1 guess" : `${guesses} guesses`;
+function easeOutCubic(progress: number) {
+  return 1 - Math.pow(1 - progress, 3);
 }
 
 export default function ClassicPage() {
   const [infoGrid, setInfoGrid] = useState<DisplayInfoGridRow[]>([]);
   const [selectedGuessCard, setSelectedGuessCard] = useState<string>("");
   const [searchClearSignal, setSearchClearSignal] = useState(0);
+  const victoryRef = useRef<HTMLDivElement | null>(null);
 
   const [gameWon, setGameWon] = useState(false);
   const [showVictory, setShowVictory] = useState(false);
@@ -45,6 +49,47 @@ export default function ClassicPage() {
   );
 
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  useEffect(() => {
+    if (!showVictory) return;
+
+    let frameId: number | null = null;
+
+    const startScroll = () => {
+      const element = victoryRef.current;
+      if (!element) return;
+
+      const startY = window.scrollY;
+      const targetY = Math.max(
+        0,
+        startY + element.getBoundingClientRect().top - VICTORY_SCROLL_OFFSET_PX,
+      );
+      const distance = targetY - startY;
+      const startedAt = window.performance.now();
+
+      const step = (timestamp: number) => {
+        const elapsed = timestamp - startedAt;
+        const progress = Math.min(elapsed / VICTORY_SCROLL_DURATION_MS, 1);
+        const nextY = startY + distance * easeOutCubic(progress);
+
+        window.scrollTo(0, nextY);
+
+        if (progress < 1) {
+          frameId = window.requestAnimationFrame(step);
+        }
+      };
+
+      frameId = window.requestAnimationFrame(step);
+    };
+
+    frameId = window.requestAnimationFrame(startScroll);
+
+    return () => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+    };
+  }, [showVictory]);
 
   const handleSubmitGuess = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -211,7 +256,7 @@ export default function ClassicPage() {
           <InfoGrid rows={infoGrid} manaSymbolsBySymbol={manaSymbolsBySymbol} />
 
           {showVictory && (
-            <section className={styles.victorySection}>
+            <section ref={victoryRef} className={styles.victorySection}>
               <h2 className={styles.victoryTitle}>You got it!</h2>
               <p className={styles.victoryText}>
                 The card was <strong>{winningCardName}</strong>.
@@ -227,80 +272,13 @@ export default function ClassicPage() {
                     height={680}
                   />
                 )}
-
-                <section className={styles.statsPanel} aria-live="polite">
-                  <div className={styles.statsHeader}>
-                    <h3>Today&apos;s Results</h3>
-                    <span>{formatGuessLabel(infoGrid.length)}</span>
-                  </div>
-
-                  {statsLoading && (
-                    <p className={styles.statsMessage}>Loading results...</p>
-                  )}
-
-                  {statsError && (
-                    <p className={styles.statsMessage}>{statsError}</p>
-                  )}
-
-                  {victoryStats && (
-                    <>
-                      <div className={styles.statsSummary}>
-                        <div>
-                          <span className={styles.statValue}>
-                            {victoryStats.solvedCount}
-                          </span>
-                          <span className={styles.statLabel}>
-                            players solved
-                          </span>
-                        </div>
-                        <div>
-                          <span className={styles.statValue}>
-                            {victoryStats.averageGuesses?.toFixed(1) ?? "—"}
-                          </span>
-                          <span className={styles.statLabel}>avg guesses</span>
-                        </div>
-                      </div>
-
-                      <div className={styles.distribution}>
-                        {victoryStats.distribution.map((bucket) => (
-                          <div className={styles.statRow} key={bucket.guesses}>
-                            <span className={styles.guessCount}>
-                              {bucket.guesses}
-                            </span>
-                            <div
-                              className={styles.barTrack}
-                              role="meter"
-                              aria-label={`${bucket.players} players solved in ${formatGuessLabel(
-                                bucket.guesses,
-                              )}`}
-                              aria-valuemin={0}
-                              aria-valuemax={Math.max(
-                                victoryStats.solvedCount,
-                                1,
-                              )}
-                              aria-valuenow={bucket.players}
-                            >
-                              <span
-                                className={styles.barFill}
-                                style={
-                                  {
-                                    "--bar-width": `${Math.max(
-                                      bucket.barWidth,
-                                      4,
-                                    )}%`,
-                                  } as React.CSSProperties
-                                }
-                              />
-                            </div>
-                            <span className={styles.playerCount}>
-                              {bucket.players}
-                              <small>{bucket.share}%</small>
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  )}
+                <section className={styles.statsPanel}>
+                  <Stats
+                    guesses={infoGrid.length}
+                    victoryStats={victoryStats}
+                    statsLoading={statsLoading}
+                    statsError={statsError}
+                  />
                 </section>
               </div>
             </section>

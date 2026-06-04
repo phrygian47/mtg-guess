@@ -32,10 +32,16 @@ export async function POST(req: Request) {
 
     const answer = oracle_id === card.oracle_id;
 
+    if (answer) {
+      return Response.json({
+        answer,
+        name: card.name,
+        image_normal: card.image_normal,
+      });
+    }
+
     return Response.json({
       answer,
-      name: card.name,
-      image_normal: card.image_normal,
     });
   } catch (error) {
     console.error("POST /api/question failed:", error);

@@ -1,0 +1,182 @@
+.statsPanel {
+  width: 100%;
+}
+
+.statsHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.statsHeader h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+}
+
+.statsHeader span {
+  color: rgb(255 255 255 / 0.66);
+  font-size: 0.9rem;
+}
+
+.statsMessage {
+  margin: 12px 0 0;
+  color: rgb(255 255 255 / 0.72);
+}
+
+.statsSummary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.statsSummary > div {
+  padding: 14px;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.045);
+}
+
+.statValue {
+  display: block;
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.statLabel {
+  display: block;
+  margin-top: 6px;
+  color: rgb(255 255 255 / 0.62);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.distribution {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.statRow {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.guessCount {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 30px;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 0.1);
+  color: rgb(255 255 255 / 0.82);
+  font-size: 0.9rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.barTrack {
+  position: relative;
+  height: 30px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 0.07);
+}
+
+.barFill {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 42px;
+  width: var(--bar-width);
+  height: 100%;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: rgb(110 154 230);
+  font-variant-numeric: tabular-nums;
+}
+
+.barLabel {
+  color: white;
+  font-size: 0.82rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.currentGuess .guessCount {
+  background: rgb(84 214 160 / 0.22);
+  color: white;
+  outline: 1px solid rgb(84 214 160 / 0.5);
+}
+
+.currentGuess .barFill {
+  background: rgb(84 214 160);
+}
+
+.playerCount {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 6px;
+  color: rgb(255 255 255 / 0.9);
+  font-size: 0.92rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.playerCount small {
+  color: rgb(255 255 255 / 0.48);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.currentGuess .guessCount {
+  background: rgb(120 180 255 / 0.22);
+  color: white;
+  outline: 1px solid rgb(120 180 255 / 0.45);
+}
+
+.currentGuess .barFill {
+  background: linear-gradient(
+    90deg,
+    rgb(84 214 160 / 0.95),
+    rgb(92 184 255 / 0.95)
+  );
+  box-shadow: 0 0 22px rgb(84 214 160 / 0.25);
+}
+
+@media (max-width: 520px) {
+  .statsSummary {
+    grid-template-columns: 1fr;
+  }
+
+  .statRow {
+    grid-template-columns: 24px minmax(0, 1fr) 58px;
+    gap: 8px;
+  }
+
+  .guessCount,
+  .barTrack {
+    height: 24px;
+  }
+
+  .guessCount {
+    width: 24px;
+    font-size: 0.78rem;
+  }
+
+  .playerCount {
+    font-size: 0.82rem;
+  }
+
+  .playerCount small {
+    display: none;
+  }
+}

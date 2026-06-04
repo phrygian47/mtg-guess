@@ -28,6 +28,7 @@ body {
   max-width: 100svw;
   overflow-x: hidden;
   scrollbar-gutter: stable;
+  scroll-behavior: auto;
 }
 
 body {

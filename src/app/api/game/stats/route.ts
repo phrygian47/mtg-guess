@@ -222,9 +222,7 @@ async function getStatsForPuzzleDate(puzzleDate: string): Promise<GuessStats> {
     distribution: rawDistribution.map((bucket) => ({
       ...bucket,
       share:
-        solvedCount > 0
-          ? Math.round((bucket.players / solvedCount) * 100)
-          : 0,
+        solvedCount > 0 ? Math.round((bucket.players / solvedCount) * 100) : 0,
       barWidth:
         maxPlayers > 0 ? Math.round((bucket.players / maxPlayers) * 100) : 0,
     })),
