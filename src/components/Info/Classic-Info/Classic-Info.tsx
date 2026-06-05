@@ -47,7 +47,12 @@ export default function ClassicInfoBar() {
     let cancelled = false;
 
     async function loadStats() {
-      setStatsLoading(true);
+      const hasCachedStats = stats !== null;
+
+      if (!hasCachedStats) {
+        setStatsLoading(true);
+      }
+
       setStatsError(null);
 
       try {
@@ -60,11 +65,14 @@ export default function ClassicInfoBar() {
         console.error("Could not load game stats:", error);
 
         if (!cancelled) {
-          setStats(null);
+          if (!hasCachedStats) {
+            setStats(null);
+          }
+
           setStatsError("Stats are unavailable right now.");
         }
       } finally {
-        if (!cancelled) {
+        if (!cancelled && !hasCachedStats) {
           setStatsLoading(false);
         }
       }
@@ -75,7 +83,7 @@ export default function ClassicInfoBar() {
     return () => {
       cancelled = true;
     };
-  }, [openWindow, timezone]);
+  }, [openWindow, timezone, stats]);
 
   return (
     <div className={styles.container} ref={containerRef}>
