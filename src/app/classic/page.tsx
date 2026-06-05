@@ -26,6 +26,7 @@ import {
 const REVEAL_TOTAL_MS = 2000;
 const VICTORY_SCROLL_OFFSET_PX = 32;
 const VICTORY_SCROLL_DURATION_MS = 700;
+const RESTORED_VICTORY_DELAY_MS = 1800;
 
 function easeOutCubic(progress: number) {
   return 1 - Math.pow(1 - progress, 3);
@@ -102,6 +103,8 @@ export default function ClassicPage() {
   }, [showVictory]);
 
   useEffect(() => {
+    let victoryTimer: number | null = null;
+
     const restoreTimer = window.setTimeout(() => {
       const savedProgress = loadClassicProgress(timezone);
 
@@ -113,16 +116,23 @@ export default function ClassicPage() {
 
       if (savedProgress.completed) {
         setGameWon(true);
-        setShowVictory(true);
         setWinningCardName(savedProgress.winningCardName);
         setWinningCardImage(savedProgress.winningCardImage);
         setWinningOracleId(savedProgress.winningOracleId);
         setShouldRetryCompletionRecord(!savedProgress.completionRecorded);
+
+        victoryTimer = window.setTimeout(() => {
+          setShowVictory(true);
+        }, RESTORED_VICTORY_DELAY_MS);
       }
     }, 0);
 
     return () => {
       window.clearTimeout(restoreTimer);
+
+      if (victoryTimer !== null) {
+        window.clearTimeout(victoryTimer);
+      }
     };
   }, [timezone]);
 
@@ -360,31 +370,33 @@ export default function ClassicPage() {
             </div>
           )}
           <div>
-            <form
-              id="guess-form"
-              className={styles.search_menu}
-              onSubmit={handleSubmitGuess}
-              autoComplete="off"
-            >
-              <CustomSearchable
-                id="guess-search"
-                fetchOptions={fetchCardOptions}
-                displayValue={(card) => card.name}
-                renderOption={(card) => <div>{card.name}</div>}
-                placeholder="Search for a card..."
-                minQueryLength={2}
-                onSelect={(card) => setSelectedGuessCard(card.oracle_id)}
-                clearSignal={searchClearSignal}
-              />
+            {!showVictory && (
+              <form
+                id="guess-form"
+                className={styles.search_menu}
+                onSubmit={handleSubmitGuess}
+                autoComplete="off"
+              >
+                <CustomSearchable
+                  id="guess-search"
+                  fetchOptions={fetchCardOptions}
+                  displayValue={(card) => card.name}
+                  renderOption={(card) => <div>{card.name}</div>}
+                  placeholder="Search for a card..."
+                  minQueryLength={2}
+                  onSelect={(card) => setSelectedGuessCard(card.oracle_id)}
+                  clearSignal={searchClearSignal}
+                />
 
-              {/* <button
+                {/* <button
                 type="submit"
                 className={styles.button}
                 disabled={gameWon}
               >
                 Submit
               </button> */}
-            </form>
+              </form>
+            )}
 
             <p className={styles.solvedCount} aria-live="polite">
               {dailyStats

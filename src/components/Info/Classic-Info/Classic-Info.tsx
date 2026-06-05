@@ -19,6 +19,7 @@ export default function ClassicInfoBar() {
   const [openWindow, setOpenWindow] = useState<InfoWindow>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [stats, setStats] = useState<GuessStats | null>(null);
+  const statsRef = useRef<GuessStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
   const [statsError, setStatsError] = useState<string | null>(null);
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -47,7 +48,7 @@ export default function ClassicInfoBar() {
     let cancelled = false;
 
     async function loadStats() {
-      const hasCachedStats = stats !== null;
+      const hasCachedStats = statsRef.current !== null;
 
       if (!hasCachedStats) {
         setStatsLoading(true);
@@ -59,6 +60,7 @@ export default function ClassicInfoBar() {
         const latestStats = await fetchGameStats(timezone);
 
         if (!cancelled) {
+          statsRef.current = latestStats;
           setStats(latestStats);
         }
       } catch (error) {
@@ -66,6 +68,7 @@ export default function ClassicInfoBar() {
 
         if (!cancelled) {
           if (!hasCachedStats) {
+            statsRef.current = null;
             setStats(null);
           }
 
@@ -83,7 +86,7 @@ export default function ClassicInfoBar() {
     return () => {
       cancelled = true;
     };
-  }, [openWindow, timezone, stats]);
+  }, [openWindow, timezone]);
 
   return (
     <div className={styles.container} ref={containerRef}>
@@ -92,8 +95,9 @@ export default function ClassicInfoBar() {
           <button
             type="button"
             aria-label="Stats"
+            data-tooltip="Stats"
             onClick={() => toggleWindow("stats")}
-            className={styles.iconButton}
+            className={`${styles.iconButton} ${styles.tooltipButton}`}
           >
             <ChartColumnDecreasing />
           </button>
@@ -102,9 +106,10 @@ export default function ClassicInfoBar() {
         <li>
           <button
             type="button"
-            aria-label="How To Play"
+            aria-label="How To"
+            data-tooltip="How To"
             onClick={() => toggleWindow("how-to-play")}
-            className={styles.iconButton}
+            className={`${styles.iconButton} ${styles.tooltipButton}`}
           >
             <CircleQuestionMark />
           </button>
@@ -113,9 +118,10 @@ export default function ClassicInfoBar() {
         <li>
           <button
             type="button"
-            aria-label="Disclaimers"
+            aria-label="Other Info"
+            data-tooltip="Other Info"
             onClick={() => toggleWindow("disclaimers")}
-            className={styles.iconButton}
+            className={`${styles.iconButton} ${styles.tooltipButton}`}
           >
             <Info />
           </button>
