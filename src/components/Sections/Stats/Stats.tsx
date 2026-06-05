@@ -1,17 +1,16 @@
-import { useState, useEffect } from "react";
 import styles from "./Stats.module.css";
-import { GuessStats } from "@/lib/game/stats";
+import type { GuessStats } from "@/lib/game/stats";
 
 type StatsProps = {
-  guesses: number;
-  victoryStats: GuessStats | null;
+  guesses?: number;
+  stats: GuessStats | null;
   statsLoading: boolean;
   statsError: string | null;
 };
 
 export default function Stats({
   guesses,
-  victoryStats,
+  stats,
   statsLoading,
   statsError,
 }: StatsProps) {
@@ -23,7 +22,7 @@ export default function Stats({
     <section className={styles.statsPanel} aria-live="polite">
       <div className={styles.statsHeader}>
         <h3>Today&apos;s Results</h3>
-        <span>{formatGuessLabel(guesses)}</span>
+        {guesses !== undefined && <span>{formatGuessLabel(guesses)}</span>}
       </div>
 
       {statsLoading && (
@@ -32,28 +31,30 @@ export default function Stats({
 
       {statsError && <p className={styles.statsMessage}>{statsError}</p>}
 
-      {victoryStats && (
+      {stats && (
         <>
           <div className={styles.statsSummary}>
             <div>
               <span className={styles.statValue}>
-                {victoryStats.solvedCount}
+                {stats.solvedCount}
               </span>
               <span className={styles.statLabel}>players solved</span>
             </div>
             <div>
               <span className={styles.statValue}>
-                {victoryStats.averageGuesses?.toFixed(1) ?? "—"}
+                {stats.averageGuesses?.toFixed(1) ?? "—"}
               </span>
               <span className={styles.statLabel}>avg guesses</span>
             </div>
           </div>
 
           <div className={styles.distribution}>
-            {victoryStats.distribution.map((bucket) => (
+            {stats.distribution.map((bucket) => (
               <div
                 className={`${styles.statRow} ${
-                  bucket.guesses === guesses ? styles.currentGuess : ""
+                  guesses !== undefined && bucket.guesses === guesses
+                    ? styles.currentGuess
+                    : ""
                 }`}
                 key={bucket.guesses}
               >
@@ -66,7 +67,7 @@ export default function Stats({
                     bucket.guesses,
                   )}`}
                   aria-valuemin={0}
-                  aria-valuemax={Math.max(victoryStats.solvedCount, 1)}
+                  aria-valuemax={Math.max(stats.solvedCount, 1)}
                   aria-valuenow={bucket.players}
                 >
                   <span

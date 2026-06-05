@@ -12,17 +12,18 @@ import ClassicInfoBar from "@/components/Info/Classic-Info/Classic-Info";
 import Stats from "@/components/Sections/Stats/Stats";
 import {
   fetchGameStats,
-  GuessStats,
+  type GuessStats,
   recordGameCompletion,
 } from "@/lib/game/stats";
 import Image from "next/image";
+import { formatCountdown, useNextPuzzleCountdown } from "@/lib/game/countdown";
 
 type DisplayInfoGridRow = {
   id: string;
   row: InfoGridRow;
 };
 
-const REVEAL_TOTAL_MS = 3000;
+const REVEAL_TOTAL_MS = 2000;
 const VICTORY_SCROLL_OFFSET_PX = 32;
 const VICTORY_SCROLL_DURATION_MS = 700;
 
@@ -47,7 +48,7 @@ export default function ClassicPage() {
   const [manaSymbolsBySymbol, setManaSymbolsBySymbol] = useState<ManaSymbolMap>(
     {},
   );
-
+  const countdown = useNextPuzzleCountdown();
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   useEffect(() => {
@@ -275,11 +276,20 @@ export default function ClassicPage() {
                 <section className={styles.statsPanel}>
                   <Stats
                     guesses={infoGrid.length}
-                    victoryStats={victoryStats}
+                    stats={victoryStats}
                     statsLoading={statsLoading}
                     statsError={statsError}
                   />
                 </section>
+                <div className={styles.timer}>
+                  <span className={styles.timer_text}>Next card in: </span>
+                  <span className={styles.timer_clock}>
+                    {formatCountdown(countdown)}
+                  </span>
+                  <span>
+                    <em>New card every local midnight</em>
+                  </span>
+                </div>
               </div>
             </section>
           )}

@@ -10,12 +10,18 @@ import {
 } from "lucide-react";
 import TutorialSection from "@/components/Sections/Classic-How-To/Tutorial-Section";
 import ClassicInfo from "@/components/Sections/Classic-Info/ClassicInfo";
+import Stats from "@/components/Sections/Stats/Stats";
+import { fetchGameStats, type GuessStats } from "@/lib/game/stats";
 
 type InfoWindow = "stats" | "how-to-play" | "disclaimers" | null;
 
 export default function ClassicInfoBar() {
   const [openWindow, setOpenWindow] = useState<InfoWindow>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [stats, setStats] = useState<GuessStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [statsError, setStatsError] = useState<string | null>(null);
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const toggleWindow = (windowName: InfoWindow) => {
     setOpenWindow((prev) => (prev === windowName ? null : windowName));
@@ -34,6 +40,42 @@ export default function ClassicInfoBar() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (openWindow !== "stats") return;
+
+    let cancelled = false;
+
+    async function loadStats() {
+      setStatsLoading(true);
+      setStatsError(null);
+
+      try {
+        const latestStats = await fetchGameStats(timezone);
+
+        if (!cancelled) {
+          setStats(latestStats);
+        }
+      } catch (error) {
+        console.error("Could not load game stats:", error);
+
+        if (!cancelled) {
+          setStats(null);
+          setStatsError("Stats are unavailable right now.");
+        }
+      } finally {
+        if (!cancelled) {
+          setStatsLoading(false);
+        }
+      }
+    }
+
+    loadStats();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [openWindow, timezone]);
 
   return (
     <div className={styles.container} ref={containerRef}>
@@ -85,7 +127,15 @@ export default function ClassicInfoBar() {
                 <X size={16} />
               </button>
             </div>
-            {openWindow === "stats" && <p>Put stats content here.</p>}
+            {openWindow === "stats" && (
+              <div>
+                <Stats
+                  stats={stats}
+                  statsLoading={statsLoading}
+                  statsError={statsError}
+                />
+              </div>
+            )}
 
             {openWindow === "how-to-play" && <TutorialSection />}
 
