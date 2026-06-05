@@ -3,7 +3,6 @@ import styles from "./page.module.css";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { fetchManaSymbols, ManaSymbolMap } from "@/lib/game/manaSymbols";
 import { CardGuess } from "@/lib/question/types";
-import { InfoGridRow } from "@/lib/game/types";
 import InfoGrid from "@/components/UI/InfoGrid/InfoGrid";
 import { submitGuess } from "@/lib/game/submitGuess";
 import CustomSearchable from "@/components/UI/CustomSearchable/CustomSearchable";
@@ -17,11 +16,12 @@ import {
 } from "@/lib/game/stats";
 import Image from "next/image";
 import { formatCountdown, useNextPuzzleCountdown } from "@/lib/game/countdown";
-
-type DisplayInfoGridRow = {
-  id: string;
-  row: InfoGridRow;
-};
+import {
+  loadClassicProgress,
+  saveClassicProgress,
+  type ClassicDisplayInfoGridRow,
+  type ClassicProgressInput,
+} from "@/lib/game/classicProgress";
 
 const REVEAL_TOTAL_MS = 2000;
 const VICTORY_SCROLL_OFFSET_PX = 32;
@@ -32,7 +32,7 @@ function easeOutCubic(progress: number) {
 }
 
 export default function ClassicPage() {
-  const [infoGrid, setInfoGrid] = useState<DisplayInfoGridRow[]>([]);
+  const [infoGrid, setInfoGrid] = useState<ClassicDisplayInfoGridRow[]>([]);
   const [selectedGuessCard, setSelectedGuessCard] = useState<string>("");
   const [searchClearSignal, setSearchClearSignal] = useState(0);
   const victoryRef = useRef<HTMLDivElement | null>(null);
@@ -41,6 +41,10 @@ export default function ClassicPage() {
   const [showVictory, setShowVictory] = useState(false);
   const [winningCardName, setWinningCardName] = useState<string | null>(null);
   const [winningCardImage, setWinningCardImage] = useState<string | null>(null);
+  const [winningOracleId, setWinningOracleId] = useState<string | null>(null);
+  const [completionRecorded, setCompletionRecorded] = useState(false);
+  const [shouldRetryCompletionRecord, setShouldRetryCompletionRecord] =
+    useState(false);
   const [dailyStats, setDailyStats] = useState<GuessStats | null>(null);
   const [victoryStats, setVictoryStats] = useState<GuessStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
@@ -50,6 +54,11 @@ export default function ClassicPage() {
   );
   const countdown = useNextPuzzleCountdown();
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  const persistProgress = useCallback(
+    (progress: ClassicProgressInput) => saveClassicProgress(timezone, progress),
+    [timezone],
+  );
 
   useEffect(() => {
     if (!showVictory) return;
@@ -92,6 +101,101 @@ export default function ClassicPage() {
     };
   }, [showVictory]);
 
+  useEffect(() => {
+    const restoreTimer = window.setTimeout(() => {
+      const savedProgress = loadClassicProgress(timezone);
+
+      if (!savedProgress) return;
+
+      setInfoGrid(savedProgress.rows);
+      setVictoryStats(savedProgress.stats);
+      setCompletionRecorded(savedProgress.completionRecorded);
+
+      if (savedProgress.completed) {
+        setGameWon(true);
+        setShowVictory(true);
+        setWinningCardName(savedProgress.winningCardName);
+        setWinningCardImage(savedProgress.winningCardImage);
+        setWinningOracleId(savedProgress.winningOracleId);
+        setShouldRetryCompletionRecord(!savedProgress.completionRecorded);
+      }
+    }, 0);
+
+    return () => {
+      window.clearTimeout(restoreTimer);
+    };
+  }, [timezone]);
+
+  useEffect(() => {
+    if (
+      !shouldRetryCompletionRecord ||
+      !gameWon ||
+      completionRecorded ||
+      !winningOracleId ||
+      infoGrid.length === 0
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+    const recordingOracleId = winningOracleId;
+
+    async function retryCompletionRecord() {
+      setStatsLoading(true);
+      setStatsError(null);
+
+      try {
+        const stats = await recordGameCompletion(
+          timezone,
+          recordingOracleId,
+          infoGrid.length,
+        );
+
+        if (cancelled) return;
+
+        setCompletionRecorded(true);
+        setVictoryStats(stats);
+        setDailyStats(stats);
+        persistProgress({
+          rows: infoGrid,
+          completed: true,
+          winningCardName,
+          winningCardImage,
+          winningOracleId: recordingOracleId,
+          completionRecorded: true,
+          stats,
+        });
+      } catch (error) {
+        console.error("Could not record restored game stats:", error);
+
+        if (!cancelled) {
+          setStatsError("Stats are unavailable right now.");
+        }
+      } finally {
+        if (!cancelled) {
+          setStatsLoading(false);
+          setShouldRetryCompletionRecord(false);
+        }
+      }
+    }
+
+    retryCompletionRecord();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    completionRecorded,
+    gameWon,
+    infoGrid,
+    persistProgress,
+    shouldRetryCompletionRecord,
+    timezone,
+    winningCardImage,
+    winningCardName,
+    winningOracleId,
+  ]);
+
   const handleSubmitGuess = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -102,45 +206,79 @@ export default function ClassicPage() {
       const guessesUsed = infoGrid.length + 1;
       const result = await submitGuess(timezone, guessedCardId);
       const newInfoGridRow = await submitCard(timezone, guessedCardId);
-
-      setInfoGrid((prev) => [
+      const nextInfoGrid = [
         {
           id: crypto.randomUUID(),
           row: newInfoGridRow,
         },
-        ...prev,
-      ]);
+        ...infoGrid,
+      ];
 
+      setInfoGrid(nextInfoGrid);
       setSelectedGuessCard("");
       setSearchClearSignal((value) => value + 1);
 
-      if (result.answer) {
-        setGameWon(true);
-        setWinningCardName(result.name);
-        setWinningCardImage(result.image_normal);
-        setVictoryStats(null);
-        setStatsError(null);
-        setStatsLoading(true);
+      if (!result.answer) {
+        persistProgress({
+          rows: nextInfoGrid,
+          completed: false,
+          winningCardName: null,
+          winningCardImage: null,
+          winningOracleId: null,
+          completionRecorded: false,
+          stats: null,
+        });
 
-        window.setTimeout(() => {
-          setShowVictory(true);
-        }, REVEAL_TOTAL_MS);
+        return;
+      }
 
-        try {
-          const stats = await recordGameCompletion(
-            timezone,
-            guessedCardId,
-            guessesUsed,
-          );
+      setGameWon(true);
+      setWinningCardName(result.name);
+      setWinningCardImage(result.image_normal);
+      setWinningOracleId(guessedCardId);
+      setCompletionRecorded(false);
+      setShouldRetryCompletionRecord(false);
+      setVictoryStats(null);
+      setStatsError(null);
+      setStatsLoading(true);
+      persistProgress({
+        rows: nextInfoGrid,
+        completed: true,
+        winningCardName: result.name,
+        winningCardImage: result.image_normal,
+        winningOracleId: guessedCardId,
+        completionRecorded: false,
+        stats: null,
+      });
 
-          setVictoryStats(stats);
-          setDailyStats(stats);
-        } catch (error) {
-          console.error("Could not record game stats:", error);
-          setStatsError("Stats are unavailable right now.");
-        } finally {
-          setStatsLoading(false);
-        }
+      window.setTimeout(() => {
+        setShowVictory(true);
+      }, REVEAL_TOTAL_MS);
+
+      try {
+        const stats = await recordGameCompletion(
+          timezone,
+          guessedCardId,
+          guessesUsed,
+        );
+
+        setCompletionRecorded(true);
+        setVictoryStats(stats);
+        setDailyStats(stats);
+        persistProgress({
+          rows: nextInfoGrid,
+          completed: true,
+          winningCardName: result.name,
+          winningCardImage: result.image_normal,
+          winningOracleId: guessedCardId,
+          completionRecorded: true,
+          stats,
+        });
+      } catch (error) {
+        console.error("Could not record game stats:", error);
+        setStatsError("Stats are unavailable right now.");
+      } finally {
+        setStatsLoading(false);
       }
     } catch (error) {
       console.error("Could not submit guess:", error);
@@ -171,6 +309,10 @@ export default function ClassicPage() {
 
         if (!cancelled) {
           setDailyStats(stats);
+
+          if (gameWon) {
+            setVictoryStats(stats);
+          }
         }
       } catch (error) {
         console.error("Could not load game stats:", error);
@@ -182,7 +324,7 @@ export default function ClassicPage() {
     return () => {
       cancelled = true;
     };
-  }, [timezone]);
+  }, [gameWon, timezone]);
 
   useEffect(() => {
     let cancelled = false;
