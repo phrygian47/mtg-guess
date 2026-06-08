@@ -1,0 +1,131 @@
+.container {
+  position: relative;
+  max-width: 200px;
+  width: 100%;
+  border: 1px solid var(--gold);
+  border-radius: 1rem;
+  background-color: var(--brown);
+  margin: 1rem;
+}
+
+.info {
+  display: flex;
+  list-style: none;
+  padding: 1rem;
+  margin: 0;
+  justify-content: space-around;
+  width: 100%;
+}
+
+.iconButton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  cursor: pointer;
+  padding: 0.35rem;
+  border-radius: 999px;
+}
+
+.tooltipButton::after {
+  position: absolute;
+  content: attr(data-tooltip);
+  visibility: hidden;
+  opacity: 0;
+
+  bottom: calc(100% + 0.5rem);
+  left: 50%;
+  transform: translateX(-50%);
+
+  background: var(--gold);
+  color: var(--text);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.35rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  pointer-events: none;
+  letter-spacing: 0.5px;
+  transition: opacity 100ms ease;
+}
+
+.tooltipButton::before {
+  position: absolute;
+  content: "";
+  visibility: hidden;
+  opacity: 0;
+
+  bottom: calc(100% + 0.15rem);
+  left: 50%;
+  transform: translateX(-50%);
+
+  border-left: 0.35rem solid transparent;
+  border-right: 0.35rem solid transparent;
+  border-top: 0.35rem solid var(--gold);
+
+  pointer-events: none;
+  transition: opacity 100ms ease;
+}
+
+.tooltipButton:hover::after,
+.tooltipButton:hover::before,
+.tooltipButton:focus-visible::after,
+.tooltipButton:focus-visible::before {
+  visibility: visible;
+  opacity: 1;
+}
+
+.iconButton:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.window {
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(560px, 92vw);
+  border: 1px solid var(--gold);
+  border-radius: 1rem;
+  background:
+    radial-gradient(circle at top, rgba(212, 175, 55, 0.12), transparent 38%),
+    var(--brown);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  z-index: 50;
+  overflow: hidden;
+}
+
+.exit_btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.windowTitle {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  color: var(--foreground);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 999px;
+}
+
+.closeButton:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.windowBody {
+  padding: 1rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}

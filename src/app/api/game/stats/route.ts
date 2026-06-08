@@ -8,6 +8,7 @@ type CompletionBody = {
   oracleId?: unknown;
   playerId?: unknown;
   guessesUsed?: unknown;
+  mode?: unknown;
 };
 
 type PuzzleDateRow = {
@@ -23,8 +24,8 @@ type DistributionRow = {
   players: number | string;
 };
 
-const MODE = "classic";
 const MAX_GUESSES_TO_TRACK = 100;
+const GAME_MODES = new Set(["classic", "art"]);
 
 let ensureStatsTablePromise: Promise<void> | null = null;
 
@@ -61,9 +62,10 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const timezone = normalizeTimezone(searchParams.get("timezone"));
+    const mode = normalizeMode(searchParams.get("mode"));
     const puzzleDate = await getCurrentPuzzleDate(timezone);
 
-    return Response.json(await getStatsForPuzzleDate(puzzleDate));
+    return Response.json(await getStatsForPuzzleDate(puzzleDate, mode));
   } catch (error) {
     console.error("GET /api/game/stats crashed:", error);
     return Response.json({ error: "Internal server error" }, { status: 500 });
@@ -77,6 +79,7 @@ export async function POST(req: Request) {
     const oracleId = normalizeString(body.oracleId);
     const playerId = normalizeString(body.playerId);
     const guessesUsed = normalizeGuessesUsed(body.guessesUsed);
+    const mode = normalizeMode(body.mode);
 
     if (!oracleId) {
       return Response.json({ error: "Missing oracleId." }, { status: 400 });
@@ -98,10 +101,12 @@ export async function POST(req: Request) {
     const puzzleDate = await getCurrentPuzzleDate(timezone);
     const answerRows = (await sql`
       select oracle_id
-      from card_history
-      where puzzle_date = ${puzzleDate}::date
+      from daily_puzzles
+      where mode = ${mode}
+        and puzzle_date = ${puzzleDate}::date
       limit 1
     `) as AnswerRow[];
+
     const answer = answerRows[0];
 
     if (!answer) {
@@ -127,7 +132,7 @@ export async function POST(req: Request) {
         guesses_used
       )
       values (
-        ${MODE},
+        ${mode},
         ${puzzleDate}::date,
         ${timezone},
         ${hashPlayerId(playerId)},
@@ -136,7 +141,7 @@ export async function POST(req: Request) {
       on conflict (mode, puzzle_date, player_key) do nothing
     `;
 
-    return Response.json(await getStatsForPuzzleDate(puzzleDate));
+    return Response.json(await getStatsForPuzzleDate(puzzleDate, mode));
   } catch (error) {
     console.error("POST /api/game/stats crashed:", error);
     return Response.json({ error: "Internal server error" }, { status: 500 });
@@ -149,6 +154,14 @@ function normalizeTimezone(value: unknown): string {
   }
 
   return value.trim() || "UTC";
+}
+
+function normalizeMode(value: unknown): "classic" | "art" {
+  if (typeof value !== "string" || !GAME_MODES.has(value)) {
+    return "classic";
+  }
+
+  return value as "classic" | "art";
 }
 
 function normalizeString(value: unknown): string {
@@ -185,13 +198,16 @@ async function getCurrentPuzzleDate(timezone: string): Promise<string> {
   return rows[0]?.puzzle_date;
 }
 
-async function getStatsForPuzzleDate(puzzleDate: string): Promise<GuessStats> {
+async function getStatsForPuzzleDate(
+  puzzleDate: string,
+  mode: "classic" | "art",
+): Promise<GuessStats> {
   const rows = (await sql`
     select
         guesses_used as guesses
       , count(*)::int as players
     from game_completions
-    where mode = ${MODE}
+    where mode = ${mode}
       and puzzle_date = ${puzzleDate}::date
     group by guesses_used
     order by guesses_used

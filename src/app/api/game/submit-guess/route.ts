@@ -1,5 +1,7 @@
 import { sql } from "@/lib/db/db";
 
+const MODE = "classic";
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -11,13 +13,14 @@ export async function POST(req: Request) {
 
     const rows = await sql`
       select
-          ch.oracle_id
+          dp.oracle_id
         , c.name
         , c.image_normal
-      from card_history ch
+      from daily_puzzles dp
       join cards c
-        on c.oracle_id = ch.oracle_id
-      where ch.puzzle_date = (now() at time zone ${timezone})::date
+        on c.oracle_id = dp.oracle_id
+      where dp.mode = ${MODE}
+        and dp.puzzle_date = (now() at time zone ${timezone})::date
       limit 1
     `;
 

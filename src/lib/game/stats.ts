@@ -11,6 +11,8 @@ export type GuessStats = {
   distribution: GuessStatBucket[];
 };
 
+export type GameMode = "classic" | "art";
+
 const PLAYER_ID_STORAGE_KEY = "mtgdle-player-id";
 
 export function getPlayerId(): string {
@@ -36,6 +38,7 @@ export async function recordGameCompletion(
   timezone: string,
   oracleId: string,
   guessesUsed: number,
+  mode: GameMode = "classic",
 ): Promise<GuessStats> {
   const res = await fetch("/api/game/stats", {
     method: "POST",
@@ -47,6 +50,7 @@ export async function recordGameCompletion(
       oracleId,
       guessesUsed,
       playerId: getPlayerId(),
+      mode,
     }),
   });
 
@@ -58,8 +62,11 @@ export async function recordGameCompletion(
   return res.json();
 }
 
-export async function fetchGameStats(timezone: string): Promise<GuessStats> {
-  const params = new URLSearchParams({ timezone });
+export async function fetchGameStats(
+  timezone: string,
+  mode: GameMode = "classic",
+): Promise<GuessStats> {
+  const params = new URLSearchParams({ timezone, mode });
   const res = await fetch(`/api/game/stats?${params.toString()}`);
 
   if (!res.ok) {

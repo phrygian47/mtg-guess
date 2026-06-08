@@ -72,7 +72,7 @@ function isEligibleCard(card: ImportableCard) {
 export async function importScryfallCards() {
   console.log("1. fetching bulk list");
 
-  await sql`truncate table card_history, card_pool, cards restart identity`;
+  await sql`truncate table card_pool, cards restart identity`;
 
   const bulkRes = await fetch("https://api.scryfall.com/bulk-data", {
     cache: "no-store",

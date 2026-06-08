@@ -1,6 +1,5 @@
 .title {
   display: flex;
-  padding: 1rem;
   flex-direction: column;
   justify-content: center;
   align-items: center;
@@ -14,6 +13,30 @@
   margin: 2rem 2rem 2rem 0;
   justify-content: center;
   width: 100%;
+}
+
+.logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.heading {
+  padding: 1rem;
+  border: 3px solid var(--gold);
+  border-radius: 1rem;
+  background: var(--brown);
+  width: min(90%, 360px);
+  font-size: 0.6rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.heading h2 {
+  margin: 1rem;
+  margin-bottom: 0;
+  opacity: 0.8;
 }
 
 .search_menu button {

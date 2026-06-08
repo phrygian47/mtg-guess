@@ -22,6 +22,8 @@ type DailyCardSelectionRow = {
   release_year: number | null;
 };
 
+const MODE = "classic";
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
@@ -37,53 +39,54 @@ export async function GET(req: Request) {
 
   const [answerRows, guessRows] = await Promise.all([
     sql`
-      select
-        c.image_small
-      , c.colors
-      , c.cmc
-      , c.type_line
-      , c.layout
-      , c.keywords
-      , c.produced_mana
-      , case
-          when c.set_code is null then null
-          else jsonb_build_object(
-            'code', c.set_code,
-            'name', s.name,
-            'image_uri', s.imageuri,
-            'release_year', extract(year from c.released_at)::int
-          )
-        end as set
-      , extract(year from c.released_at)::int as release_year
-      , c.rarity
-      , array_remove(array_agg(distinct t.slug order by t.slug), null) as tags
-    from card_history ch
-    join cards c
-      on c.oracle_id = ch.oracle_id
-    left join sets s
-      on s.code = c.set_code
-    left join card_tags ct
-      on ct.oracle_id = ch.oracle_id
-    left join tags t
-      on t.slug = ct.tag_slug
-     and t.enabled = true
-    where ch.puzzle_date = (now() at time zone ${timezone})::date
-    group by
-        c.oracle_id
-      , c.image_small
-      , c.colors
-      , c.cmc
-      , c.type_line
-      , c.set_code
-      , s.name
-      , s.imageuri
-      , c.released_at
-      , c.rarity
-      , c.layout
-      , c.keywords
-      , c.produced_mana
-    limit 1
-  `,
+  select
+    c.image_small
+  , c.colors
+  , c.cmc
+  , c.type_line
+  , c.layout
+  , c.keywords
+  , c.produced_mana
+  , case
+      when c.set_code is null then null
+      else jsonb_build_object(
+        'code', c.set_code,
+        'name', s.name,
+        'image_uri', s.imageuri,
+        'release_year', extract(year from c.released_at)::int
+      )
+    end as set
+  , extract(year from c.released_at)::int as release_year
+  , c.rarity
+  , array_remove(array_agg(distinct t.slug order by t.slug), null) as tags
+from daily_puzzles dp
+join cards c
+  on c.oracle_id = dp.oracle_id
+left join sets s
+  on s.code = c.set_code
+left join card_tags ct
+  on ct.oracle_id = dp.oracle_id
+left join tags t
+  on t.slug = ct.tag_slug
+ and t.enabled = true
+where dp.mode = ${MODE}
+  and dp.puzzle_date = (now() at time zone ${timezone})::date
+group by
+    c.oracle_id
+  , c.image_small
+  , c.colors
+  , c.cmc
+  , c.type_line
+  , c.set_code
+  , s.name
+  , s.imageuri
+  , c.released_at
+  , c.rarity
+  , c.layout
+  , c.keywords
+  , c.produced_mana
+limit 1
+`,
 
     sql`
     select

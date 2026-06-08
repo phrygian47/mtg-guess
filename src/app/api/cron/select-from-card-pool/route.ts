@@ -16,6 +16,8 @@ function getUtcDateStringPlusDays(daysToAdd: number): string {
   }).format(date);
 }
 
+const MODE = "classic";
+
 async function pickOracleId(targetDateString: string) {
   const freshRows = await sql`
     select cp.oracle_id
@@ -23,10 +25,11 @@ async function pickOracleId(targetDateString: string) {
     where cp.enabled = true
       and not exists (
         select 1
-        from card_history ch
-        where ch.oracle_id = cp.oracle_id
-          and ch.puzzle_date >= (${targetDateString}::date - ${RECENT_DAYS_TO_AVOID}::int)
-          and ch.puzzle_date < ${targetDateString}::date
+        from daily_puzzles dp
+        where dp.mode = ${MODE}
+          and dp.oracle_id = cp.oracle_id
+          and dp.puzzle_date >= (${targetDateString}::date - ${RECENT_DAYS_TO_AVOID}::int)
+          and dp.puzzle_date < ${targetDateString}::date
       )
     order by random() * cp.weight desc
     limit 1
@@ -39,11 +42,12 @@ async function pickOracleId(targetDateString: string) {
   const fallbackRows = await sql`
     select cp.oracle_id
     from card_pool cp
-    left join card_history ch
-      on ch.oracle_id = cp.oracle_id
+    left join daily_puzzles dp
+      on dp.mode = ${MODE}
+     and dp.oracle_id = cp.oracle_id
     where cp.enabled = true
     group by cp.oracle_id, cp.weight
-    order by max(ch.puzzle_date) nulls first, random() * cp.weight desc
+    order by max(dp.puzzle_date) nulls first, random() * cp.weight desc
     limit 1
   `;
 
@@ -66,8 +70,9 @@ export async function GET(req: Request) {
 
       const existingRows = await sql`
         select *
-        from card_history
-        where puzzle_date = ${targetDateString}::date
+        from daily_puzzles
+        where mode = ${MODE}
+          and puzzle_date = ${targetDateString}::date
         limit 1
       `;
 
@@ -89,12 +94,13 @@ export async function GET(req: Request) {
       }
 
       const rows = await sql`
-        insert into card_history (oracle_id, puzzle_date)
+        insert into daily_puzzles (mode, oracle_id, puzzle_date)
         values (
+          ${MODE},
           ${oracleId}::uuid,
           ${targetDateString}::date
         )
-        on conflict (puzzle_date) do nothing
+        on conflict (mode, puzzle_date) do nothing
         returning *
       `;
 

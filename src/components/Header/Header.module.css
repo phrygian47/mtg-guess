@@ -1,0 +1,14 @@
+.header {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.logo {
+  transition: transform 200ms ease;
+}
+
+.logo:hover {
+  transform: scale(1.05);
+}

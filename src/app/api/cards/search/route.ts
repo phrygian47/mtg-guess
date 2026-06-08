@@ -5,7 +5,8 @@ function normalize(input: string) {
   return input
     .toLowerCase()
     .normalize("NFKD")
-    .replace(/[^\w\s/-]/g, "")
+    .replace(/[-/]+/g, " ")
+    .replace(/[^\w\s]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -21,17 +22,25 @@ export async function GET(req: NextRequest) {
   const searchPattern = query.length <= 2 ? `${query}%` : `%${query}%`;
 
   const cards = await sql`
+    WITH searchable_cards AS (
+      SELECT
+          id
+        , oracle_id
+        , name
+        , regexp_replace(normalized_name, '[-/]+', ' ', 'g') as search_name
+      FROM cards
+    )
     SELECT id, oracle_id, name
-    FROM cards
-    WHERE normalized_name LIKE ${searchPattern}
+    FROM searchable_cards
+    WHERE search_name LIKE ${searchPattern}
     ORDER BY
       CASE
-        WHEN normalized_name = ${query} THEN 0
-        WHEN normalized_name LIKE ${`${query}%`} THEN 1
-        WHEN normalized_name LIKE ${`% ${query}%`} THEN 2
+        WHEN search_name = ${query} THEN 0
+        WHEN search_name LIKE ${`${query}%`} THEN 1
+        WHEN search_name LIKE ${`% ${query}%`} THEN 2
         ELSE 3
       END,
-      LENGTH(normalized_name),
+      LENGTH(search_name),
       name
     LIMIT 20
   `;

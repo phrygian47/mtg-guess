@@ -1,0 +1,291 @@
+.shell {
+  width: min(100%, 860px);
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+  color: var(--text);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.header h1 {
+  font-size: 4rem;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.subhead {
+  min-height: 1.4em;
+  color: var(--text-sub);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.artStage {
+  width: min(100%, 620px);
+  aspect-ratio: 720 / 518;
+  margin: 0 auto;
+  padding: 12px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.artCanvas {
+  display: block;
+  width: 80%;
+  max-width: 520px;
+  border-radius: 6px;
+  image-rendering: pixelated;
+  height: auto;
+  box-shadow: 0px 0px 37px 10px rgba(0, 0, 0, 0.4);
+}
+
+.status {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: min(100%, 620px);
+  max-width: 520px;
+  aspect-ratio: 720 / 518;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 2rem;
+  text-align: center;
+  height: auto;
+  background: rgba(0, 0, 0, 0.75);
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  box-shadow: 0px 0px 37px 10px rgba(0, 0, 0, 0.4);
+}
+
+.searchMenu {
+  --control-height: 64px;
+  display: flex;
+  justify-content: center;
+  width: min(100%, 620px);
+  margin: 24px auto 0;
+}
+
+.searchMenu > div {
+  width: min(350px, 100%);
+}
+
+.hintBox {
+  width: min(100%, 300px);
+  padding: 1rem;
+  border: 2px solid var(--gold);
+  background-color: var(--brown);
+  border-radius: 0.75rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.hintReveal {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translateY(-6px);
+  width: 100%;
+  padding: 0.5rem;
+  transition:
+    grid-template-rows 220ms ease,
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.hintRevealOpen {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hintRevealInner {
+  overflow: hidden;
+}
+
+.hintBox h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.2rem;
+}
+
+.hintList {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.35rem 0.75rem;
+  margin: 0;
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+}
+
+.hintList dt {
+  font-weight: 700;
+}
+
+.hintList dd {
+  margin: 0;
+}
+
+.manaCostSymbols {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  flex-wrap: wrap;
+}
+
+.manaCostSymbols img {
+  width: 1rem;
+  height: 1rem;
+}
+
+.hintButtons {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.hintButton {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.7rem;
+  flex-wrap: wrap;
+  max-width: 3rem;
+  text-align: center;
+}
+
+.hintButton span {
+  margin-top: 0.3rem;
+}
+
+.hintIconButton {
+  width: 3.5rem;
+  height: 3.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid currentColor;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  color: var(--gold);
+}
+
+.hintIconButton:disabled {
+  cursor: not-allowed;
+  color: #747474;
+  opacity: 0.4;
+}
+
+.hintUnlockText {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.rulesHint {
+  font-size: 0.85rem;
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+}
+
+.rulesText {
+  margin: 0;
+  white-space: pre-line;
+}
+
+.rulesTextSymbol {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin: 0 0.08em;
+  vertical-align: -0.15em;
+}
+
+.searchMenu button {
+  margin: 0.5rem;
+  height: 64px;
+  padding: 1rem;
+  cursor: pointer;
+}
+
+.winningCard {
+  display: block;
+  width: min(100%, 260px);
+  height: auto;
+  margin: 24px auto 0;
+  border-radius: 8px;
+  box-shadow: 0 18px 36px rgb(0 0 0 / 0.32);
+}
+
+.statsPanel {
+  width: min(100%, 620px);
+  margin: 24px auto 0;
+  padding: 18px;
+  border: 1px solid rgb(255 255 255 / 0.16);
+  border-radius: 8px;
+  background: rgb(18 22 27 / 0.84);
+  box-shadow: 0 18px 44px rgb(0 0 0 / 0.22);
+  text-align: left;
+}
+
+.guessList {
+  display: grid;
+  gap: 8px;
+  width: min(100%, 620px);
+  margin: 24px auto 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guessItem {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border: 1px solid rgb(255 255 255 / 0.16);
+  border-radius: 8px;
+  background: rgb(18 22 27 / 0.82);
+  color: var(--text);
+  font-weight: 800;
+  text-align: center;
+}
+
+.correct {
+  border-color: rgb(93 193 132 / 0.8);
+  background: rgb(56 141 93 / 0.8);
+}
+
+@media (max-width: 620px) {
+  .shell {
+    padding-inline: 12px;
+  }
+
+  .header h1 {
+    font-size: 2.5rem;
+  }
+
+  .artStage {
+    padding: 8px;
+  }
+
+  .searchMenu {
+    --control-height: 56px;
+    margin-top: 18px;
+  }
+
+  .searchMenu button {
+    height: 56px;
+  }
+}

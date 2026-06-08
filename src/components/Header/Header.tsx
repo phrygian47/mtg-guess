@@ -1,15 +1,15 @@
 import styles from "./Header.module.css";
+import Image from "next/image";
+import Link from "next/link";
 
 export default function Header() {
   return (
-    <div className={styles.page}>
-      <div className={styles.logo}></div>
-      <nav>
-        <ul>
-          <li></li>
-          <li></li>
-        </ul>
-      </nav>
-    </div>
+    <header className={styles.header}>
+      <div className={styles.logo}>
+        <Link href="/" aria-label="Go to home page">
+          <Image src="/logo.svg" alt="Logo" width={400} height={200} priority />
+        </Link>
+      </div>
+    </header>
   );
 }

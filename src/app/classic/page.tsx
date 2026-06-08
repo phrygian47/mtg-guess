@@ -361,14 +361,21 @@ export default function ClassicPage() {
   return (
     <div className="page">
       <main className="main">
-        <div className={styles.title}>
-          <h1 className={styles.title}>Guess the Card!</h1>
-          <ClassicInfoBar />
-          {infoGrid.length === 0 && !showVictory && (
-            <div>
-              <h3>Start typing to submit a guess</h3>
-            </div>
-          )}
+        <div>
+          <div className={styles.title}>
+            <ClassicInfoBar />
+          </div>
+          <div className={styles.heading}>
+            <h1 className={styles.title}>
+              Guess today's Magic: The Gathering card!
+            </h1>
+            {infoGrid.length === 0 && !showVictory && (
+              <div>
+                <h2>Start typing to submit a guess...</h2>
+              </div>
+            )}
+          </div>
+
           <div>
             {!showVictory && (
               <form
