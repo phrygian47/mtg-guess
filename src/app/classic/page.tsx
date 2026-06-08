@@ -404,14 +404,17 @@ export default function ClassicPage() {
               </button> */}
               </form>
             )}
-
-            <p className={styles.solvedCount} aria-live="polite">
-              {dailyStats
-                ? `${dailyStats.solvedCount} ${
-                    dailyStats.solvedCount === 1 ? "player has" : "players have"
-                  } solved today`
-                : "Loading solve count..."}
-            </p>
+            {!showVictory && (
+              <p className={styles.solvedCount} aria-live="polite">
+                {dailyStats
+                  ? `${dailyStats.solvedCount} ${
+                      dailyStats.solvedCount === 1
+                        ? "player has"
+                        : "players have"
+                    } solved today`
+                  : "Loading solve count..."}
+              </p>
+            )}
           </div>
         </div>
         <div>

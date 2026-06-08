@@ -2,7 +2,7 @@
   position: relative;
   max-width: 200px;
   width: 100%;
-  border: 1px solid var(--gold);
+  border: 3px solid var(--gold);
   border-radius: 1rem;
   background-color: var(--brown);
   margin: 1rem;
@@ -87,7 +87,7 @@
   left: 50%;
   transform: translateX(-50%);
   width: min(560px, 92vw);
-  border: 1px solid var(--gold);
+  border: 3px solid var(--gold);
   border-radius: 1rem;
   background:
     radial-gradient(circle at top, rgba(212, 175, 55, 0.12), transparent 38%),

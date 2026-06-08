@@ -90,7 +90,7 @@
 .timer {
   display: flex;
   flex-direction: column;
-  border: 1px solid rgba(212, 175, 55, 0.5);
+  border: 3px solid rgba(212, 175, 55, 0.5);
   background: rgba(0, 0, 0, 0.44);
   color: var(--gold);
   border-radius: 0.75rem;
@@ -132,7 +132,7 @@
   grid-area: image;
   width: min(100%, 240px);
   height: auto;
-  border-radius: 8px;
+  border-radius: 1rem;
   justify-self: center;
 }
 
