@@ -30,7 +30,10 @@ export default function Home() {
               </span>
             </Link>
             <Link href="/art" className={styles.button}>
-              <span className={styles.button_title}>Card Art</span>
+              <span className={styles.buttonTitleRow}>
+                <span className={styles.button_title}>Card Art</span>
+                <span className={styles.newTag}>New</span>
+              </span>
               <span className={styles.button_subtitle}>
                 Guess the Art From a Pixelated Image
               </span>

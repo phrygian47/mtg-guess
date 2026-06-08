@@ -60,6 +60,28 @@
   background-size: 100% 100%;
 }
 
+.buttonTitleRow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.newTag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.18rem 0.45rem;
+  border-radius: 999px;
+  background: var(--gold);
+  color: #1b1208;
+  font-size: 0.7rem;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .button_title {
   font-size: 1.2rem;
   color: #eee;
