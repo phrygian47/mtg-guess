@@ -1,7 +1,10 @@
 import { sql } from "@/lib/db/db";
 
 const RECENT_DAYS_TO_AVOID = 180;
-const DAYS_TO_PREGENERATE = 3;
+const DAYS_TO_PREGENERATE = 2;
+
+const MODES = ["classic", "art"] as const;
+type PuzzleMode = (typeof MODES)[number];
 
 function getUtcDateStringPlusDays(daysToAdd: number): string {
   const date = new Date();
@@ -16,9 +19,7 @@ function getUtcDateStringPlusDays(daysToAdd: number): string {
   }).format(date);
 }
 
-const MODE = "classic";
-
-async function pickOracleId(targetDateString: string) {
+async function pickOracleId(targetDateString: string, mode: PuzzleMode) {
   const freshRows = await sql`
     select cp.oracle_id
     from card_pool cp
@@ -26,7 +27,7 @@ async function pickOracleId(targetDateString: string) {
       and not exists (
         select 1
         from daily_puzzles dp
-        where dp.mode = ${MODE}
+        where dp.mode = ${mode}
           and dp.oracle_id = cp.oracle_id
           and dp.puzzle_date >= (${targetDateString}::date - ${RECENT_DAYS_TO_AVOID}::int)
           and dp.puzzle_date < ${targetDateString}::date
@@ -43,7 +44,7 @@ async function pickOracleId(targetDateString: string) {
     select cp.oracle_id
     from card_pool cp
     left join daily_puzzles dp
-      on dp.mode = ${MODE}
+      on dp.mode = ${mode}
      and dp.oracle_id = cp.oracle_id
     where cp.enabled = true
     group by cp.oracle_id, cp.weight
@@ -65,47 +66,49 @@ export async function GET(req: Request) {
     const createdCards = [];
     const reusedCards = [];
 
-    for (let offset = 0; offset <= DAYS_TO_PREGENERATE; offset++) {
-      const targetDateString = getUtcDateStringPlusDays(offset);
+    for (const mode of MODES) {
+      for (let offset = 0; offset <= DAYS_TO_PREGENERATE; offset++) {
+        const targetDateString = getUtcDateStringPlusDays(offset);
 
-      const existingRows = await sql`
-        select *
-        from daily_puzzles
-        where mode = ${MODE}
-          and puzzle_date = ${targetDateString}::date
-        limit 1
-      `;
+        const existingRows = await sql`
+          select *
+          from daily_puzzles
+          where mode = ${mode}
+            and puzzle_date = ${targetDateString}::date
+          limit 1
+        `;
 
-      if (existingRows.length > 0) {
-        reusedCards.push(existingRows[0]);
-        continue;
-      }
+        if (existingRows.length > 0) {
+          reusedCards.push(existingRows[0]);
+          continue;
+        }
 
-      const oracleId = await pickOracleId(targetDateString);
+        const oracleId = await pickOracleId(targetDateString, mode);
 
-      if (!oracleId) {
-        return Response.json(
-          {
-            ok: false,
-            error: `No eligible card found for ${targetDateString}.`,
-          },
-          { status: 500 },
-        );
-      }
+        if (!oracleId) {
+          return Response.json(
+            {
+              ok: false,
+              error: `No eligible card found for ${mode} on ${targetDateString}.`,
+            },
+            { status: 500 },
+          );
+        }
 
-      const rows = await sql`
-        insert into daily_puzzles (mode, oracle_id, puzzle_date)
-        values (
-          ${MODE},
-          ${oracleId}::uuid,
-          ${targetDateString}::date
-        )
-        on conflict (mode, puzzle_date) do nothing
-        returning *
-      `;
+        const rows = await sql`
+          insert into daily_puzzles (mode, oracle_id, puzzle_date)
+          values (
+            ${mode},
+            ${oracleId}::uuid,
+            ${targetDateString}::date
+          )
+          on conflict (mode, puzzle_date) do nothing
+          returning *
+        `;
 
-      if (rows.length > 0) {
-        createdCards.push(rows[0]);
+        if (rows.length > 0) {
+          createdCards.push(rows[0]);
+        }
       }
     }
 
