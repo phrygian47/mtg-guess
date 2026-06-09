@@ -35,7 +35,7 @@
 
 .statsSummary > div {
   padding: 14px;
-  border: 1px solid rgb(255 255 255 / 0.12);
+  border: 3px solid var(--gold);
   border-radius: 10px;
   background: rgb(255 255 255 / 0.045);
 }

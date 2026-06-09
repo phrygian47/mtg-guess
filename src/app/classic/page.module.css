@@ -90,7 +90,7 @@
 .timer {
   display: flex;
   flex-direction: column;
-  border: 3px solid rgba(212, 175, 55, 0.5);
+  border: 3px solid var(--gold);
   background: rgba(0, 0, 0, 0.44);
   color: var(--gold);
   border-radius: 0.75rem;
@@ -141,9 +141,9 @@
   grid-area: stats;
   width: 100%;
   padding: 18px;
-  border: 1px solid rgb(255 255 255 / 0.16);
+  border: 3px solid var(--gold);
   border-radius: 8px;
-  background: rgb(18 22 27 / 0.84);
+  background: var(--brown);
   box-shadow: 0 18px 44px rgb(0 0 0 / 0.22);
   text-align: left;
 }

@@ -232,9 +232,9 @@
   width: min(100%, 620px);
   margin: 24px auto 0;
   padding: 18px;
-  border: 1px solid rgb(255 255 255 / 0.16);
+  border: 3px solid var(--gold);
   border-radius: 8px;
-  background: rgb(18 22 27 / 0.84);
+  background: var(--brown);
   box-shadow: 0 18px 44px rgb(0 0 0 / 0.22);
   text-align: left;
 }
