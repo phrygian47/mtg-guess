@@ -8,7 +8,7 @@ import {
   X,
 } from "lucide-react";
 
-import styles from "@/components/Info/Classic-Info/Classic-Info.module.css";
+import styles from "./Art-Info.module.css";
 import ArtTutorialSection from "@/components/Sections/Art-How-To/ArtTutorialSection";
 import ArtInfo from "@/components/Sections/Art-Info/ArtInfo";
 import Stats from "@/components/Sections/Stats/Stats";

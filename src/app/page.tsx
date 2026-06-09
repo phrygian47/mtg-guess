@@ -17,6 +17,7 @@ export default function Home() {
       <main className="main">
         <section className={styles.hero}>
           <div className={styles.heading}>
+            <h1>MTGdle</h1>
             <p className={styles.subtitle}>
               A daily Magic: The Gathering card guessing game
             </p>
