@@ -24,7 +24,7 @@ export interface CustomSearchableProps<T> {
   renderOption?: (item: T) => React.ReactNode;
   placeholder?: string;
   minQueryLength?: number;
-  onSelect?: (item: T) => void;
+  onSelect?: (item: T | null) => void;
   name?: string;
   id?: string;
   clearSignal?: number;
@@ -54,7 +54,7 @@ function SearchableDropdownInner<T>(
   const dropdownRef = useRef<HTMLDivElement>(null);
   const selectedDisplayValueRef = useRef<string | null>(null);
 
-  const debouncedQuery = useDebounce(query, 500);
+  const debouncedQuery = useDebounce(query, 400);
 
   useEffect(() => {
     selectedDisplayValueRef.current = null;
@@ -237,6 +237,8 @@ function SearchableDropdownInner<T>(
               const trimmedNextQuery = nextQuery.trim();
 
               selectedDisplayValueRef.current = null;
+              onSelect?.(null);
+
               setQuery(nextQuery);
               setFocusedIndex(-1);
               setError(null);

@@ -162,8 +162,6 @@ export async function POST(req: Request) {
   `,
     });
 
-    console.log("Resend response:", { data, error });
-
     if (error) {
       return NextResponse.json(
         { error: error.message ?? "Resend failed to send email." },

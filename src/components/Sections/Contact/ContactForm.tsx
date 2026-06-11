@@ -66,9 +66,6 @@ export default function ContactForm() {
       });
 
       const data = await response.json();
-
-      console.log("API response:", data);
-
       if (!response.ok) {
         setStatus(data.error || "Something went wrong. Please try again.");
         return;

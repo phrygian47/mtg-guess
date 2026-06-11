@@ -27,39 +27,8 @@ type DistributionRow = {
 const MAX_GUESSES_TO_TRACK = 100;
 const GAME_MODES = new Set(["classic", "art"]);
 
-let ensureStatsTablePromise: Promise<void> | null = null;
-
-function ensureStatsTable() {
-  ensureStatsTablePromise ??= (async () => {
-    await sql`
-      create table if not exists game_completions (
-        id bigserial primary key,
-        mode text not null default 'classic',
-        puzzle_date date not null,
-        timezone text not null,
-        player_key text not null,
-        guesses_used integer not null check (
-          guesses_used >= 1
-          and guesses_used <= 100
-        ),
-        created_at timestamptz not null default now(),
-        unique (mode, puzzle_date, player_key)
-      )
-    `;
-
-    await sql`
-      create index if not exists game_completions_daily_guess_idx
-      on game_completions (mode, puzzle_date, guesses_used)
-    `;
-  })();
-
-  return ensureStatsTablePromise;
-}
-
 export async function GET(req: Request) {
   try {
-    await ensureStatsTable();
-
     const { searchParams } = new URL(req.url);
     const timezone = normalizeTimezone(searchParams.get("timezone"));
     const mode = normalizeMode(searchParams.get("mode"));
@@ -95,8 +64,6 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
-
-    await ensureStatsTable();
 
     const puzzleDate = await getCurrentPuzzleDate(timezone);
     const answerRows = (await sql`

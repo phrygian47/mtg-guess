@@ -22,5 +22,10 @@ export default function ClassicLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return (
+    <>
+      <link rel="preload" as="image" href="/card_back.webp" />
+      {children}
+    </>
+  );
 }

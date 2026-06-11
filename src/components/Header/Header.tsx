@@ -7,7 +7,14 @@ export default function Header() {
     <header className={styles.header}>
       <div className={styles.logo}>
         <Link href="/" aria-label="Go to home page">
-          <Image src="/logo.svg" alt="Logo" width={400} height={200} priority />
+          <Image
+            src="/logo.svg"
+            alt="Logo"
+            width={400}
+            height={200}
+            loading="eager"
+            fetchPriority="high"
+          />
         </Link>
       </div>
     </header>

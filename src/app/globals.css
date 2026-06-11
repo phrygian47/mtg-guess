@@ -25,31 +25,40 @@ html {
 
 html,
 body {
-  max-width: 100svw;
+  width: 100%;
   overflow-x: hidden;
-  scrollbar-gutter: stable;
   scroll-behavior: auto;
 }
 
 body {
-  min-height: 100%;
+  min-height: 100dvh;
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
   background:
     linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url("/bg.jpg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   background-attachment: fixed;
+
+  display: flex;
+  flex-direction: column;
+}
+
+body > main,
+body > .main {
+  flex: 1;
 }
 
 .main {
   width: 100%;
   max-width: 1100px;
   margin: 0 auto;
+  flex: 1;
 }
 
 .page {

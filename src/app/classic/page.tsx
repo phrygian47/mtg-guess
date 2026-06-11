@@ -9,6 +9,7 @@ import CustomSearchable from "@/components/UI/CustomSearchable/CustomSearchable"
 import { submitCard } from "@/lib/game/submitCard";
 import ClassicInfoBar from "@/components/Info/Classic-Info/Classic-Info";
 import Stats from "@/components/Sections/Stats/Stats";
+import ClassicLoadingScreen from "./ClassicLoadingScreen";
 import {
   fetchGameStats,
   type GuessStats,
@@ -27,6 +28,8 @@ const REVEAL_TOTAL_MS = 2000;
 const VICTORY_SCROLL_OFFSET_PX = 32;
 const VICTORY_SCROLL_DURATION_MS = 700;
 const RESTORED_VICTORY_DELAY_MS = 1800;
+const CARD_BACK_SRC = "/card_back.webp";
+const MIN_LOADING_MS = 1500;
 
 function easeOutCubic(progress: number) {
   return 1 - Math.pow(1 - progress, 3);
@@ -50,16 +53,48 @@ export default function ClassicPage() {
   const [victoryStats, setVictoryStats] = useState<GuessStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
   const [statsError, setStatsError] = useState<string | null>(null);
+  const [dailyStatsReady, setDailyStatsReady] = useState(false);
+  const [classicProgressReady, setClassicProgressReady] = useState(false);
+  const [cardBackReady, setCardBackReady] = useState(false);
+  const [minimumLoadingTimePassed, setMinimumLoadingTimePassed] =
+    useState(false);
   const [manaSymbolsBySymbol, setManaSymbolsBySymbol] = useState<ManaSymbolMap>(
     {},
   );
   const countdown = useNextPuzzleCountdown();
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const showLoadingScreen =
+    !dailyStatsReady ||
+    !classicProgressReady ||
+    !cardBackReady ||
+    !minimumLoadingTimePassed;
 
   const persistProgress = useCallback(
     (progress: ClassicProgressInput) => saveClassicProgress(timezone, progress),
     [timezone],
   );
+
+  const hasRequestedWakeRef = useRef(false);
+
+  const wakeDatabase = useCallback((delayMs = 500) => {
+    if (hasRequestedWakeRef.current) return;
+    hasRequestedWakeRef.current = true;
+
+    window.setTimeout(() => {
+      fetch("/api/cards/wake", {
+        method: "GET",
+        cache: "no-store",
+      }).catch(() => {});
+    }, delayMs);
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setMinimumLoadingTimePassed(true);
+    }, MIN_LOADING_MS);
+
+    return () => window.clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (!showVictory) return;
@@ -108,7 +143,10 @@ export default function ClassicPage() {
     const restoreTimer = window.setTimeout(() => {
       const savedProgress = loadClassicProgress(timezone);
 
-      if (!savedProgress) return;
+      if (!savedProgress) {
+        setClassicProgressReady(true);
+        return;
+      }
 
       setInfoGrid(savedProgress.rows);
       setVictoryStats(savedProgress.stats);
@@ -125,6 +163,8 @@ export default function ClassicPage() {
           setShowVictory(true);
         }, RESTORED_VICTORY_DELAY_MS);
       }
+
+      setClassicProgressReady(true);
     }, 0);
 
     return () => {
@@ -135,6 +175,25 @@ export default function ClassicPage() {
       }
     };
   }, [timezone]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCardBack() {
+      await preloadBrowserImage(CARD_BACK_SRC);
+
+      if (!cancelled) {
+        setCardBackReady(true);
+      }
+    }
+
+    loadCardBack();
+    wakeDatabase();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [wakeDatabase]);
 
   useEffect(() => {
     if (
@@ -326,6 +385,10 @@ export default function ClassicPage() {
         }
       } catch (error) {
         console.error("Could not load game stats:", error);
+      } finally {
+        if (!cancelled) {
+          setDailyStatsReady(true);
+        }
       }
     }
 
@@ -358,6 +421,10 @@ export default function ClassicPage() {
     };
   }, []);
 
+  if (showLoadingScreen) {
+    return <ClassicLoadingScreen cardBackSrc={CARD_BACK_SRC} />;
+  }
+
   return (
     <div className="page">
       <main className="main">
@@ -367,7 +434,7 @@ export default function ClassicPage() {
           </div>
           <div className={styles.heading}>
             <h1 className={styles.title}>
-              Guess today's Magic: The Gathering card!
+              Guess today&apos;s Magic: The Gathering card!
             </h1>
             {infoGrid.length === 0 && !showVictory && (
               <div>
@@ -391,7 +458,9 @@ export default function ClassicPage() {
                   renderOption={(card) => <div>{card.name}</div>}
                   placeholder="Search for a card..."
                   minQueryLength={2}
-                  onSelect={(card) => setSelectedGuessCard(card.oracle_id)}
+                  onSelect={(card) =>
+                    setSelectedGuessCard(card?.oracle_id ?? "")
+                  }
                   clearSignal={searchClearSignal}
                 />
 
@@ -412,7 +481,7 @@ export default function ClassicPage() {
                         ? "player has"
                         : "players have"
                     } solved today`
-                  : "Loading solve count..."}
+                  : "Solve count unavailable"}
               </p>
             )}
           </div>
@@ -461,4 +530,28 @@ export default function ClassicPage() {
       </main>
     </div>
   );
+}
+
+async function preloadBrowserImage(src: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const image = new window.Image();
+  image.decoding = "async";
+  image.src = src;
+
+  try {
+    if (image.decode) {
+      await image.decode();
+      return;
+    }
+
+    await new Promise<void>((resolve) => {
+      image.onload = () => resolve();
+      image.onerror = () => resolve();
+    });
+  } catch {
+    // Let the page continue even if the browser cannot decode the preload.
+  }
 }

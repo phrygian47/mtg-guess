@@ -545,6 +545,7 @@ export default function InfoGrid({ rows, manaSymbolsBySymbol }: InfoGridProps) {
               className={styles.cardImage}
               width={146}
               height={204}
+              preload
             />
           ) : (
             cell.value

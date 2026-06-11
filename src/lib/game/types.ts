@@ -1,8 +1,3 @@
-export type StartInfo = {
-  colors: string[];
-  type: string;
-};
-
 export type CellTone = "correct" | "partial" | "wrong" | "neutral";
 
 export type ReleaseYearDirection = "higher" | "lower" | "same" | null;

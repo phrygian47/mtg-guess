@@ -41,7 +41,21 @@ type GuessEntry = {
   correct: boolean;
 };
 
-const PIXEL_WIDTH_STEPS = [16, 24, 36, 56, 88, 140, 240];
+type InitialArtPageState = {
+  guesses: GuessEntry[];
+  gameWon: boolean;
+  winningCardName: string | null;
+  winningCardImage: string | null;
+  winningOracleId: string | null;
+  completionRecorded: boolean;
+  shouldRetryCompletionRecord: boolean;
+  victoryStats: GuessStats | null;
+  setNameHint: string | null;
+  manaCostHint: string | null;
+  rulesTextHint: string | null;
+};
+
+const PIXEL_WIDTH_STEPS = [24, 36, 56, 88, 140, 240];
 const CANVAS_WIDTH = 720;
 const CANVAS_HEIGHT = 518;
 const FULL_REVEAL_GUESS_COUNT = PIXEL_WIDTH_STEPS.length;
@@ -49,6 +63,8 @@ const SET_AND_MANA_HINT_GUESS_COUNT = FULL_REVEAL_GUESS_COUNT;
 const RULES_TEXT_HINT_GUESS_COUNT = FULL_REVEAL_GUESS_COUNT + 4;
 
 export default function ArtPage() {
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const [initialArtState] = useState(() => getInitialArtPageState(timezone));
   const [puzzle, setPuzzle] = useState<ArtPuzzle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,23 +72,38 @@ export default function ArtPage() {
     null,
   );
   const [searchClearSignal, setSearchClearSignal] = useState(0);
-  const [guesses, setGuesses] = useState<GuessEntry[]>([]);
+  const [guesses, setGuesses] = useState<GuessEntry[]>(initialArtState.guesses);
   const [submitting, setSubmitting] = useState(false);
-  const [gameWon, setGameWon] = useState(false);
-  const [winningCardName, setWinningCardName] = useState<string | null>(null);
-  const [winningCardImage, setWinningCardImage] = useState<string | null>(null);
-  const [winningOracleId, setWinningOracleId] = useState<string | null>(null);
-  const [completionRecorded, setCompletionRecorded] = useState(false);
+  const [gameWon, setGameWon] = useState(initialArtState.gameWon);
+  const [winningCardName, setWinningCardName] = useState<string | null>(
+    initialArtState.winningCardName,
+  );
+  const [winningCardImage, setWinningCardImage] = useState<string | null>(
+    initialArtState.winningCardImage,
+  );
+  const [winningOracleId, setWinningOracleId] = useState<string | null>(
+    initialArtState.winningOracleId,
+  );
+  const [completionRecorded, setCompletionRecorded] = useState(
+    initialArtState.completionRecorded,
+  );
   const [shouldRetryCompletionRecord, setShouldRetryCompletionRecord] =
-    useState(false);
-  const [victoryStats, setVictoryStats] = useState<GuessStats | null>(null);
+    useState(initialArtState.shouldRetryCompletionRecord);
+  const [victoryStats, setVictoryStats] = useState<GuessStats | null>(
+    initialArtState.victoryStats,
+  );
   const [statsLoading, setStatsLoading] = useState(false);
   const [statsError, setStatsError] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const [setNameHint, setSetNameHint] = useState<string | null>(null);
-  const [manaCostHint, setManaCostHint] = useState<string | null>(null);
-  const [rulesTextHint, setRulesTextHint] = useState<string | null>(null);
+  const [setNameHint, setSetNameHint] = useState<string | null>(
+    initialArtState.setNameHint,
+  );
+  const [manaCostHint, setManaCostHint] = useState<string | null>(
+    initialArtState.manaCostHint,
+  );
+  const [rulesTextHint, setRulesTextHint] = useState<string | null>(
+    initialArtState.rulesTextHint,
+  );
   const [openHint, setOpenHint] = useState<"setMana" | "rules" | null>(null);
 
   const stepIndex = Math.min(guesses.length, PIXEL_WIDTH_STEPS.length - 1);
@@ -99,29 +130,6 @@ export default function ArtPage() {
     (progress: ArtProgressInput) => saveArtProgress(timezone, progress),
     [timezone],
   );
-
-  useEffect(() => {
-    const savedProgress = loadArtProgress(timezone);
-
-    if (!savedProgress) {
-      return;
-    }
-
-    setGuesses(savedProgress.guesses);
-    setGameWon(savedProgress.completed);
-    setWinningCardName(savedProgress.winningCardName);
-    setWinningCardImage(savedProgress.winningCardImage);
-    setWinningOracleId(savedProgress.winningOracleId);
-    setCompletionRecorded(savedProgress.completionRecorded);
-    setVictoryStats(savedProgress.stats);
-    setSetNameHint(savedProgress.setNameHint);
-    setManaCostHint(savedProgress.manaCostHint);
-    setRulesTextHint(savedProgress.rulesTextHint);
-
-    if (savedProgress.completed) {
-      setShouldRetryCompletionRecord(!savedProgress.completionRecorded);
-    }
-  }, [timezone]);
 
   useEffect(() => {
     if (
@@ -628,6 +636,47 @@ export default function ArtPage() {
       </main>
     </div>
   );
+}
+
+function getInitialArtPageState(timezone: string): InitialArtPageState {
+  const emptyState: InitialArtPageState = {
+    guesses: [],
+    gameWon: false,
+    winningCardName: null,
+    winningCardImage: null,
+    winningOracleId: null,
+    completionRecorded: false,
+    shouldRetryCompletionRecord: false,
+    victoryStats: null,
+    setNameHint: null,
+    manaCostHint: null,
+    rulesTextHint: null,
+  };
+
+  if (typeof window === "undefined") {
+    return emptyState;
+  }
+
+  const savedProgress = loadArtProgress(timezone);
+
+  if (!savedProgress) {
+    return emptyState;
+  }
+
+  return {
+    guesses: savedProgress.guesses,
+    gameWon: savedProgress.completed,
+    winningCardName: savedProgress.winningCardName,
+    winningCardImage: savedProgress.winningCardImage,
+    winningOracleId: savedProgress.winningOracleId,
+    completionRecorded: savedProgress.completionRecorded,
+    shouldRetryCompletionRecord:
+      savedProgress.completed && !savedProgress.completionRecorded,
+    victoryStats: savedProgress.stats,
+    setNameHint: savedProgress.setNameHint,
+    manaCostHint: savedProgress.manaCostHint,
+    rulesTextHint: savedProgress.rulesTextHint,
+  };
 }
 
 function drawPixelatedImage(
