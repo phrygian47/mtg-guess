@@ -25,6 +25,27 @@ export const metadata: Metadata = {
     icon: "/favicon.svg",
   },
   description: "A daily Magic: The Gathering card guessing game.",
+  openGraph: {
+    title: "MTGdle",
+    description: "A daily Magic: The Gathering card guessing game.",
+    url: "/",
+    siteName: "MTGdle",
+    type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "MTGdle - A daily Magic card guessing game",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MTGdle",
+    description: "A daily Magic: The Gathering card guessing game.",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({
