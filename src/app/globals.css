@@ -12,12 +12,12 @@
   --incorrect: #a04f4f;
 }
 
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
   :root {
     --background: #ffffff;
     --foreground: #171717;
   }
-}
+} */
 
 html {
   height: 100%;
