@@ -1,8 +1,8 @@
 import { sql } from "@/lib/db/db";
 
 const MODE = "art";
-const RULES_TEXT_HINT_GUESS_COUNT = 6;
-const SET_AND_MANA_HINT_GUESS_COUNT = 10;
+const SET_AND_MANA_HINT_GUESS_COUNT = 6;
+const RULES_TEXT_HINT_GUESS_COUNT = 10;
 
 type ArtAnswerRow = {
   oracle_id: string;
