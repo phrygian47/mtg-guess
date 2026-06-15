@@ -1,7 +1,7 @@
 import { sql } from "@/lib/db/db";
 
 const RECENT_DAYS_TO_AVOID = 180;
-const DAYS_TO_PREGENERATE = 2;
+const FUTURE_DAYS_TO_KEEP_READY = 3;
 
 const MODES = ["classic", "art"] as const;
 type PuzzleMode = (typeof MODES)[number];
@@ -64,10 +64,11 @@ export async function GET(req: Request) {
 
   try {
     const createdCards = [];
-    const reusedCards = [];
+    const existingCards = [];
 
     for (const mode of MODES) {
-      for (let offset = 0; offset <= DAYS_TO_PREGENERATE; offset++) {
+      // Offset 0 can heal today's puzzle; offsets 1-3 keep three future days ready.
+      for (let offset = 0; offset <= FUTURE_DAYS_TO_KEEP_READY; offset++) {
         const targetDateString = getUtcDateStringPlusDays(offset);
 
         const existingRows = await sql`
@@ -79,7 +80,7 @@ export async function GET(req: Request) {
         `;
 
         if (existingRows.length > 0) {
-          reusedCards.push(existingRows[0]);
+          existingCards.push(existingRows[0]);
           continue;
         }
 
@@ -115,9 +116,11 @@ export async function GET(req: Request) {
     return Response.json({
       ok: true,
       createdCount: createdCards.length,
-      reusedCount: reusedCards.length,
+      existingCount: existingCards.length,
+      reusedCount: existingCards.length,
       createdCards,
-      reusedCards,
+      existingCards,
+      reusedCards: existingCards,
     });
   } catch (err) {
     console.error("Daily card selection failed", err);
