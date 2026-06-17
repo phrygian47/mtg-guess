@@ -21,20 +21,22 @@
     "@vercel/analytics": "^2.0.1",
     "dotenv": "^17.4.2",
     "lucide-react": "^1.16.0",
+    "minisearch": "^7.2.0",
     "next": "^16.2.4",
     "postcss": "^8.5.12",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
-    "resend": "^6.12.4",
-    "tsx": "^4.21.0"
+    "resend": "^6.12.4"
   },
   "devDependencies": {
+    "@duckdb/node-api": "^1.5.3-r.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.2",
+    "tsx": "^4.22.4",
     "typescript": "^5"
   }
 }

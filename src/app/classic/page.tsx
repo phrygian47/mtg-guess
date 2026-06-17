@@ -35,6 +35,30 @@ function easeOutCubic(progress: number) {
   return 1 - Math.pow(1 - progress, 3);
 }
 
+async function preloadBrowserImage(src: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const image = new window.Image();
+  image.decoding = "async";
+  image.src = src;
+
+  try {
+    if (image.decode) {
+      await image.decode();
+      return;
+    }
+
+    await new Promise<void>((resolve) => {
+      image.onload = () => resolve();
+      image.onerror = () => resolve();
+    });
+  } catch {
+    // Let the page continue even if the browser cannot decode the preload.
+  }
+}
+
 export default function ClassicPage() {
   const [infoGrid, setInfoGrid] = useState<ClassicDisplayInfoGridRow[]>([]);
   const [selectedGuessCard, setSelectedGuessCard] = useState<string>("");
@@ -530,28 +554,4 @@ export default function ClassicPage() {
       </main>
     </div>
   );
-}
-
-async function preloadBrowserImage(src: string) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  const image = new window.Image();
-  image.decoding = "async";
-  image.src = src;
-
-  try {
-    if (image.decode) {
-      await image.decode();
-      return;
-    }
-
-    await new Promise<void>((resolve) => {
-      image.onload = () => resolve();
-      image.onerror = () => resolve();
-    });
-  } catch {
-    // Let the page continue even if the browser cannot decode the preload.
-  }
 }

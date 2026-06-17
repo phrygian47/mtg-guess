@@ -1,0 +1,47 @@
+export type Identifiers = {
+  abuId?: string;
+  scryfallCardBackId?: string;
+  scryfallId?: string;
+  scryfallIllustrationId?: string;
+  scryfallOracleId?: string;
+  tcgplayerAlternativeFoilProductId?: string;
+  tcgplayerEtchedProductId?: string;
+  tcgplayerProductId?: string;
+};
+
+export type CardAtomic = {
+  colorIdentity: string[];
+  colors: string[];
+  convertedManaCost: number;
+  defense?: string;
+  edhrecRank?: number;
+  edhrecSaltiness?: number;
+  faceConvertedManaCost?: number;
+  faceManaValue?: number;
+  faceName?: string;
+  firstPrinting?: string;
+  hand?: string;
+  hasAlternativeDeckLimit?: boolean;
+  identifiers: Identifiers;
+  isFunny?: boolean;
+  isGameChanger?: boolean;
+  isReserved?: boolean;
+  keywords?: string[];
+  layout: string;
+  life?: string;
+  loyalty?: string;
+  manaCost?: string;
+  manaValue: number;
+  name: string;
+  power?: string;
+  printings?: string[];
+  producedMana?: string[];
+  side?: string;
+  subsets?: string[];
+  subtypes: string[];
+  supertypes: string[];
+  text?: string;
+  toughness?: string;
+  type: string;
+  types: string[];
+};
