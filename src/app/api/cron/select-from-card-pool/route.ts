@@ -1,10 +1,16 @@
 import { sql } from "@/lib/db/db";
 
 const RECENT_DAYS_TO_AVOID = 180;
-const FUTURE_DAYS_TO_KEEP_READY = 3;
+const DAYS_AHEAD_TO_KEEP_READY = 3;
 
 const MODES = ["classic", "art"] as const;
 type PuzzleMode = (typeof MODES)[number];
+type DailyPuzzleRow = {
+  mode: PuzzleMode;
+  oracle_id: string;
+  puzzle_date: string;
+};
+type ModeReadyResult = Awaited<ReturnType<typeof ensureModeReady>>;
 
 function getUtcDateStringPlusDays(daysToAdd: number): string {
   const date = new Date();
@@ -55,6 +61,81 @@ async function pickOracleId(targetDateString: string, mode: PuzzleMode) {
   return fallbackRows[0]?.oracle_id as string | undefined;
 }
 
+async function getPuzzleForDate(targetDateString: string, mode: PuzzleMode) {
+  const rows = await sql`
+    select *
+    from daily_puzzles
+    where mode = ${mode}
+      and puzzle_date = ${targetDateString}::date
+    limit 1
+  `;
+
+  return rows[0] as DailyPuzzleRow | undefined;
+}
+
+async function createPuzzleForDate(targetDateString: string, mode: PuzzleMode) {
+  const oracleId = await pickOracleId(targetDateString, mode);
+
+  if (!oracleId) {
+    throw new Error(`No eligible card found for ${mode} on ${targetDateString}.`);
+  }
+
+  const rows = await sql`
+    insert into daily_puzzles (mode, oracle_id, puzzle_date)
+    values (
+      ${mode},
+      ${oracleId}::uuid,
+      ${targetDateString}::date
+    )
+    on conflict (mode, puzzle_date) do nothing
+    returning *
+  `;
+
+  return rows[0] as DailyPuzzleRow | undefined;
+}
+
+async function ensureModeReady(mode: PuzzleMode) {
+  const createdCards: DailyPuzzleRow[] = [];
+  const existingCards: DailyPuzzleRow[] = [];
+  const checkedDates: string[] = [];
+
+  for (let offset = 0; offset <= DAYS_AHEAD_TO_KEEP_READY; offset++) {
+    const targetDateString = getUtcDateStringPlusDays(offset);
+    checkedDates.push(targetDateString);
+
+    const existingPuzzle = await getPuzzleForDate(targetDateString, mode);
+
+    if (existingPuzzle) {
+      existingCards.push(existingPuzzle);
+      continue;
+    }
+
+    const createdPuzzle = await createPuzzleForDate(targetDateString, mode);
+
+    if (createdPuzzle) {
+      createdCards.push(createdPuzzle);
+      continue;
+    }
+
+    const racedPuzzle = await getPuzzleForDate(targetDateString, mode);
+
+    if (racedPuzzle) {
+      existingCards.push(racedPuzzle);
+      continue;
+    }
+
+    throw new Error(`Failed to create ${mode} puzzle for ${targetDateString}.`);
+  }
+
+  return {
+    mode,
+    checkedDates,
+    readyThroughDate: checkedDates[checkedDates.length - 1],
+    createdCards,
+    existingCards,
+  };
+}
+
 export async function GET(req: Request) {
   const auth = req.headers.get("authorization");
 
@@ -63,61 +144,27 @@ export async function GET(req: Request) {
   }
 
   try {
-    const createdCards = [];
-    const existingCards = [];
+    const modeResults: ModeReadyResult[] = [];
 
     for (const mode of MODES) {
-      // Offset 0 can heal today's puzzle; offsets 1-3 keep three future days ready.
-      for (let offset = 0; offset <= FUTURE_DAYS_TO_KEEP_READY; offset++) {
-        const targetDateString = getUtcDateStringPlusDays(offset);
-
-        const existingRows = await sql`
-          select *
-          from daily_puzzles
-          where mode = ${mode}
-            and puzzle_date = ${targetDateString}::date
-          limit 1
-        `;
-
-        if (existingRows.length > 0) {
-          existingCards.push(existingRows[0]);
-          continue;
-        }
-
-        const oracleId = await pickOracleId(targetDateString, mode);
-
-        if (!oracleId) {
-          return Response.json(
-            {
-              ok: false,
-              error: `No eligible card found for ${mode} on ${targetDateString}.`,
-            },
-            { status: 500 },
-          );
-        }
-
-        const rows = await sql`
-          insert into daily_puzzles (mode, oracle_id, puzzle_date)
-          values (
-            ${mode},
-            ${oracleId}::uuid,
-            ${targetDateString}::date
-          )
-          on conflict (mode, puzzle_date) do nothing
-          returning *
-        `;
-
-        if (rows.length > 0) {
-          createdCards.push(rows[0]);
-        }
-      }
+      modeResults.push(await ensureModeReady(mode));
     }
+
+    const createdCards = modeResults.flatMap((result) => result.createdCards);
+    const existingCards = modeResults.flatMap((result) => result.existingCards);
 
     return Response.json({
       ok: true,
       createdCount: createdCards.length,
       existingCount: existingCards.length,
       reusedCount: existingCards.length,
+      modes: modeResults.map((result) => ({
+        mode: result.mode,
+        checkedDates: result.checkedDates,
+        readyThroughDate: result.readyThroughDate,
+        createdCount: result.createdCards.length,
+        existingCount: result.existingCards.length,
+      })),
       createdCards,
       existingCards,
       reusedCards: existingCards,
