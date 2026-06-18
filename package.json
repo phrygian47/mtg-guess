@@ -12,7 +12,8 @@
     "import:sets": "tsx src/scripts/import-sets.ts",
     "import:card-pool": "tsx src/scripts/import-card-pool.ts",
     "import:symbology": "tsx src/scripts/import-symbology.ts",
-    "backfill:daily-puzzles": "tsx src/scripts/backfill-daily-puzzles.ts"
+    "backfill:daily-puzzles": "tsx src/scripts/backfill-daily-puzzles.ts",
+    "import:atomic": "tsx src/scripts/import-atomic"
   },
   "dependencies": {
     "@azure/msal-node": "^5.1.5",

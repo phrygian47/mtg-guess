@@ -18,41 +18,55 @@ type CardSourceOfTruth = CardAtomic & {
 };
 
 const inputPath = path.join(process.cwd(), "data", "AtomicCards.json");
-const outputPath = path.join(
-  process.cwd(),
-  "public",
-  "data",
-  "atomic-cards.filtered.json",
-);
+
+const outputDir = path.join(process.cwd(), "public", "data");
 
 const searchIndexOutputPath = path.join(
-  outputPath,
+  outputDir,
   "card-name-search-index.json",
 );
-const sourceOutputPath = path.join(outputPath, "cards-by-id.json");
+
+const sourceOutputPath = path.join(outputDir, "cards-by-id.json");
 
 function shouldKeepCard(card: CardAtomic): boolean {
-  if (card.isFunny === true) return false; //No unset or joke set cards
-  if (card.layout === "art_series") return false; //No art cards
-  if (card.types?.includes("Token")) return false; //No tokens
+  if (card.isFunny === true) return false; // No un-set or joke-set cards
+  if (card.layout === "art_series") return false; // No art cards
+  if (card.types?.includes("Token")) return false; // No tokens
   if (card.type?.includes("Token")) return false;
-  if (card.type === "Card") return false; //No memorabilia or jumpstart face cards
+  if (card.type === "Card") return false; // No memorabilia or jumpstart face cards
+
   return true;
 }
 
 function getCardId(card: CardAtomic): string {
   return (
-    card.identifiers?.scryfallOracleId ??
-    card.identifiers?.scryfallId ??
+    card.identifiers.scryfallOracleId ??
+    card.identifiers.scryfallId ??
     card.name
   );
+}
+
+function pickPreferredCard(
+  current: CardSourceOfTruth | undefined,
+  next: CardSourceOfTruth,
+): CardSourceOfTruth {
+  if (!current) return next;
+
+  /**
+   * AtomicCards can contain multiple entries that resolve to the same ID,
+   * especially when using scryfallOracleId.
+   *
+   * Since your CardAtomic type does not include language, release date,
+   * rarity, set code, or digital/paper flags, the safest deterministic choice
+   * is to keep the first card encountered.
+   */
+  return current;
 }
 
 export async function ImportCards() {
   const raw = await fs.readFile(inputPath, "utf8");
   const json = JSON.parse(raw) as AtomicCardsFile;
 
-  const searchDocs: SearchCard[] = [];
   const cardsById: Record<string, CardSourceOfTruth> = {};
 
   for (const cardVersions of Object.values(json.data)) {
@@ -66,14 +80,14 @@ export async function ImportCards() {
         id,
       };
 
-      cardsById[id] = sourceCard;
-
-      searchDocs.push({
-        id,
-        name: card.name,
-      });
+      cardsById[id] = pickPreferredCard(cardsById[id], sourceCard);
     }
   }
+
+  const searchDocs: SearchCard[] = Object.values(cardsById).map((card) => ({
+    id: card.id,
+    name: card.name,
+  }));
 
   const miniSearch = new MiniSearch<SearchCard>({
     idField: "id",
@@ -87,16 +101,24 @@ export async function ImportCards() {
 
   miniSearch.addAll(searchDocs);
 
-  await fs.mkdir(outputPath, { recursive: true });
+  await fs.mkdir(outputDir, { recursive: true });
 
   await fs.writeFile(
     searchIndexOutputPath,
     JSON.stringify(miniSearch.toJSON()),
+    "utf8",
   );
 
-  await fs.writeFile(sourceOutputPath, JSON.stringify(cardsById));
+  await fs.writeFile(sourceOutputPath, JSON.stringify(cardsById), "utf8");
 
   console.log(`Wrote ${searchDocs.length} searchable cards`);
   console.log(`Search index: ${searchIndexOutputPath}`);
   console.log(`Source data: ${sourceOutputPath}`);
+
+  return {
+    searchableCards: searchDocs.length,
+    sourceCards: Object.keys(cardsById).length,
+    searchIndexOutputPath,
+    sourceOutputPath,
+  };
 }
