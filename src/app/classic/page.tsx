@@ -10,6 +10,7 @@ import { submitCard } from "@/lib/game/submitCard";
 import ClassicInfoBar from "@/components/Info/Classic-Info/Classic-Info";
 import Stats from "@/components/Sections/Stats/Stats";
 import ClassicLoadingScreen from "./ClassicLoadingScreen";
+import MiniSearch from "minisearch";
 import {
   fetchGameStats,
   type GuessStats,
@@ -30,6 +31,44 @@ const VICTORY_SCROLL_DURATION_MS = 700;
 const RESTORED_VICTORY_DELAY_MS = 1800;
 const CARD_BACK_SRC = "/card_back.webp";
 const MIN_LOADING_MS = 1500;
+
+type SearchCard = {
+  id: string;
+  name: string;
+};
+
+function rankSearchResult(name: string, query: string) {
+  const normalizedName = name.toLowerCase();
+  const normalizedQuery = query.toLowerCase().trim();
+
+  if (normalizedName === normalizedQuery) return 0;
+  if (normalizedName.startsWith(normalizedQuery)) return 1;
+  if (normalizedName.includes(` ${normalizedQuery}`)) return 2;
+  return 3;
+}
+
+let cardSearchIndexPromise: Promise<MiniSearch<SearchCard>> | null = null;
+
+function loadCardSearchIndex() {
+  cardSearchIndexPromise ??= fetch("/data/card-name-search-index.json")
+    .then((res) => {
+      if (!res.ok) throw new Error("Failed to load card search index");
+      return res.text();
+    })
+    .then((json) =>
+      MiniSearch.loadJSON<SearchCard>(json, {
+        idField: "id",
+        fields: ["name"],
+        storeFields: ["id", "name"],
+        searchOptions: {
+          prefix: true,
+          fuzzy: 0.2,
+        },
+      }),
+    );
+
+  return cardSearchIndexPromise;
+}
 
 function easeOutCubic(progress: number) {
   return 1 - Math.pow(1 - progress, 3);
@@ -97,20 +136,6 @@ export default function ClassicPage() {
     (progress: ClassicProgressInput) => saveClassicProgress(timezone, progress),
     [timezone],
   );
-
-  const hasRequestedWakeRef = useRef(false);
-
-  const wakeDatabase = useCallback((delayMs = 500) => {
-    if (hasRequestedWakeRef.current) return;
-    hasRequestedWakeRef.current = true;
-
-    window.setTimeout(() => {
-      fetch("/api/cards/wake", {
-        method: "GET",
-        cache: "no-store",
-      }).catch(() => {});
-    }, delayMs);
-  }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -212,12 +237,14 @@ export default function ClassicPage() {
     }
 
     loadCardBack();
-    wakeDatabase();
+    loadCardSearchIndex().catch((error) => {
+      console.error("Could not preload card search index:", error);
+    });
 
     return () => {
       cancelled = true;
     };
-  }, [wakeDatabase]);
+  }, []);
 
   useEffect(() => {
     if (
@@ -380,15 +407,25 @@ export default function ClassicPage() {
 
   const fetchCardOptions = useCallback(
     async (query: string): Promise<CardGuess[]> => {
-      const res = await fetch(
-        `/api/cards/search?q=${encodeURIComponent(query)}`,
-      );
+      const searchIndex = await loadCardSearchIndex();
 
-      if (!res.ok) {
-        throw new Error("Failed to fetch card options");
-      }
+      return searchIndex
+        .search(query)
+        .sort((a, b) => {
+          const rankDiff =
+            rankSearchResult(String(a.name), query) -
+            rankSearchResult(String(b.name), query);
 
-      return res.json();
+          if (rankDiff !== 0) return rankDiff;
+
+          return b.score - a.score;
+        })
+        .slice(0, 20)
+        .map((result) => ({
+          id: String(result.id),
+          oracle_id: String(result.id),
+          name: String(result.name),
+        }));
     },
     [],
   );
