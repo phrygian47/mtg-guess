@@ -54,7 +54,7 @@ function SearchableDropdownInner<T>(
   const dropdownRef = useRef<HTMLDivElement>(null);
   const selectedDisplayValueRef = useRef<string | null>(null);
 
-  const debouncedQuery = useDebounce(query, 400);
+  const debouncedQuery = useDebounce(query, 250);
 
   useEffect(() => {
     selectedDisplayValueRef.current = null;
