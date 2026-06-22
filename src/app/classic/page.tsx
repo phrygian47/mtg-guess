@@ -11,6 +11,7 @@ import ClassicInfoBar from "@/components/Info/Classic-Info/Classic-Info";
 import Stats from "@/components/Sections/Stats/Stats";
 import ClassicLoadingScreen from "./ClassicLoadingScreen";
 import MiniSearch from "minisearch";
+import { loadCardSearchIndex } from "@/lib/db/loadCardSearchIndex";
 import {
   fetchGameStats,
   type GuessStats,
@@ -32,11 +33,6 @@ const RESTORED_VICTORY_DELAY_MS = 1800;
 const CARD_BACK_SRC = "/card_back.webp";
 const MIN_LOADING_MS = 1500;
 
-type SearchCard = {
-  id: string;
-  name: string;
-};
-
 function rankSearchResult(name: string, query: string) {
   const normalizedName = name.toLowerCase();
   const normalizedQuery = query.toLowerCase().trim();
@@ -45,29 +41,6 @@ function rankSearchResult(name: string, query: string) {
   if (normalizedName.startsWith(normalizedQuery)) return 1;
   if (normalizedName.includes(` ${normalizedQuery}`)) return 2;
   return 3;
-}
-
-let cardSearchIndexPromise: Promise<MiniSearch<SearchCard>> | null = null;
-
-function loadCardSearchIndex() {
-  cardSearchIndexPromise ??= fetch("/data/card-name-search-index.json")
-    .then((res) => {
-      if (!res.ok) throw new Error("Failed to load card search index");
-      return res.text();
-    })
-    .then((json) =>
-      MiniSearch.loadJSON<SearchCard>(json, {
-        idField: "id",
-        fields: ["name"],
-        storeFields: ["id", "name"],
-        searchOptions: {
-          prefix: true,
-          fuzzy: 0.2,
-        },
-      }),
-    );
-
-  return cardSearchIndexPromise;
 }
 
 function easeOutCubic(progress: number) {

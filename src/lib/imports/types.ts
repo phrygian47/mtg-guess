@@ -28,6 +28,7 @@ export type CardAtomic = {
   isReserved?: boolean;
   keywords?: string[];
   layout: string;
+  legalities?: Record<string, string>;
   life?: string;
   loyalty?: string;
   manaCost?: string;
