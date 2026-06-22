@@ -33,7 +33,7 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 data/CardData
-data/AromicCards*
+data/AtomicCards*
 
 # vercel
 .vercel
@@ -42,3 +42,5 @@ data/AromicCards*
 *.tsbuildinfo
 next-env.d.ts
 .env*.local
+data/AtomicCards.json
+public/data/cards-by-id.json
