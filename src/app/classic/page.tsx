@@ -33,6 +33,13 @@ const RESTORED_VICTORY_DELAY_MS = 1800;
 const CARD_BACK_SRC = "/card_back.webp";
 const MIN_LOADING_MS = 1500;
 
+type AnimatedInfoGridRow = {
+  id: string;
+  row: ClassicDisplayInfoGridRow["row"] | null;
+  submittedAt?: number;
+  pending?: boolean;
+};
+
 function rankSearchResult(name: string, query: string) {
   const normalizedName = name.toLowerCase();
   const normalizedQuery = query.toLowerCase().trim();
@@ -72,7 +79,7 @@ async function preloadBrowserImage(src: string) {
 }
 
 export default function ClassicPage() {
-  const [infoGrid, setInfoGrid] = useState<ClassicDisplayInfoGridRow[]>([]);
+  const [infoGrid, setInfoGrid] = useState<AnimatedInfoGridRow[]>([]);
   const [selectedGuessCard, setSelectedGuessCard] = useState<string>("");
   const [searchClearSignal, setSearchClearSignal] = useState(0);
   const victoryRef = useRef<HTMLDivElement | null>(null);
@@ -109,6 +116,12 @@ export default function ClassicPage() {
     (progress: ClassicProgressInput) => saveClassicProgress(timezone, progress),
     [timezone],
   );
+
+  const getCompletedRows = useCallback((rows: AnimatedInfoGridRow[]) => {
+    return rows.filter(
+      (row): row is ClassicDisplayInfoGridRow => row.row !== null,
+    );
+  }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -170,7 +183,13 @@ export default function ClassicPage() {
         return;
       }
 
-      setInfoGrid(savedProgress.rows);
+      setInfoGrid(
+        savedProgress.rows.map((row) => ({
+          ...row,
+          submittedAt: 0,
+          pending: false,
+        })),
+      );
       setVictoryStats(savedProgress.stats);
       setCompletionRecorded(savedProgress.completionRecorded);
 
@@ -225,7 +244,7 @@ export default function ClassicPage() {
       !gameWon ||
       completionRecorded ||
       !winningOracleId ||
-      infoGrid.length === 0
+      getCompletedRows(infoGrid).length === 0
     ) {
       return;
     }
@@ -250,7 +269,7 @@ export default function ClassicPage() {
         setVictoryStats(stats);
         setDailyStats(stats);
         persistProgress({
-          rows: infoGrid,
+          rows: getCompletedRows(infoGrid),
           completed: true,
           winningCardName,
           winningCardImage,
@@ -287,33 +306,52 @@ export default function ClassicPage() {
     winningCardImage,
     winningCardName,
     winningOracleId,
+    getCompletedRows,
   ]);
 
-  const handleSubmitGuess = async (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleSubmitGuess = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!selectedGuessCard || gameWon) return;
 
+    const guessedCardId = selectedGuessCard;
+    const guessesUsed = getCompletedRows(infoGrid).length + 1;
+    const pendingRowId = crypto.randomUUID();
+
+    const pendingRow: AnimatedInfoGridRow = {
+      id: pendingRowId,
+      row: null,
+      pending: true,
+      submittedAt: window.performance.now(),
+    };
+
+    setInfoGrid((prev) => [pendingRow, ...prev]);
+    setSelectedGuessCard("");
+    setSearchClearSignal((value) => value + 1);
+
     try {
-      const guessedCardId = selectedGuessCard;
-      const guessesUsed = infoGrid.length + 1;
-      const result = await submitGuess(timezone, guessedCardId);
-      const newInfoGridRow = await submitCard(timezone, guessedCardId);
-      const nextInfoGrid = [
+      const [result, newInfoGridRow] = await Promise.all([
+        submitGuess(timezone, guessedCardId),
+        submitCard(timezone, guessedCardId),
+      ]);
+
+      const nextInfoGrid: AnimatedInfoGridRow[] = [
         {
-          id: crypto.randomUUID(),
+          id: pendingRowId,
           row: newInfoGridRow,
+          pending: false,
+          submittedAt: pendingRow.submittedAt,
         },
         ...infoGrid,
       ];
 
       setInfoGrid(nextInfoGrid);
-      setSelectedGuessCard("");
-      setSearchClearSignal((value) => value + 1);
+
+      const completedRows = getCompletedRows(nextInfoGrid);
 
       if (!result.answer) {
         persistProgress({
-          rows: nextInfoGrid,
+          rows: completedRows,
           completed: false,
           winningCardName: null,
           winningCardImage: null,
@@ -334,8 +372,9 @@ export default function ClassicPage() {
       setVictoryStats(null);
       setStatsError(null);
       setStatsLoading(true);
+
       persistProgress({
-        rows: nextInfoGrid,
+        rows: completedRows,
         completed: true,
         winningCardName: result.name,
         winningCardImage: result.image_normal,
@@ -358,8 +397,9 @@ export default function ClassicPage() {
         setCompletionRecorded(true);
         setVictoryStats(stats);
         setDailyStats(stats);
+
         persistProgress({
-          rows: nextInfoGrid,
+          rows: completedRows,
           completed: true,
           winningCardName: result.name,
           winningCardImage: result.image_normal,
@@ -375,6 +415,8 @@ export default function ClassicPage() {
       }
     } catch (error) {
       console.error("Could not submit guess:", error);
+
+      setInfoGrid((prev) => prev.filter((row) => row.id !== pendingRowId));
     }
   };
 
@@ -542,7 +584,7 @@ export default function ClassicPage() {
                 )}
                 <section className={styles.statsPanel}>
                   <Stats
-                    guesses={infoGrid.length}
+                    guesses={getCompletedRows(infoGrid).length}
                     stats={victoryStats}
                     statsLoading={statsLoading}
                     statsError={statsError}

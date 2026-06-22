@@ -13,7 +13,9 @@ import Image from "next/image";
 
 type DisplayInfoGridRow = {
   id: string;
-  row: InfoGridRow;
+  row: InfoGridRow | null;
+  submittedAt?: number;
+  pending?: boolean;
 };
 
 type InfoGridProps = {
@@ -48,6 +50,7 @@ const CELL_SWEEP_STAGGER_MS = 50;
 const CELL_SWEEP_DURATION_MS = 350;
 const CELL_FLIP_STAGGER_MS = 100;
 const CARD_IMAGE_PRELOAD_TIMEOUT_MS = 2500;
+
 const SWEEP_TOTAL_MS =
   (CELL_ORDER.length - 1) * CELL_SWEEP_STAGGER_MS + CELL_SWEEP_DURATION_MS;
 
@@ -100,7 +103,7 @@ const getRarityClass = (value: unknown) => {
 };
 
 async function preloadImage(src: string | null) {
-  if (!src) return;
+  if (!src || typeof window === "undefined") return;
 
   const image = new window.Image();
   image.decoding = "async";
@@ -126,17 +129,30 @@ export default function InfoGrid({ rows, manaSymbolsBySymbol }: InfoGridProps) {
   useEffect(() => {
     const newestRow = rows[0];
 
-    if (!newestRow || flipReadyRowIds.includes(newestRow.id)) {
+    if (
+      !newestRow ||
+      !newestRow.row ||
+      flipReadyRowIds.includes(newestRow.id)
+    ) {
       return;
     }
 
     let cancelled = false;
+
     const cardImageUrl =
       typeof newestRow.row.card.value === "string"
         ? newestRow.row.card.value
         : null;
+
+    const elapsedSinceSubmit =
+      newestRow.submittedAt !== undefined
+        ? window.performance.now() - newestRow.submittedAt
+        : 0;
+
+    const remainingSweepMs = Math.max(0, SWEEP_TOTAL_MS - elapsedSinceSubmit);
+
     const sweepFinished = new Promise<void>((resolve) => {
-      window.setTimeout(resolve, SWEEP_TOTAL_MS);
+      window.setTimeout(resolve, remainingSweepMs);
     });
 
     async function waitForFlip() {
@@ -206,6 +222,14 @@ export default function InfoGrid({ rows, manaSymbolsBySymbol }: InfoGridProps) {
         </div>
       </div>
     );
+  };
+
+  const renderPendingCell = (
+    cellIndex: number,
+    shouldAnimate: boolean,
+    isCard = false,
+  ) => {
+    return renderAnimatedCell(null, cellIndex, shouldAnimate, false, isCard);
   };
 
   const renderManaValueCell = (
@@ -527,7 +551,9 @@ export default function InfoGrid({ rows, manaSymbolsBySymbol }: InfoGridProps) {
 
     return (
       <div
-        className={`${getRevealClass(shouldAnimate)} ${styles.cardRevealWrapper}`}
+        className={`${getRevealClass(shouldAnimate)} ${
+          styles.cardRevealWrapper
+        }`}
         style={getRevealStyle(revealIndex, shouldAnimate)}
       >
         <div
@@ -570,12 +596,28 @@ export default function InfoGrid({ rows, manaSymbolsBySymbol }: InfoGridProps) {
 
         {rows.map(({ id, row }, rowIndex) => {
           const isNewestRow = rowIndex === 0;
+          const shouldAnimate = isNewestRow;
           const canFlip = flipReadyRowIds.includes(id);
+
+          if (!row) {
+            return (
+              <div className={styles.infoGridRow} key={id}>
+                {CELL_ORDER.map((cell, cellIndex) => (
+                  <div key={cell.key}>
+                    {renderPendingCell(
+                      cellIndex,
+                      shouldAnimate,
+                      cell.type === "card",
+                    )}
+                  </div>
+                ))}
+              </div>
+            );
+          }
 
           return (
             <div className={styles.infoGridRow} key={id}>
               {CELL_ORDER.map((cell, cellIndex) => {
-                const shouldAnimate = isNewestRow;
                 const revealIndex = isNewestRow ? cellIndex : 0;
 
                 if (cell.type === "card") {

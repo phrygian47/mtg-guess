@@ -263,7 +263,8 @@ function toDbCardRow(
   );
 
   return {
-    scryfall_id: printingMetadata?.scryfall_id ?? card.identifiers.scryfallId ?? oracleId,
+    scryfall_id:
+      printingMetadata?.scryfall_id ?? card.identifiers.scryfallId ?? oracleId,
     oracle_id: oracleId,
     name: card.name,
     type_line: toNullableString(card.type),
@@ -272,7 +273,8 @@ function toDbCardRow(
     colors: compactStringArray(card.colors),
     cmc: card.manaValue ?? card.convertedManaCost ?? null,
     set_code:
-      printingMetadata?.set_code ?? normalizeSetCode(card, setReleaseDateByCode),
+      printingMetadata?.set_code ??
+      normalizeSetCode(card, setReleaseDateByCode),
     set_name: printingMetadata?.set_name ?? null,
     rarity: printingMetadata?.rarity ?? null,
     image_small: printingMetadata?.image_small ?? null,
@@ -316,7 +318,10 @@ async function loadSetReleaseDateByCode(): Promise<SetReleaseDateByCode> {
     const setReleaseDateByCode: SetReleaseDateByCode = new Map();
 
     for (const row of reader.getRowObjectsJson() as SetReleaseDateRow[]) {
-      if (typeof row.code !== "string" || typeof row.release_date !== "string") {
+      if (
+        typeof row.code !== "string" ||
+        typeof row.release_date !== "string"
+      ) {
         continue;
       }
 
@@ -347,12 +352,12 @@ async function loadCardPrintingMetadataByOracleId(): Promise<CardPrintingMetadat
           , c.availability as games
           , row_number() over (
               partition by lower(i.scryfallOracleId)
-              order by
-                  s.releaseDate asc nulls last
-                , case when c.language = 'English' then 0 else 1 end
-                , case when c.isOnlineOnly = true then 1 else 0 end
-                , case when c.isPromo = true then 1 else 0 end
-                , c.uuid
+             order by
+                case when c.isPromo = true then 1 else 0 end
+              , s.releaseDate asc nulls last
+              , case when c.language = 'English' then 0 else 1 end
+              , case when c.isOnlineOnly = true then 1 else 0 end
+              , c.uuid
             ) as rank
         from read_parquet('${toDuckDbPath(cardPrintingsPath)}') c
         join read_parquet('${toDuckDbPath(cardIdentifiersPath)}') i
