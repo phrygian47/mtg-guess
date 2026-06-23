@@ -12,9 +12,15 @@ import {
   saveArtProgress,
   type ArtProgressInput,
 } from "@/lib/game/artProgress";
+import { formatCountdown, useNextPuzzleCountdown } from "@/lib/game/countdown";
 import { recordGameCompletion, type GuessStats } from "@/lib/game/stats";
 import { parseManaCost, parseSymbolText } from "@/lib/game/manaSymbols";
 import type { CardGuess } from "@/lib/question/types";
+<<<<<<< Updated upstream
+=======
+import { loadCardSearchIndex } from "@/lib/db/loadCardSearchIndex";
+import { useVictoryScroll } from "@/lib/game/useVictoryScroll";
+>>>>>>> Stashed changes
 
 import styles from "./page.module.css";
 
@@ -61,10 +67,13 @@ const CANVAS_HEIGHT = 518;
 const FULL_REVEAL_GUESS_COUNT = PIXEL_WIDTH_STEPS.length;
 const SET_AND_MANA_HINT_GUESS_COUNT = FULL_REVEAL_GUESS_COUNT;
 const RULES_TEXT_HINT_GUESS_COUNT = FULL_REVEAL_GUESS_COUNT + 4;
+const VICTORY_REVEAL_DELAY_MS = 350;
+const RESTORED_VICTORY_DELAY_MS = 900;
 
 export default function ArtPage() {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const [initialArtState] = useState(() => getInitialArtPageState(timezone));
+  const [initialArtState] = useState(() => getEmptyArtPageState());
+  const countdown = useNextPuzzleCountdown();
   const [puzzle, setPuzzle] = useState<ArtPuzzle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -75,6 +84,8 @@ export default function ArtPage() {
   const [guesses, setGuesses] = useState<GuessEntry[]>(initialArtState.guesses);
   const [submitting, setSubmitting] = useState(false);
   const [gameWon, setGameWon] = useState(initialArtState.gameWon);
+  const [showVictory, setShowVictory] = useState(false);
+  const victoryRef = useVictoryScroll<HTMLDivElement>(showVictory);
   const [winningCardName, setWinningCardName] = useState<string | null>(
     initialArtState.winningCardName,
   );
@@ -130,6 +141,47 @@ export default function ArtPage() {
     (progress: ArtProgressInput) => saveArtProgress(timezone, progress),
     [timezone],
   );
+
+  useEffect(() => {
+    let restoreTimer: number | null = null;
+    let victoryTimer: number | null = null;
+
+    restoreTimer = window.setTimeout(() => {
+      const savedProgress = loadArtProgress(timezone);
+
+      if (!savedProgress) return;
+
+      setGuesses(savedProgress.guesses);
+      setGameWon(savedProgress.completed);
+      setWinningCardName(savedProgress.winningCardName);
+      setWinningCardImage(savedProgress.winningCardImage);
+      setWinningOracleId(savedProgress.winningOracleId);
+      setCompletionRecorded(savedProgress.completionRecorded);
+      setShouldRetryCompletionRecord(
+        savedProgress.completed && !savedProgress.completionRecorded,
+      );
+      setVictoryStats(savedProgress.stats);
+      setSetNameHint(savedProgress.setNameHint);
+      setManaCostHint(savedProgress.manaCostHint);
+      setRulesTextHint(savedProgress.rulesTextHint);
+
+      if (savedProgress.completed) {
+        victoryTimer = window.setTimeout(() => {
+          setShowVictory(true);
+        }, RESTORED_VICTORY_DELAY_MS);
+      }
+    }, 0);
+
+    return () => {
+      if (restoreTimer !== null) {
+        window.clearTimeout(restoreTimer);
+      }
+
+      if (victoryTimer !== null) {
+        window.clearTimeout(victoryTimer);
+      }
+    };
+  }, [timezone]);
 
   useEffect(() => {
     if (
@@ -380,6 +432,10 @@ export default function ArtPage() {
           rulesTextHint: nextRulesTextHint,
         });
 
+        window.setTimeout(() => {
+          setShowVictory(true);
+        }, VICTORY_REVEAL_DELAY_MS);
+
         try {
           const stats = await recordGameCompletion(
             timezone,
@@ -442,7 +498,7 @@ export default function ArtPage() {
         <section className={styles.shell}>
           <div className={styles.header}>
             <ArtInfoBar />
-            {gameWon && winningCardName && (
+            {gameWon && winningCardName && !showVictory && (
               <p className={styles.subhead}>
                 The card was <strong>{winningCardName}</strong>.
               </p>
@@ -595,24 +651,43 @@ export default function ArtPage() {
             </form>
           )}
 
-          {gameWon && winningCardImage && (
-            <Image
-              className={styles.winningCard}
-              src={winningCardImage}
-              alt={winningCardName ?? "Winning card"}
-              width={488}
-              height={680}
-            />
-          )}
+          {showVictory && (
+            <section ref={victoryRef} className={styles.victorySection}>
+              <h2 className={styles.victoryTitle}>You got it!</h2>
+              <p className={styles.victoryText}>
+                The card was <strong>{winningCardName}</strong>.
+              </p>
 
-          {gameWon && (
-            <section className={styles.statsPanel}>
-              <Stats
-                guesses={guesses.length}
-                stats={victoryStats}
-                statsLoading={statsLoading}
-                statsError={statsError}
-              />
+              <div className={styles.victoryContent}>
+                {winningCardImage && (
+                  <Image
+                    className={styles.victoryCard}
+                    src={winningCardImage}
+                    alt={winningCardName ?? "Winning card"}
+                    width={488}
+                    height={680}
+                  />
+                )}
+
+                <section className={styles.statsPanel}>
+                  <Stats
+                    guesses={guesses.length}
+                    stats={victoryStats}
+                    statsLoading={statsLoading}
+                    statsError={statsError}
+                  />
+                </section>
+
+                <div className={styles.timer}>
+                  <span className={styles.timerText}>Next art in: </span>
+                  <span className={styles.timerClock}>
+                    {formatCountdown(countdown)}
+                  </span>
+                  <span>
+                    <em>New art every local midnight</em>
+                  </span>
+                </div>
+              </div>
             </section>
           )}
 
@@ -638,8 +713,8 @@ export default function ArtPage() {
   );
 }
 
-function getInitialArtPageState(timezone: string): InitialArtPageState {
-  const emptyState: InitialArtPageState = {
+function getEmptyArtPageState(): InitialArtPageState {
+  return {
     guesses: [],
     gameWon: false,
     winningCardName: null,
@@ -651,31 +726,6 @@ function getInitialArtPageState(timezone: string): InitialArtPageState {
     setNameHint: null,
     manaCostHint: null,
     rulesTextHint: null,
-  };
-
-  if (typeof window === "undefined") {
-    return emptyState;
-  }
-
-  const savedProgress = loadArtProgress(timezone);
-
-  if (!savedProgress) {
-    return emptyState;
-  }
-
-  return {
-    guesses: savedProgress.guesses,
-    gameWon: savedProgress.completed,
-    winningCardName: savedProgress.winningCardName,
-    winningCardImage: savedProgress.winningCardImage,
-    winningOracleId: savedProgress.winningOracleId,
-    completionRecorded: savedProgress.completionRecorded,
-    shouldRetryCompletionRecord:
-      savedProgress.completed && !savedProgress.completionRecorded,
-    victoryStats: savedProgress.stats,
-    setNameHint: savedProgress.setNameHint,
-    manaCostHint: savedProgress.manaCostHint,
-    rulesTextHint: savedProgress.rulesTextHint,
   };
 }
 
