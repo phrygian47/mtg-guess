@@ -1,0 +1,94 @@
+.container {
+  color: var(--text);
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 0.35rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold) rgba(0, 0, 0, 0.25);
+}
+
+.container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 999px;
+}
+
+.container::-webkit-scrollbar-thumb {
+  background: var(--gold);
+  border-radius: 999px;
+}
+
+.container h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.35rem;
+  line-height: 1.1;
+  color: var(--gold);
+  text-align: center;
+  letter-spacing: 0.03em;
+}
+
+.container hr {
+  border: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  margin: 0.75rem 0 1rem;
+}
+
+.container p {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.timer {
+  display: flex;
+  flex-direction: column;
+  border: 3px solid var(--gold);
+  background: rgba(0, 0, 0, 0.44);
+  color: var(--gold);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  margin: 1rem 0;
+  text-align: center;
+  font-weight: 700;
+}
+
+.timer em {
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.timer_text {
+  font-size: 1rem;
+}
+
+.timer_clock {
+  font-size: 2rem;
+}
+
+.propertyList {
+  display: grid;
+  gap: 0.75rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.propertyCard {
+  padding: 1rem;
+  border: 1px solid rgba(184, 148, 82, 0.5);
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.propertyCard h3 {
+  margin: 0 0 0.5rem;
+  color: var(--gold);
+}
+
+.propertyCard p {
+  margin: 0;
+}

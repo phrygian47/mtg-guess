@@ -15,8 +15,8 @@ export default function ArtInfo() {
 
       <p>
         Some cards have many printings and alternate illustrations. This mode
-        currently chooses from the site&apos;s card pool and uses the stored art
-        crop for that card row.
+        currently chooses from the site&apos;s card pool and typically chooses
+        the original art printing version over reprints.
       </p>
 
       <p>

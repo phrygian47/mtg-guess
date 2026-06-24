@@ -16,11 +16,8 @@ import { formatCountdown, useNextPuzzleCountdown } from "@/lib/game/countdown";
 import { recordGameCompletion, type GuessStats } from "@/lib/game/stats";
 import { parseManaCost, parseSymbolText } from "@/lib/game/manaSymbols";
 import type { CardGuess } from "@/lib/question/types";
-<<<<<<< Updated upstream
-=======
 import { loadCardSearchIndex } from "@/lib/db/loadCardSearchIndex";
 import { useVictoryScroll } from "@/lib/game/useVictoryScroll";
->>>>>>> Stashed changes
 
 import styles from "./page.module.css";
 
@@ -337,17 +334,37 @@ export default function ArtPage() {
     };
   }, [pixelWidth, puzzle?.art_crop]);
 
+  function rankSearchResult(name: string, query: string) {
+    const normalizedName = name.toLowerCase();
+    const normalizedQuery = query.toLowerCase().trim();
+
+    if (normalizedName === normalizedQuery) return 0;
+    if (normalizedName.startsWith(normalizedQuery)) return 1;
+    if (normalizedName.includes(` ${normalizedQuery}`)) return 2;
+    return 3;
+  }
+
   const fetchCardOptions = useCallback(
     async (query: string): Promise<CardGuess[]> => {
-      const res = await fetch(
-        `/api/cards/search?q=${encodeURIComponent(query)}`,
-      );
+      const searchIndex = await loadCardSearchIndex();
 
-      if (!res.ok) {
-        throw new Error("Failed to fetch card options");
-      }
+      return searchIndex
+        .search(query)
+        .sort((a, b) => {
+          const rankDiff =
+            rankSearchResult(String(a.name), query) -
+            rankSearchResult(String(b.name), query);
 
-      return res.json();
+          if (rankDiff !== 0) return rankDiff;
+
+          return b.score - a.score;
+        })
+        .slice(0, 20)
+        .map((result) => ({
+          id: String(result.id),
+          oracle_id: String(result.id),
+          name: String(result.name),
+        }));
     },
     [],
   );
@@ -561,6 +578,11 @@ export default function ArtPage() {
                   <span>Rules text in {rulesTextTriesRemaining} tries</span>
                 </div>
               </div>
+              {guesses.length === 0 && !showVictory && (
+                <div>
+                  <h2>Start typing to submit a guess...</h2>
+                </div>
+              )}
 
               <div
                 className={`${styles.hintReveal} ${
