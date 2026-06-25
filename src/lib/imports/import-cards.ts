@@ -363,7 +363,18 @@ async function loadCardPrintingMetadataByOracleId(): Promise<CardPrintingMetadat
                 , case when c.isOnlineOnly = true then 1 else 0 end
                 , case when c.isPromo = true then 1 else 0 end
                 , c.uuid
-            ) as rank
+            ) as metadata_rank
+          , row_number() over (
+              partition by lower(i.scryfallOracleId)
+              order by
+                  case
+                    when lower(coalesce(c.promoTypes, '')) like '%universesbeyond%'
+                      then 1
+                    else 0
+                  end
+                , s.releaseDate desc nulls last
+                , c.uuid
+            ) as image_rank
         from read_parquet('${toDuckDbPath(cardPrintingsPath)}') c
         join read_parquet('${toDuckDbPath(cardIdentifiersPath)}') i
           on i.uuid = c.uuid
@@ -379,19 +390,30 @@ async function loadCardPrintingMetadataByOracleId(): Promise<CardPrintingMetadat
           and lower(coalesce(s.type, '')) not in (${[...EXCLUDED_SET_TYPES]
             .map((setType) => `'${setType}'`)
             .join(", ")})
+      ),
+      metadata_printings as (
+        select *
+        from printing_candidates
+        where metadata_rank = 1
+      ),
+      image_printings as (
+        select *
+        from printing_candidates
+        where image_rank = 1
       )
       select
-          oracle_id
-        , scryfall_id
-        , set_code
-        , set_name
-        , release_date
-        , rarity
-        , artist
-        , flavor_text
-        , games
-      from printing_candidates
-      where rank = 1
+          metadata_printings.oracle_id
+        , image_printings.scryfall_id
+        , metadata_printings.set_code
+        , metadata_printings.set_name
+        , metadata_printings.release_date
+        , metadata_printings.rarity
+        , image_printings.artist
+        , metadata_printings.flavor_text
+        , metadata_printings.games
+      from metadata_printings
+      join image_printings
+        on image_printings.oracle_id = metadata_printings.oracle_id
     `);
 
     const cardPrintingMetadataByOracleId: CardPrintingMetadataByOracleId =

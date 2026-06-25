@@ -77,7 +77,9 @@ async function createPuzzleForDate(targetDateString: string, mode: PuzzleMode) {
   const oracleId = await pickOracleId(targetDateString, mode);
 
   if (!oracleId) {
-    throw new Error(`No eligible card found for ${mode} on ${targetDateString}.`);
+    throw new Error(
+      `No eligible card found for ${mode} on ${targetDateString}.`,
+    );
   }
 
   const rows = await sql`
@@ -137,13 +139,45 @@ async function ensureModeReady(mode: PuzzleMode) {
 }
 
 export async function GET(req: Request) {
+  const schedule = req.headers.get("x-vercel-cron-schedule");
+  const userAgent = req.headers.get("user-agent");
+  let cronRunId: number | null = null;
+
   const auth = req.headers.get("authorization");
 
   if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+    await sql`
+      insert into cron_runs (
+        job, status, finished_at, http_status, schedule, user_agent, error
+      )
+      values (
+        'select-from-card-pool',
+        'unauthorized',
+        now(),
+        401,
+        ${schedule},
+        ${userAgent},
+        'Authorization header did not match CRON_SECRET'
+      )
+    `;
+
     return new Response("Unauthorized", { status: 401 });
   }
 
   try {
+    const runRows = await sql`
+      insert into cron_runs (job, status, schedule, user_agent)
+      values (
+        'select-from-card-pool',
+        'started',
+        ${schedule},
+        ${userAgent}
+      )
+      returning id
+    `;
+
+    cronRunId = Number(runRows[0]?.id);
+
     const modeResults: ModeReadyResult[] = [];
 
     for (const mode of MODES) {
@@ -152,6 +186,17 @@ export async function GET(req: Request) {
 
     const createdCards = modeResults.flatMap((result) => result.createdCards);
     const existingCards = modeResults.flatMap((result) => result.existingCards);
+
+    await sql`
+      update cron_runs
+      set
+        status = 'success',
+        finished_at = now(),
+        http_status = 200,
+        created_count = ${createdCards.length},
+        existing_count = ${existingCards.length}
+      where id = ${cronRunId}
+    `;
 
     return Response.json({
       ok: true,
@@ -170,14 +215,20 @@ export async function GET(req: Request) {
       reusedCards: existingCards,
     });
   } catch (err) {
-    console.error("Daily card selection failed", err);
+    const message = err instanceof Error ? err.message : "Unknown error";
 
-    return Response.json(
-      {
-        ok: false,
-        error: err instanceof Error ? err.message : "Unknown error",
-      },
-      { status: 500 },
-    );
+    if (cronRunId !== null) {
+      await sql`
+        update cron_runs
+        set
+          status = 'error',
+          finished_at = now(),
+          http_status = 500,
+          error = ${message}
+        where id = ${cronRunId}
+      `;
+    }
+
+    return Response.json({ ok: false, error: message }, { status: 500 });
   }
 }

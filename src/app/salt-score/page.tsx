@@ -5,9 +5,17 @@ export default function Page() {
   return (
     <div className="page">
       <main className="main">
-        <div className={styles.infoBar}>
+        <section className={styles.infoSection}>
           <SaltInfoBar />
-        </div>
+          <div className={styles.infoHeader}>
+            <h1 className={styles.title}>
+              Guess which Magic: The Gathering card is saltier!
+            </h1>
+          </div>
+        </section>
+        <section className={styles.gameContainer}>
+          <h2>This Game is Coming Soon!</h2>
+        </section>
       </main>
     </div>
   );
