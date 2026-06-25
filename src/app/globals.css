@@ -10,6 +10,19 @@
   --correct: #388d5d;
   --partial: #c7a140;
   --incorrect: #a04f4f;
+  --mythic-gradient: linear-gradient(
+    45deg,
+    rgb(180, 50, 25),
+    rgb(245, 145, 5),
+    rgb(180, 50, 25)
+  );
+  --mythic-stroke: rgb(245, 145, 5);
+  --mythic-stroke-gradient: linear-gradient(
+    45deg,
+    rgb(205, 95, 35),
+    rgb(245, 145, 5),
+    rgb(205, 95, 35)
+  );
 }
 
 /* @media (prefers-color-scheme: dark) {

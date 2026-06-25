@@ -123,6 +123,7 @@ const searchIndexOutputPath = path.join(
 const sourceOutputPath = path.join(outputDir, "cards-by-id.json");
 
 const DB_BATCH_SIZE = 500;
+
 const EXCLUDED_SET_TYPES = new Set([
   "promo",
   "token",
@@ -270,7 +271,8 @@ function toDbCardRow(
   );
 
   return {
-    scryfall_id: printingMetadata?.scryfall_id ?? card.identifiers.scryfallId ?? oracleId,
+    scryfall_id:
+      printingMetadata?.scryfall_id ?? card.identifiers.scryfallId ?? oracleId,
     oracle_id: oracleId,
     name: card.name,
     type_line: toNullableString(card.type),
@@ -279,7 +281,8 @@ function toDbCardRow(
     colors: compactStringArray(card.colors),
     cmc: card.manaValue ?? card.convertedManaCost ?? null,
     set_code:
-      printingMetadata?.set_code ?? normalizeSetCode(card, setReleaseDateByCode),
+      printingMetadata?.set_code ??
+      normalizeSetCode(card, setReleaseDateByCode),
     set_name: printingMetadata?.set_name ?? null,
     rarity: printingMetadata?.rarity ?? null,
     image_small: printingMetadata?.image_small ?? null,
@@ -327,7 +330,10 @@ async function loadSetReleaseDateByCode(): Promise<SetReleaseDateByCode> {
     const setReleaseDateByCode: SetReleaseDateByCode = new Map();
 
     for (const row of reader.getRowObjectsJson() as SetReleaseDateRow[]) {
-      if (typeof row.code !== "string" || typeof row.release_date !== "string") {
+      if (
+        typeof row.code !== "string" ||
+        typeof row.release_date !== "string"
+      ) {
         continue;
       }
 

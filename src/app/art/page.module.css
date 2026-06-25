@@ -1,7 +1,7 @@
 .shell {
   width: min(100%, 860px);
   margin: 0 auto;
-  padding: 24px 16px 48px;
+  padding: 0px 16px 48px;
   color: var(--text);
 }
 
@@ -219,16 +219,46 @@
   cursor: pointer;
 }
 
-.winningCard {
-  display: block;
+.victorySection {
+  width: min(100%, 780px);
+  margin: 24px auto 0;
+  padding: 20px;
+  text-align: center;
+  color: var(--text);
+  scroll-margin-top: 32px;
+}
+
+.victoryTitle {
+  margin: 0 0 8px;
+}
+
+.victoryText {
+  margin: 0 0 16px;
+}
+
+.victoryContent {
+  display: grid;
+  grid-template-areas:
+    "image"
+    "stats"
+    "timer";
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.victoryCard {
+  grid-area: image;
   width: min(100%, 260px);
   height: auto;
-  margin: 1.5rem auto 0;
   border-radius: 1rem;
+  justify-self: center;
   box-shadow: 0 18px 36px rgb(0 0 0 / 0.32);
 }
 
 .statsPanel {
+  grid-area: stats;
   width: min(100%, 620px);
   margin: 24px auto 0;
   padding: 18px;
@@ -237,6 +267,33 @@
   background: var(--brown);
   box-shadow: 0 18px 44px rgb(0 0 0 / 0.22);
   text-align: left;
+}
+
+.timer {
+  grid-area: timer;
+  display: flex;
+  flex-direction: column;
+  border: 3px solid var(--gold);
+  background: rgba(0, 0, 0, 0.44);
+  color: var(--gold);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  margin: 1rem 0;
+  text-align: center;
+  font-weight: 700;
+}
+
+.timer em {
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.timerText {
+  font-size: 1rem;
+}
+
+.timerClock {
+  font-size: 2rem;
 }
 
 .guessList {
@@ -287,5 +344,14 @@
 
   .searchMenu button {
     height: 56px;
+  }
+
+  .victoryContent {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .victoryCard {
+    max-width: 240px;
+    margin: 0 auto;
   }
 }

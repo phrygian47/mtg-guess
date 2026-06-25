@@ -17,6 +17,13 @@ type ImportableCard = Card & {
   oracle_id?: string | null;
 };
 
+const EXCLUDED_SET_TYPES = new Set([
+  "promo",
+  "token",
+  "memorabilia",
+  "minigame",
+]);
+
 function getPrimaryFace(card: ImportableCard) {
   return card.card_faces?.[0];
 }
@@ -59,12 +66,15 @@ function getLoyalty(card: ImportableCard) {
 
 function isEligibleCard(card: ImportableCard) {
   if (!card.oracle_id) return false;
+  if (card.lang && card.lang !== "en") return false;
   if (card.digital) return false;
+  if (!card.games?.includes("paper")) return false;
+  if (card.promo) return false;
   if (card.border_color === "silver") return false;
   if (card.security_stamp === "acorn") return false;
   if (!getImageUris(card)?.normal) return false;
   if (card.layout === "token") return false;
-  if (card.set_type === "memorabilia") return false;
+  if (card.set_type && EXCLUDED_SET_TYPES.has(card.set_type)) return false;
 
   return true;
 }

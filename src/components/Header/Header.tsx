@@ -1,6 +1,7 @@
 import styles from "./Header.module.css";
 import Image from "next/image";
 import Link from "next/link";
+import GameNav from "../UI/GameNav/GameNav";
 
 export default function Header() {
   return (
@@ -17,6 +18,7 @@ export default function Header() {
           />
         </Link>
       </div>
+      <GameNav />
     </header>
   );
 }

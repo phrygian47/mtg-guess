@@ -1,6 +1,6 @@
 "use client";
 import styles from "./page.module.css";
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { fetchManaSymbols, ManaSymbolMap } from "@/lib/game/manaSymbols";
 import { CardGuess } from "@/lib/question/types";
 import InfoGrid from "@/components/UI/InfoGrid/InfoGrid";
@@ -10,7 +10,6 @@ import { submitCard } from "@/lib/game/submitCard";
 import ClassicInfoBar from "@/components/Info/Classic-Info/Classic-Info";
 import Stats from "@/components/Sections/Stats/Stats";
 import ClassicLoadingScreen from "./ClassicLoadingScreen";
-import MiniSearch from "minisearch";
 import { loadCardSearchIndex } from "@/lib/db/loadCardSearchIndex";
 import {
   fetchGameStats,
@@ -25,13 +24,12 @@ import {
   type ClassicDisplayInfoGridRow,
   type ClassicProgressInput,
 } from "@/lib/game/classicProgress";
+import { useVictoryScroll } from "@/lib/game/useVictoryScroll";
 
 const REVEAL_TOTAL_MS = 2000;
-const VICTORY_SCROLL_OFFSET_PX = 32;
-const VICTORY_SCROLL_DURATION_MS = 700;
 const RESTORED_VICTORY_DELAY_MS = 1800;
 const CARD_BACK_SRC = "/card_back.webp";
-const MIN_LOADING_MS = 1500;
+const MIN_LOADING_MS = 100;
 
 type AnimatedInfoGridRow = {
   id: string;
@@ -48,10 +46,6 @@ function rankSearchResult(name: string, query: string) {
   if (normalizedName.startsWith(normalizedQuery)) return 1;
   if (normalizedName.includes(` ${normalizedQuery}`)) return 2;
   return 3;
-}
-
-function easeOutCubic(progress: number) {
-  return 1 - Math.pow(1 - progress, 3);
 }
 
 async function preloadBrowserImage(src: string) {
@@ -82,10 +76,10 @@ export default function ClassicPage() {
   const [infoGrid, setInfoGrid] = useState<AnimatedInfoGridRow[]>([]);
   const [selectedGuessCard, setSelectedGuessCard] = useState<string>("");
   const [searchClearSignal, setSearchClearSignal] = useState(0);
-  const victoryRef = useRef<HTMLDivElement | null>(null);
 
   const [gameWon, setGameWon] = useState(false);
   const [showVictory, setShowVictory] = useState(false);
+  const victoryRef = useVictoryScroll<HTMLDivElement>(showVictory);
   const [winningCardName, setWinningCardName] = useState<string | null>(null);
   const [winningCardImage, setWinningCardImage] = useState<string | null>(null);
   const [winningOracleId, setWinningOracleId] = useState<string | null>(null);
@@ -130,47 +124,6 @@ export default function ClassicPage() {
 
     return () => window.clearTimeout(timer);
   }, []);
-
-  useEffect(() => {
-    if (!showVictory) return;
-
-    let frameId: number | null = null;
-
-    const startScroll = () => {
-      const element = victoryRef.current;
-      if (!element) return;
-
-      const startY = window.scrollY;
-      const targetY = Math.max(
-        0,
-        startY + element.getBoundingClientRect().top - VICTORY_SCROLL_OFFSET_PX,
-      );
-      const distance = targetY - startY;
-      const startedAt = window.performance.now();
-
-      const step = (timestamp: number) => {
-        const elapsed = timestamp - startedAt;
-        const progress = Math.min(elapsed / VICTORY_SCROLL_DURATION_MS, 1);
-        const nextY = startY + distance * easeOutCubic(progress);
-
-        window.scrollTo(0, nextY);
-
-        if (progress < 1) {
-          frameId = window.requestAnimationFrame(step);
-        }
-      };
-
-      frameId = window.requestAnimationFrame(step);
-    };
-
-    frameId = window.requestAnimationFrame(startScroll);
-
-    return () => {
-      if (frameId !== null) {
-        window.cancelAnimationFrame(frameId);
-      }
-    };
-  }, [showVictory]);
 
   useEffect(() => {
     let victoryTimer: number | null = null;
