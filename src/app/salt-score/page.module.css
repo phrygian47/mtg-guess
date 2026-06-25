@@ -1,5 +1,32 @@
-.infoBar {
+.infoSection {
   width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: var(--text);
+}
+
+.infoHeader {
+  padding: 1rem;
+  border: 3px solid var(--gold);
+  border-radius: 1rem;
+  background: var(--brown);
+  width: min(90%, 360px);
+  font-size: 0.6rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.gameContainer {
+  margin: 1rem;
   display: flex;
   justify-content: center;
   align-items: center;
