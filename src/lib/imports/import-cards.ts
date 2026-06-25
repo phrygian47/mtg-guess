@@ -123,6 +123,12 @@ const searchIndexOutputPath = path.join(
 const sourceOutputPath = path.join(outputDir, "cards-by-id.json");
 
 const DB_BATCH_SIZE = 500;
+const EXCLUDED_SET_TYPES = new Set([
+  "promo",
+  "token",
+  "memorabilia",
+  "minigame",
+]);
 
 function shouldKeepCard(card: CardAtomic): boolean {
   if (!card.identifiers.scryfallOracleId) return false;
@@ -199,13 +205,14 @@ function normalizeSetCode(
 ): string | null {
   const firstPrinting = normalizeSetCodeValue(card.firstPrinting);
 
-  if (firstPrinting) {
+  if (firstPrinting && setReleaseDateByCode.has(firstPrinting)) {
     return firstPrinting;
   }
 
   const printings = compactStringArray(card.printings)
     .map((setCode) => normalizeSetCodeValue(setCode))
-    .filter((setCode): setCode is string => Boolean(setCode));
+    .filter((setCode): setCode is string => setCode !== null)
+    .filter((setCode) => setReleaseDateByCode.has(setCode));
 
   if (printings.length === 0) {
     return null;
@@ -263,8 +270,7 @@ function toDbCardRow(
   );
 
   return {
-    scryfall_id:
-      printingMetadata?.scryfall_id ?? card.identifiers.scryfallId ?? oracleId,
+    scryfall_id: printingMetadata?.scryfall_id ?? card.identifiers.scryfallId ?? oracleId,
     oracle_id: oracleId,
     name: card.name,
     type_line: toNullableString(card.type),
@@ -273,8 +279,7 @@ function toDbCardRow(
     colors: compactStringArray(card.colors),
     cmc: card.manaValue ?? card.convertedManaCost ?? null,
     set_code:
-      printingMetadata?.set_code ??
-      normalizeSetCode(card, setReleaseDateByCode),
+      printingMetadata?.set_code ?? normalizeSetCode(card, setReleaseDateByCode),
     set_name: printingMetadata?.set_name ?? null,
     rarity: printingMetadata?.rarity ?? null,
     image_small: printingMetadata?.image_small ?? null,
@@ -313,15 +318,16 @@ async function loadSetReleaseDateByCode(): Promise<SetReleaseDateByCode> {
       from read_parquet('${toDuckDbPath(setMetadataPath)}')
       where code is not null
         and releaseDate is not null
+        and coalesce(isOnlineOnly, false) = false
+        and lower(coalesce(type, '')) not in (${[...EXCLUDED_SET_TYPES]
+          .map((setType) => `'${setType}'`)
+          .join(", ")})
     `);
 
     const setReleaseDateByCode: SetReleaseDateByCode = new Map();
 
     for (const row of reader.getRowObjectsJson() as SetReleaseDateRow[]) {
-      if (
-        typeof row.code !== "string" ||
-        typeof row.release_date !== "string"
-      ) {
+      if (typeof row.code !== "string" || typeof row.release_date !== "string") {
         continue;
       }
 
@@ -352,13 +358,23 @@ async function loadCardPrintingMetadataByOracleId(): Promise<CardPrintingMetadat
           , c.availability as games
           , row_number() over (
               partition by lower(i.scryfallOracleId)
-             order by
-                case when c.isPromo = true then 1 else 0 end
-              , s.releaseDate asc nulls last
-              , case when c.language = 'English' then 0 else 1 end
-              , case when c.isOnlineOnly = true then 1 else 0 end
-              , c.uuid
-            ) as rank
+              order by
+                  s.releaseDate asc nulls last
+                , case when c.isOnlineOnly = true then 1 else 0 end
+                , case when c.isPromo = true then 1 else 0 end
+                , c.uuid
+            ) as metadata_rank
+          , row_number() over (
+              partition by lower(i.scryfallOracleId)
+              order by
+                  case
+                    when lower(coalesce(c.promoTypes, '')) like '%universesbeyond%'
+                      then 1
+                    else 0
+                  end
+                , s.releaseDate desc nulls last
+                , c.uuid
+            ) as image_rank
         from read_parquet('${toDuckDbPath(cardPrintingsPath)}') c
         join read_parquet('${toDuckDbPath(cardIdentifiersPath)}') i
           on i.uuid = c.uuid
@@ -366,19 +382,38 @@ async function loadCardPrintingMetadataByOracleId(): Promise<CardPrintingMetadat
           on lower(s.code) = lower(c.setCode)
         where i.scryfallOracleId is not null
           and i.scryfallId is not null
+          and c.language = 'English'
+          and coalesce(c.isOnlineOnly, false) = false
+          and coalesce(c.isPromo, false) = false
+          and lower(coalesce(c.availability, '')) like '%paper%'
+          and coalesce(s.isOnlineOnly, false) = false
+          and lower(coalesce(s.type, '')) not in (${[...EXCLUDED_SET_TYPES]
+            .map((setType) => `'${setType}'`)
+            .join(", ")})
+      ),
+      metadata_printings as (
+        select *
+        from printing_candidates
+        where metadata_rank = 1
+      ),
+      image_printings as (
+        select *
+        from printing_candidates
+        where image_rank = 1
       )
       select
-          oracle_id
-        , scryfall_id
-        , set_code
-        , set_name
-        , release_date
-        , rarity
-        , artist
-        , flavor_text
-        , games
-      from printing_candidates
-      where rank = 1
+          metadata_printings.oracle_id
+        , image_printings.scryfall_id
+        , metadata_printings.set_code
+        , metadata_printings.set_name
+        , metadata_printings.release_date
+        , metadata_printings.rarity
+        , image_printings.artist
+        , metadata_printings.flavor_text
+        , metadata_printings.games
+      from metadata_printings
+      join image_printings
+        on image_printings.oracle_id = metadata_printings.oracle_id
     `);
 
     const cardPrintingMetadataByOracleId: CardPrintingMetadataByOracleId =
@@ -556,9 +591,9 @@ async function importCardsToDatabase(
         , set_code = excluded.set_code
         , set_name = coalesce(excluded.set_name, cards.set_name)
         , rarity = coalesce(excluded.rarity, cards.rarity)
-        , image_small = coalesce(excluded.image_small, cards.image_small)
-        , image_normal = coalesce(excluded.image_normal, cards.image_normal)
-        , art_crop = coalesce(excluded.art_crop, cards.art_crop)
+        , image_small = excluded.image_small
+        , image_normal = excluded.image_normal
+        , art_crop = excluded.art_crop
         , artist = coalesce(excluded.artist, cards.artist)
         , released_at = coalesce(excluded.released_at, cards.released_at)
         , layout = excluded.layout
