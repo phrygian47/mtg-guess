@@ -4,6 +4,11 @@ const RECENT_DAYS_TO_AVOID = 180;
 const DAYS_AHEAD_TO_KEEP_READY = 3;
 
 const MODES = ["classic", "art"] as const;
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const maxDuration = 30;
+
 type PuzzleMode = (typeof MODES)[number];
 type DailyPuzzleRow = {
   mode: PuzzleMode;
