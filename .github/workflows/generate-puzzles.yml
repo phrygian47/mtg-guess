@@ -1,0 +1,22 @@
+name: Generate Daily Puzzles
+
+on:
+  schedule:
+    # Runs every day at 00:05 UTC
+    - cron: "5 0 * * *"
+
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Call puzzle endpoint
+        run: |
+          curl \
+            --fail \
+            --location \
+            --request GET \
+            --header "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://mtgdle.net/api/cron/select-from-card-pool
