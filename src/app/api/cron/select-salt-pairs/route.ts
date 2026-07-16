@@ -1,5 +1,4 @@
 import { fillSaltScoreSelections } from "@/lib/game/saltScorePairs";
-import { ok } from "assert";
 
 export async function GET(req: Request) {
   const auth = req.headers.get("authorization");

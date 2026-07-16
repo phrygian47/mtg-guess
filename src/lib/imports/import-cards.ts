@@ -129,6 +129,9 @@ const EXCLUDED_SET_TYPES = new Set([
   "token",
   "memorabilia",
   "minigame",
+  "box",
+  "masterpiece",
+  "treasure_chest",
 ]);
 
 function shouldKeepCard(card: CardAtomic): boolean {
@@ -363,12 +366,14 @@ async function loadCardPrintingMetadataByOracleId(): Promise<CardPrintingMetadat
           , c.flavorText as flavor_text
           , c.availability as games
           , row_number() over (
-              partition by lower(i.scryfallOracleId)
-              order by
-                  s.releaseDate asc nulls last
-                , case when c.isOnlineOnly = true then 1 else 0 end
-                , case when c.isPromo = true then 1 else 0 end
-                , c.uuid
+            partition by lower(i.scryfallOracleId)
+            order by
+                /* Heavily penalize rolling reprint sets so they are never picked as the "original" set */
+                case when lower(c.setCode) in ('plist', 'plst', 'mb1', 'fmb1') then 1 else 0 end
+              , s.releaseDate asc nulls last
+              , case when coalesce(c.isOnlineOnly, false) = true then 1 else 0 end
+              , case when coalesce(c.isPromo, false) = true then 1 else 0 end
+              , c.uuid
             ) as metadata_rank
           , row_number() over (
               partition by lower(i.scryfallOracleId)

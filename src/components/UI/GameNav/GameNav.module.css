@@ -117,3 +117,22 @@
   border-color: var(--gold);
   box-shadow: 0 0 12px var(--gold);
 }
+
+.newTag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.18rem 0.45rem;
+  border-radius: 999px;
+  background: var(--gold);
+  color: #1b1208;
+  font-size: 0.7rem;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  position: absolute;
+  top: -25px;
+  right: 50%;
+  transform: translateX(50%);
+}

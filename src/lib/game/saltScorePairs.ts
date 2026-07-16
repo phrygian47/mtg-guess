@@ -152,8 +152,7 @@ function buildSaltScorePairs(
         : [rightCandidate, leftCandidate];
 
     for (const [index, candidate] of pairCandidates.entries()) {
-      const position =
-        (pairNumber - 1) * SALT_SCORE_CARDS_PER_PAIR + index + 1;
+      const position = (pairNumber - 1) * SALT_SCORE_CARDS_PER_PAIR + index + 1;
 
       selectedCards.push({
         oracle_id: candidate.oracle_id,
@@ -225,6 +224,7 @@ async function pickSaltScoreCandidates(
       , cards.edhrec_saltiness::text as salt_score
     from cards
     where cards.edhrec_saltiness is not null
+      and cards.edhrec_saltiness >= 1.0
       and cards.image_normal is not null
       and not exists (
         select 1
@@ -353,8 +353,10 @@ export async function fillSaltScoreSelections({
 } = {}) {
   const createdSelections: SaltScoreSelection[] = [];
   const reusedSelections: SaltScoreSelection[] = [];
-  const missingSelections: { mode: typeof SALT_SCORE_MODE; puzzle_date: string }[] =
-    [];
+  const missingSelections: {
+    mode: typeof SALT_SCORE_MODE;
+    puzzle_date: string;
+  }[] = [];
 
   for (let offset = 0; offset <= daysToPregenerate; offset++) {
     const puzzleDate = getUtcDateStringPlusDays(offset);

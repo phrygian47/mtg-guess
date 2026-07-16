@@ -4,6 +4,7 @@
   justify-content: center;
   align-items: center;
   flex-direction: column;
+  padding: 1rem;
 }
 
 .title {
@@ -12,6 +13,8 @@
   justify-content: center;
   align-items: center;
   color: var(--text);
+  font-size: 1.5rem;
+  text-align: center;
 }
 
 .infoHeader {
@@ -19,15 +22,220 @@
   border: 3px solid var(--gold);
   border-radius: 1rem;
   background: var(--brown);
-  width: min(90%, 360px);
-  font-size: 0.6rem;
+  width: min(95%, 450px);
   margin: 0 auto;
   text-align: center;
 }
 
 .gameContainer {
-  margin: 1rem;
+  margin: 1rem 0;
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-direction: column;
+  position: relative;
+  width: 100%;
+}
+
+/* Card Row Layout - Flexes to column on mobile screens */
+.cardRow {
+  display: flex;
+  gap: 4rem;
+  justify-content: center;
+  align-items: flex-end; /* Keeps alignment flat */
+  width: 100%;
+  max-width: 1200px;
+  padding: 0 1rem;
+}
+
+@media (max-width: 640px) {
+  .cardRow {
+    flex-direction: column;
+    align-items: center;
+    gap: 4rem;
+    max-width: 280px;
+  }
+}
+
+.item {
+  cursor: pointer;
+  padding: 1rem; /* Better balance on small screens */
+  border-radius: 1rem;
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto;
+  text-align: center;
+  transition: all 200ms ease;
+}
+
+.item:hover {
+  background-color: #00000030;
+}
+
+.itemImage {
+  border-radius: 1rem;
+  transition: all 300ms ease;
+  width: 100%;
+  height: auto;
+  background: #111;
+  display: block;
+}
+
+.selected {
+  transform: scale(1.03);
+}
+
+.winner .itemImage {
+  box-shadow: 0 0 20px 5px rgba(0, 128, 0, 0.63);
+  border: 3px solid rgba(0, 116, 0, 0.747);
+}
+
+.loser .itemImage {
+  filter: grayscale(80%) opacity(0.6);
+  box-shadow: 0 0 15px 2px red;
+  border: 3px solid red;
+}
+
+.scoreOverlay {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: white;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9);
+  margin-top: 0.5rem;
+}
+
+.resultContainer {
+  border: 3px solid var(--gold);
+  position: absolute;
+  padding: 2rem;
+  border-radius: 1rem;
+  background: var(--brown);
+  z-index: 10;
+  text-align: center;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+}
+
+.result {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+
+.nextRoundBtn {
+  padding: 1rem 2rem;
+  font-size: 1.25rem;
+  font-weight: bold;
+  background-color: var(--gold, #ffd700);
+  color: #111;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease;
+  animation: fadeIn 0.5s ease;
+}
+
+.nextRoundBtn:hover {
+  transform: scale(1.05);
+  background-color: #ffed4a;
+}
+
+/* Victory Screen Details */
+.victorySection {
+  width: min(100%, 780px);
+  margin: 24px auto 0;
+  padding: 20px 10px;
+  text-align: center;
+  color: var(--text);
+}
+
+.victoryContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.sharePreviewContainer {
+  background: var(--brown);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+  border: 3px solid var(--gold);
+}
+
+.previewHeading {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  color: var(--gold);
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+}
+
+.sharePreview {
+  font-family: monospace;
+  font-size: 1.1rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  color: #fff;
+  margin: 0;
+}
+
+.shareButton {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.15rem;
+  font-weight: bold;
+  background-color: var(--gold, #ffd700);
+  color: #111;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.shareButton:hover {
+  transform: scale(1.02);
+  background-color: #ffed4a;
+}
+
+.timer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 3px solid var(--gold);
+  background: rgba(0, 0, 0, 0.44);
+  color: var(--gold);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  text-align: center;
+  font-weight: 700;
+}
+
+.timerClock {
+  font-size: 1.75rem;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
