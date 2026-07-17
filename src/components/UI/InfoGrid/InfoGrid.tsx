@@ -572,6 +572,7 @@ export default function InfoGrid({ rows, manaSymbolsBySymbol }: InfoGridProps) {
               width={146}
               height={204}
               preload
+              unoptimized
             />
           ) : (
             cell.value

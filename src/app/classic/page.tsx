@@ -2,6 +2,7 @@
 import styles from "./page.module.css";
 import { useState, useCallback, useEffect } from "react";
 import { fetchManaSymbols, ManaSymbolMap } from "@/lib/game/manaSymbols";
+import { Share } from "lucide-react";
 import { CardGuess } from "@/lib/question/types";
 import InfoGrid from "@/components/UI/InfoGrid/InfoGrid";
 import { submitGuess } from "@/lib/game/submitGuess";
@@ -11,6 +12,7 @@ import ClassicInfoBar from "@/components/Info/Classic-Info/Classic-Info";
 import Stats from "@/components/Sections/Stats/Stats";
 import ClassicLoadingScreen from "./ClassicLoadingScreen";
 import { loadCardSearchIndex } from "@/lib/db/loadCardSearchIndex";
+import { GenerateShareString } from "@/lib/game/share";
 import {
   fetchGameStats,
   type GuessStats,
@@ -84,6 +86,7 @@ export default function ClassicPage() {
   const [winningCardImage, setWinningCardImage] = useState<string | null>(null);
   const [winningOracleId, setWinningOracleId] = useState<string | null>(null);
   const [completionRecorded, setCompletionRecorded] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [shouldRetryCompletionRecord, setShouldRetryCompletionRecord] =
     useState(false);
   const [dailyStats, setDailyStats] = useState<GuessStats | null>(null);
@@ -93,6 +96,7 @@ export default function ClassicPage() {
   const [dailyStatsReady, setDailyStatsReady] = useState(false);
   const [classicProgressReady, setClassicProgressReady] = useState(false);
   const [cardBackReady, setCardBackReady] = useState(false);
+  const [shareGrid, setShareGrid] = useState<string>("");
   const [minimumLoadingTimePassed, setMinimumLoadingTimePassed] =
     useState(false);
   const [manaSymbolsBySymbol, setManaSymbolsBySymbol] = useState<ManaSymbolMap>(
@@ -116,6 +120,12 @@ export default function ClassicPage() {
       (row): row is ClassicDisplayInfoGridRow => row.row !== null,
     );
   }, []);
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(shareGrid);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -145,6 +155,12 @@ export default function ClassicPage() {
       );
       setVictoryStats(savedProgress.stats);
       setCompletionRecorded(savedProgress.completionRecorded);
+      console.log(savedProgress.rows);
+      const today = new Date();
+      const dateStr = `${String(today.getMonth() + 1).padStart(2, "0")}/${String(today.getDate()).padStart(2, "0")}`;
+      setShareGrid(
+        `MTGdle Classic: ${dateStr}\nSolved in ${savedProgress.rows.length} guesses${GenerateShareString(savedProgress.rows)}`,
+      );
 
       if (savedProgress.completed) {
         setGameWon(true);
@@ -262,7 +278,7 @@ export default function ClassicPage() {
     getCompletedRows,
   ]);
 
-  const handleSubmitGuess = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmitGuess = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!selectedGuessCard || gameWon) return;
@@ -313,6 +329,10 @@ export default function ClassicPage() {
           stats: null,
         });
 
+        const string = GenerateShareString(completedRows); // <--REMOVE TESTING ONLY
+
+        console.log(string);
+
         return;
       }
 
@@ -350,6 +370,11 @@ export default function ClassicPage() {
         setCompletionRecorded(true);
         setVictoryStats(stats);
         setDailyStats(stats);
+        const today = new Date();
+        const dateStr = `${String(today.getMonth() + 1).padStart(2, "0")}/${String(today.getDate()).padStart(2, "0")}`;
+        setShareGrid(
+          `MTGdle Classic ${dateStr}\nSolved in ${guessesUsed} guesses${GenerateShareString(completedRows)}`,
+        );
 
         persistProgress({
           rows: completedRows,
@@ -543,6 +568,14 @@ export default function ClassicPage() {
                     statsError={statsError}
                   />
                 </section>
+                {shareGrid && (
+                  <div className={styles.shareGrid}>
+                    <p>{shareGrid}</p>
+                    <button onClick={handleShare}>
+                      <Share size={20} /> {copied ? "Copied!" : "Share Results"}
+                    </button>
+                  </div>
+                )}
                 <div className={styles.timer}>
                   <span className={styles.timer_text}>Next card in: </span>
                   <span className={styles.timer_clock}>
