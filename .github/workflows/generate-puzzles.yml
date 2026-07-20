@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Call puzzle endpoint
+      - name: Call select-from-card-pool endpoint
         run: |
           curl \
             --fail \
@@ -20,3 +20,12 @@ jobs:
             --request GET \
             --header "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             https://mtgdle.net/api/cron/select-from-card-pool
+
+      - name: Call select-salt-pairs endpoint
+        run: |
+          curl \
+            --fail \
+            --location \
+            --request GET \
+            --header "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://mtgdle.net/api/cron/select-salt-pairs
