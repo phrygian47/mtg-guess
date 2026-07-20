@@ -159,7 +159,7 @@ export default function ClassicPage() {
       const today = new Date();
       const dateStr = `${String(today.getMonth() + 1).padStart(2, "0")}/${String(today.getDate()).padStart(2, "0")}`;
       setShareGrid(
-        `MTGdle Classic: ${dateStr}\nSolved in ${savedProgress.rows.length} guesses${GenerateShareString(savedProgress.rows)}`,
+        `MTGdle Classic: ${dateStr}\nSolved in ${savedProgress.rows.length} guesses\nPlay at https://mtgdle.net${GenerateShareString(savedProgress.rows)}`,
       );
 
       if (savedProgress.completed) {
@@ -329,10 +329,6 @@ export default function ClassicPage() {
           stats: null,
         });
 
-        const string = GenerateShareString(completedRows); // <--REMOVE TESTING ONLY
-
-        console.log(string);
-
         return;
       }
 
@@ -373,7 +369,7 @@ export default function ClassicPage() {
         const today = new Date();
         const dateStr = `${String(today.getMonth() + 1).padStart(2, "0")}/${String(today.getDate()).padStart(2, "0")}`;
         setShareGrid(
-          `MTGdle Classic ${dateStr}\nSolved in ${guessesUsed} guesses${GenerateShareString(completedRows)}`,
+          `MTGdle Classic ${dateStr}\nSolved in ${guessesUsed} guesses\nPlay at https://mtgdle.net${GenerateShareString(completedRows)}`,
         );
 
         persistProgress({
