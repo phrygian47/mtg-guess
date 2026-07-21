@@ -96,6 +96,19 @@ export default function Page() {
   const countdown = useNextPuzzleCountdown();
   const [copied, setCopied] = useState(false);
 
+  const getCardStatusClass = (side: "left" | "right") => {
+    if (!revealed || !currentScores) return "";
+
+    const leftVal = currentScores.left.salt_score;
+    const rightVal = currentScores.right.salt_score;
+
+    if (side === "left") {
+      return leftVal >= rightVal ? styles.winner : styles.loser;
+    } else {
+      return rightVal >= leftVal ? styles.winner : styles.loser;
+    }
+  };
+
   useEffect(() => {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const params = new URLSearchParams({ timezone });
@@ -277,13 +290,13 @@ export default function Page() {
           <div className={styles.cardRow}>
             {/* LEFT CARD */}
             <div
-              className={styles.leftImage}
+              className={`${styles.leftImage} ${getCardStatusClass("left")}`}
               onClick={() => handleGuess("left")}
             >
               <img
                 src={currentPair.left.image_normal}
                 alt={currentPair.left.name}
-                width="250"
+                width={300}
                 className={`${styles.itemImage} ${styles.imageLeft}`}
               />
               {currentScores && (
@@ -302,13 +315,13 @@ export default function Page() {
 
             {/* RIGHT CARD */}
             <div
-              className={styles.rightImage}
+              className={`${styles.rightImage} ${getCardStatusClass("right")}`}
               onClick={() => handleGuess("right")}
             >
               <img
                 src={currentPair.right.image_normal}
                 alt={currentPair.right.name}
-                width="250"
+                width={300}
                 className={`${styles.itemImage} ${styles.imageRight}`}
               />
               {currentScores && (

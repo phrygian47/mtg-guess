@@ -73,12 +73,18 @@
 }
 
 .itemImage {
+  cursor: pointer;
   border-radius: 1rem;
+
   transition: all 300ms ease;
   width: 100%;
+  max-width: 380px;
   height: auto;
   background: #111;
   display: block;
+  margin: 0 auto;
+  text-align: center;
+  transition: all 200ms ease;
 }
 
 .itemName {
@@ -92,19 +98,18 @@
   height: auto;
 }
 
-.selected {
+.winner .itemImage,
+.winner.itemImage {
+  box-shadow: 0 0 20px 5px rgba(0, 128, 0, 0.63);
+  outline: 3px solid rgba(0, 116, 0, 0.5);
   transform: scale(1.03);
 }
 
-.winner .itemImage {
-  box-shadow: 0 0 20px 5px rgba(0, 128, 0, 0.63);
-  border: 3px solid rgba(0, 116, 0, 0.747);
-}
-
-.loser .itemImage {
-  filter: grayscale(80%) opacity(0.6);
+.loser .itemImage,
+.loser.itemImage {
+  filter: grayscale(80%) opacity(0.8);
   box-shadow: 0 0 15px 2px red;
-  border: 3px solid red;
+  outline: 3px solid red;
 }
 
 .scoreOverlay {
@@ -114,7 +119,7 @@
   transform: translate(-50%, -50%);
   height: 100%;
   width: 100%;
-  background: rgba(17, 17, 17, 0.4);
+  max-width: 380px;
   display: flex;
   align-items: center;
   justify-content: center;
