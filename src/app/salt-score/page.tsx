@@ -30,21 +30,48 @@ type RevealedScores = {
 };
 
 // Simple CountUp component for animating the salt score
-function CountUp({ end, duration = 300 }: { end: number; duration?: number }) {
+function CountUp({
+  end,
+  duration = 1000,
+  start = false,
+}: {
+  end: number;
+  duration?: number;
+  start?: boolean;
+}) {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
+    // Only run animation when start is true
+    if (!start) {
+      setCount(0);
+      return;
+    }
+
+    let animationFrameId: number;
     let startTimestamp: number | null = null;
+
     const step = (timestamp: number) => {
       if (!startTimestamp) startTimestamp = timestamp;
       const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-      setCount(progress * end);
+
+      // Smooth ease-out cubic curve
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      setCount(easeOut * end);
+
       if (progress < 1) {
-        window.requestAnimationFrame(step);
+        animationFrameId = window.requestAnimationFrame(step);
       }
     };
-    window.requestAnimationFrame(step);
-  }, [end, duration]);
+
+    animationFrameId = window.requestAnimationFrame(step);
+
+    return () => {
+      if (animationFrameId) {
+        window.cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [end, duration, start]);
 
   return <span>{count.toFixed(2)}</span>;
 }
@@ -181,12 +208,11 @@ export default function Page() {
               <div className={styles.sharePreviewContainer}>
                 <p className={styles.previewHeading}>Your Results:</p>
                 <pre className={styles.sharePreview}>{shareText}</pre>
+                <button className={styles.shareButton} onClick={handleShare}>
+                  <Share size={20} />
+                  {copied ? "Copied!" : "Share Results"}
+                </button>
               </div>
-
-              <button className={styles.shareButton} onClick={handleShare}>
-                <Share size={20} />
-                {copied ? "Copied!" : "Share Results"}
-              </button>
 
               <div className={styles.timer}>
                 <span className={styles.timerText}>Next puzzle in: </span>
@@ -249,32 +275,52 @@ export default function Page() {
           <h2>Round {currentRound + 1} of 5</h2>
 
           <div className={styles.cardRow}>
-            <div className={leftClass} onClick={() => handleGuess("left")}>
+            {/* LEFT CARD */}
+            <div
+              className={styles.leftImage}
+              onClick={() => handleGuess("left")}
+            >
               <img
                 src={currentPair.left.image_normal}
                 alt={currentPair.left.name}
                 width="250"
-                className={styles.itemImage}
+                className={`${styles.itemImage} ${styles.imageLeft}`}
               />
-              <p>{currentPair.left.name}</p>
-              {revealed && currentScores && (
-                <div className={styles.scoreOverlay}>
-                  <CountUp end={currentScores.left.salt_score} />
+              {currentScores && (
+                <div
+                  className={`${styles.scoreOverlay} ${styles.left} ${
+                    revealed ? styles.active : ""
+                  }`}
+                >
+                  <CountUp
+                    end={currentScores.left.salt_score}
+                    start={revealed}
+                  />
                 </div>
               )}
             </div>
 
-            <div className={rightClass} onClick={() => handleGuess("right")}>
+            {/* RIGHT CARD */}
+            <div
+              className={styles.rightImage}
+              onClick={() => handleGuess("right")}
+            >
               <img
                 src={currentPair.right.image_normal}
                 alt={currentPair.right.name}
                 width="250"
-                className={styles.itemImage}
+                className={`${styles.itemImage} ${styles.imageRight}`}
               />
-              <p>{currentPair.right.name}</p>
-              {revealed && currentScores && (
-                <div className={styles.scoreOverlay}>
-                  <CountUp end={currentScores.right.salt_score} />
+              {currentScores && (
+                <div
+                  className={`${styles.scoreOverlay} ${styles.right} ${
+                    revealed ? styles.active : ""
+                  }`}
+                >
+                  <CountUp
+                    end={currentScores.right.salt_score}
+                    start={revealed}
+                  />
                 </div>
               )}
             </div>
