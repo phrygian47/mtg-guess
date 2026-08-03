@@ -96,6 +96,24 @@
   position: relative;
   width: 100%;
   height: auto;
+  transition: all 200ms ease;
+}
+
+.leftImage:hover {
+  transform: translateY(-4px);
+  transform: scale(1.03);
+}
+
+.rightImage:hover {
+  transform: translateY(-4px);
+  transform: scale(1.03);
+}
+
+/* Once the scores are revealed the card is no longer a choice, so it stops
+   being a hover target entirely. */
+.locked {
+  pointer-events: none;
+  cursor: default;
 }
 
 .winner .itemImage,
@@ -244,6 +262,62 @@
 .shareButton:hover {
   transform: scale(1.02);
   background-color: #ffed4a;
+}
+
+/* Loading Screen - mirrors the classic mode loading card */
+.loadingPage {
+  min-height: 100dvh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: clamp(1rem, 4vw, 2rem);
+  padding-top: clamp(4rem, 12vh, 7rem);
+}
+
+.loadingCard {
+  display: grid;
+  justify-items: center;
+  gap: 1.25rem;
+  width: min(100%, 360px);
+  padding: 1.5rem 1.25rem;
+  border: 3px solid var(--gold);
+  border-radius: 1rem;
+  background:
+    radial-gradient(circle at top, rgba(184, 148, 82, 0.18), transparent 42%),
+    var(--brown);
+  box-shadow: 0 18px 44px rgb(0 0 0 / 0.42);
+  text-align: center;
+}
+
+.loadingCopy {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.loadingEyebrow {
+  color: var(--gold);
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.loadingCopy h1 {
+  margin: 0;
+  color: var(--foreground);
+  font-size: clamp(1.35rem, 5vw, 2rem);
+  line-height: 1.05;
+}
+
+.statsPanel {
+  width: 100%;
+  padding: 18px;
+  border: 3px solid var(--gold);
+  border-radius: 0.75rem;
+  background: var(--brown);
+  box-shadow: 0 18px 44px rgb(0 0 0 / 0.22);
+  text-align: left;
 }
 
 .timer {

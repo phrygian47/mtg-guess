@@ -11,7 +11,7 @@ export type GuessStats = {
   distribution: GuessStatBucket[];
 };
 
-export type GameMode = "classic" | "art";
+export type GameMode = "classic" | "art" | "salt-score";
 
 const PLAYER_ID_STORAGE_KEY = "mtgdle-player-id";
 

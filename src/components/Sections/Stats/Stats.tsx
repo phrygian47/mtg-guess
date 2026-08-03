@@ -6,23 +6,27 @@ type StatsProps = {
   stats: GuessStats | null;
   statsLoading: boolean;
   statsError: string | null;
+  formatScore?: (score: number) => string;
+  averageLabel?: string;
 };
+
+function formatDefaultScore(guesses: number) {
+  return guesses === 1 ? "1 guess" : `${guesses} guesses`;
+}
 
 export default function Stats({
   guesses,
   stats,
   statsLoading,
   statsError,
+  formatScore = formatDefaultScore,
+  averageLabel = "avg guesses",
 }: StatsProps) {
-  function formatGuessLabel(guesses: number) {
-    return guesses === 1 ? "1 guess" : `${guesses} guesses`;
-  }
-
   return (
     <section className={styles.statsPanel} aria-live="polite">
       <div className={styles.statsHeader}>
         <h3>Today&apos;s Results</h3>
-        {guesses !== undefined && <span>{formatGuessLabel(guesses)}</span>}
+        {guesses !== undefined && <span>{formatScore(guesses)}</span>}
       </div>
 
       {statsLoading && (
@@ -44,7 +48,7 @@ export default function Stats({
               <span className={styles.statValue}>
                 {stats.averageGuesses?.toFixed(1) ?? "—"}
               </span>
-              <span className={styles.statLabel}>avg guesses</span>
+              <span className={styles.statLabel}>{averageLabel}</span>
             </div>
           </div>
 
@@ -63,9 +67,9 @@ export default function Stats({
                 <div
                   className={styles.barTrack}
                   role="meter"
-                  aria-label={`${bucket.players} players solved in ${formatGuessLabel(
-                    bucket.guesses,
-                  )}`}
+                  aria-label={`${formatScore(bucket.guesses)}: ${
+                    bucket.players
+                  } players`}
                   aria-valuemin={0}
                   aria-valuemax={Math.max(stats.solvedCount, 1)}
                   aria-valuenow={bucket.players}

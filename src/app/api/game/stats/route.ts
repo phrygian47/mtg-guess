@@ -25,7 +25,7 @@ type DistributionRow = {
 };
 
 const MAX_GUESSES_TO_TRACK = 100;
-const GAME_MODES = new Set(["classic", "art"]);
+const GAME_MODES = new Set(["classic", "art", "salt-score"]);
 
 export async function GET(req: Request) {
   try {
@@ -47,8 +47,8 @@ export async function POST(req: Request) {
     const timezone = normalizeTimezone(body.timezone);
     const oracleId = normalizeString(body.oracleId);
     const playerId = normalizeString(body.playerId);
-    const guessesUsed = normalizeGuessesUsed(body.guessesUsed);
     const mode = normalizeMode(body.mode);
+    const guessesUsed = normalizeGuessesUsed(body.guessesUsed, mode);
 
     if (!oracleId) {
       return Response.json({ error: "Missing oracleId." }, { status: 400 });
@@ -66,30 +66,54 @@ export async function POST(req: Request) {
     }
 
     const puzzleDate = await getCurrentPuzzleDate(timezone);
-    const answerRows = (await sql`
-      select oracle_id
-      from daily_puzzles
-      where mode = ${mode}
-        and puzzle_date = ${puzzleDate}::date
-      limit 1
-    `) as AnswerRow[];
 
-    const answer = answerRows[0];
+    let answerFound = false;
+    let isValidOracleId = false;
+    // Route the validation depending on the game mode
+    if (mode === "salt-score") {
+      // 1. Verify a puzzle was actually generated for today
+      const selectionRows = await sql`
+        select id
+        from multicard_game_selections
+        where mode = ${mode}
+          and puzzle_date = ${puzzleDate}::date
+        limit 1
+      `;
 
-    if (!answer) {
+      if (selectionRows.length > 0) {
+        answerFound = true;
+        // 2. Since salt-score uses pairs and doesn't have a single "winning" card,
+        // we just expect the frontend to pass a dummy ID for the stats table.
+        isValidOracleId = oracleId === "salt-score-daily";
+      }
+    } else {
+      // Original validation for Classic & Art modes
+      const answerRows = (await sql`
+        select oracle_id
+        from daily_puzzles
+        where mode = ${mode}
+          and puzzle_date = ${puzzleDate}::date
+        limit 1
+      `) as AnswerRow[];
+      const answer = answerRows[0];
+      if (answer) {
+        answerFound = true;
+        isValidOracleId =
+          answer.oracle_id.toLowerCase() === oracleId.toLowerCase();
+      }
+    }
+    if (!answerFound) {
       return Response.json(
         { error: "No puzzle card found for today." },
         { status: 404 },
       );
     }
-
-    if (answer.oracle_id.toLowerCase() !== oracleId.toLowerCase()) {
+    if (!isValidOracleId) {
       return Response.json(
         { error: "Stats can only be recorded for the winning card." },
         { status: 400 },
       );
     }
-
     await sql`
       insert into game_completions (
         mode,
@@ -107,7 +131,6 @@ export async function POST(req: Request) {
       )
       on conflict (mode, puzzle_date, player_key) do nothing
     `;
-
     return Response.json(await getStatsForPuzzleDate(puzzleDate, mode));
   } catch (error) {
     console.error("POST /api/game/stats crashed:", error);
@@ -123,12 +146,12 @@ function normalizeTimezone(value: unknown): string {
   return value.trim() || "UTC";
 }
 
-function normalizeMode(value: unknown): "classic" | "art" {
+function normalizeMode(value: unknown): "classic" | "art" | "salt-score" {
   if (typeof value !== "string" || !GAME_MODES.has(value)) {
     return "classic";
   }
 
-  return value as "classic" | "art";
+  return value as "classic" | "art" | "salt-score";
 }
 
 function normalizeString(value: unknown): string {
@@ -139,15 +162,22 @@ function normalizeString(value: unknown): string {
   return value.trim();
 }
 
-function normalizeGuessesUsed(value: unknown): number | null {
+function normalizeGuessesUsed(value: unknown, mode: string): number | null {
   if (typeof value !== "number" || !Number.isInteger(value)) {
     return null;
   }
-
-  if (value < 1 || value > MAX_GUESSES_TO_TRACK) {
-    return null;
+  // Salt Score allows a score of 0 through 5
+  if (mode === "salt-score") {
+    if (value < 0 || value > 5) {
+      return null;
+    }
   }
-
+  // Classic and Art require 1 to 100 guesses
+  else {
+    if (value < 1 || value > MAX_GUESSES_TO_TRACK) {
+      return null;
+    }
+  }
   return value;
 }
 
@@ -167,7 +197,7 @@ async function getCurrentPuzzleDate(timezone: string): Promise<string> {
 
 async function getStatsForPuzzleDate(
   puzzleDate: string,
-  mode: "classic" | "art",
+  mode: "classic" | "art" | "salt-score",
 ): Promise<GuessStats> {
   const rows = (await sql`
     select

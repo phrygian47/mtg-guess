@@ -1,0 +1,133 @@
+.spinner {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  /* Keeps the wheel and label together if a parent stretches this box. */
+  align-content: start;
+  gap: 0.85rem;
+}
+
+.wheel {
+  position: relative;
+  width: var(--wheel-size);
+  height: var(--wheel-size);
+  /* Distance from the centre out to each symbol's own centre. */
+  --radius: calc((var(--wheel-size) - var(--symbol-size)) / 2);
+}
+
+/* The color pie itself: a WUBRG conic gradient masked into a thin ring that
+   turns slowly behind the symbols. */
+.wheel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from -90deg,
+    #f6efc9,
+    #4d9de0,
+    #9a72c4,
+    #e0563a,
+    #4fae63,
+    #f6efc9
+  );
+  opacity: 0.28;
+  -webkit-mask: radial-gradient(
+    closest-side,
+    transparent 68%,
+    #000 72%,
+    #000 100%
+  );
+  mask: radial-gradient(closest-side, transparent 68%, #000 72%, #000 100%);
+  animation: wheelTurn 9s linear infinite;
+}
+
+.symbol {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--symbol-size);
+  height: var(--symbol-size);
+  /* Push the symbol out along its spoke, then undo the spin so the glyph
+     stays upright. */
+  transform: translate(-50%, -50%) rotate(var(--angle))
+    translateY(calc(var(--radius) * -1)) rotate(calc(var(--angle) * -1));
+}
+
+.symbol img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: manaPulse var(--cycle) ease-in-out infinite;
+  animation-delay: var(--delay);
+}
+
+.label {
+  margin: 0;
+  color: var(--gold);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@keyframes wheelTurn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* The pulse travels around the wheel one color at a time, the way a ring of
+   dots lights up in sequence. */
+@keyframes manaPulse {
+  0%,
+  55%,
+  100% {
+    transform: scale(0.76);
+    opacity: 0.4;
+    /* Keeps the same filter functions as the lit frame so the glow
+       interpolates instead of snapping. */
+    filter: saturate(0.45) brightness(0.8) drop-shadow(0 0 0 transparent);
+  }
+
+  20% {
+    transform: scale(1.14);
+    opacity: 1;
+    filter: saturate(1) brightness(1.1)
+      drop-shadow(0 0 calc(var(--symbol-size) * 0.35) var(--glow));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wheel::before {
+    animation: none;
+    opacity: 0.4;
+  }
+
+  .symbol img {
+    animation: manaFade var(--cycle) ease-in-out infinite;
+    animation-delay: var(--delay);
+  }
+
+  @keyframes manaFade {
+    0%,
+    55%,
+    100% {
+      opacity: 0.45;
+    }
+
+    20% {
+      opacity: 1;
+    }
+  }
+}

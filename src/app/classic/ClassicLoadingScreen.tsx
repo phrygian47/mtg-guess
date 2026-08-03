@@ -1,5 +1,6 @@
 import Image from "next/image";
 import styles from "./ClassicLoadingScreen.module.css";
+import ManaSpinner from "@/components/UI/ManaSpinner/ManaSpinner";
 
 type ClassicLoadingScreenProps = {
   cardBackSrc: string;
@@ -12,21 +13,14 @@ export default function ClassicLoadingScreen({
     <div className="page">
       <main className={`main ${styles.loadingPage}`} aria-busy="true">
         <section className={styles.loadingCard}>
-          <div className={styles.loadingCardBackFrame}>
-            <Image
-              src={cardBackSrc}
-              alt="Magic: The Gathering card back"
-              className={styles.loadingCardBack}
-              width={146}
-              height={204}
-              preload
-              unoptimized
-            />
-          </div>
-
+          <ManaSpinner
+            size={120}
+            label="Loading today's Salt Score puzzle"
+            showLabel={false}
+          ></ManaSpinner>
           <div className={styles.loadingCopy}>
             <p className={styles.loadingEyebrow}>Classic Mode</p>
-            <h1>Planeswalking Through the Blind Eternities...</h1>
+            <h1>Planeswalking Through the Blind Eternities</h1>
           </div>
         </section>
       </main>
