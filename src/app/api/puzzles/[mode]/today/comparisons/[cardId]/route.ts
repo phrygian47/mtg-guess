@@ -24,18 +24,36 @@ type DailyCardSelectionRow = {
 
 const MODE = "classic";
 
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-  const timezone = searchParams.get("timezone")?.trim() || "UTC";
-  const cardId = searchParams.get("cardId");
+type RouteContext = {
+  params: Promise<{ mode: string; cardId: string }>;
+};
 
-  if (!cardId) {
+/**
+ * A comparison between one candidate card and today's answer. Safe and
+ * idempotent, so it is a GET, but it is a derived resource rather than a plain
+ * card lookup.
+ */
+export async function GET(req: Request, context: RouteContext) {
+  const { mode, cardId } = await context.params;
+
+  if (mode !== MODE) {
     return Response.json(
-      { error: "Missing required query param: cardId" },
-      { status: 400 },
+      { error: "This mode has no comparisons resource." },
+      { status: 404 },
     );
   }
+
+  // The id interpolates into a ::uuid cast, so reject junk with a 400 rather
+  // than letting Postgres raise.
+  if (!UUID_PATTERN.test(cardId)) {
+    return Response.json({ error: "Invalid card id." }, { status: 400 });
+  }
+
+  const { searchParams } = new URL(req.url);
+  const timezone = searchParams.get("timezone")?.trim() || "UTC";
 
   const [answerRows, guessRows] = await Promise.all([
     sql`

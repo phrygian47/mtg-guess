@@ -265,7 +265,9 @@ export default function ArtPage() {
 
       try {
         const params = new URLSearchParams({ timezone });
-        const res = await fetch(`/api/art/start-game?${params.toString()}`);
+        const res = await fetch(
+          `/api/puzzles/art/today?${params.toString()}`,
+        );
 
         if (!res.ok) {
           const message = await res.text();
@@ -381,7 +383,7 @@ export default function ArtPage() {
     setError(null);
 
     try {
-      const res = await fetch("/api/art/submit-guess", {
+      const res = await fetch("/api/puzzles/art/today/guesses", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -4,14 +4,14 @@ export async function submitCard(
   timezone: string,
   cardId: string,
 ): Promise<InfoGridRow> {
-  const params = new URLSearchParams({
-    timezone,
-    cardId,
-  });
+  const params = new URLSearchParams({ timezone });
 
-  const res = await fetch(`/api/game/submit-card?${params.toString()}`, {
-    method: "GET",
-  });
+  const res = await fetch(
+    `/api/puzzles/classic/today/comparisons/${encodeURIComponent(
+      cardId,
+    )}?${params.toString()}`,
+    { method: "GET" },
+  );
 
   if (!res.ok) {
     const message = await res.text();

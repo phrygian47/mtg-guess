@@ -8,7 +8,7 @@ export async function submitGuess(
   timezone: string,
   oracle_id: string,
 ): Promise<SubmitGuessResult> {
-  const res = await fetch("/api/game/submit-guess", {
+  const res = await fetch("/api/puzzles/classic/today/guesses", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

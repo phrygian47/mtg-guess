@@ -157,21 +157,28 @@ export default function Page() {
   // Restore today's saved progress before the puzzle finishes loading so a
   // refresh drops the player back into the round they left off on.
   useEffect(() => {
-    const savedProgress = loadSaltScoreProgress(timezone);
+    // Deferred a tick, the way the art page restores: localStorage is not
+    // readable during SSR, so this cannot be lazy state, and applying it
+    // synchronously in the effect body cascades a render.
+    const restoreTimer = window.setTimeout(() => {
+      const savedProgress = loadSaltScoreProgress(timezone);
 
-    if (!savedProgress) return;
+      if (!savedProgress) return;
 
-    setResults(savedProgress.results);
-    setCurrentRound(savedProgress.currentRound);
-    setCompletionRecorded(savedProgress.completionRecorded);
-    setStats(savedProgress.stats);
+      setResults(savedProgress.results);
+      setCurrentRound(savedProgress.currentRound);
+      setCompletionRecorded(savedProgress.completionRecorded);
+      setStats(savedProgress.stats);
 
-    if (savedProgress.completed) {
-      setGameState("finished");
-      // Cached stats are a snapshot from whenever this game was finished, so
-      // pull the current numbers if the completion is already on the server.
-      setShouldRefreshStats(savedProgress.completionRecorded);
-    }
+      if (savedProgress.completed) {
+        setGameState("finished");
+        // Cached stats are a snapshot from whenever this game was finished, so
+        // pull the current numbers if the completion is already on the server.
+        setShouldRefreshStats(savedProgress.completionRecorded);
+      }
+    }, 0);
+
+    return () => window.clearTimeout(restoreTimer);
   }, [timezone]);
 
   useEffect(() => {
@@ -180,7 +187,7 @@ export default function Page() {
     const fetchItems = async () => {
       try {
         const response = await fetch(
-          `/api/salt-score/start-game?${params.toString()}`,
+          `/api/puzzles/salt-score/today?${params.toString()}`,
         );
         const data = await response.json();
         setItemPairList(data.pairs);
@@ -319,7 +326,7 @@ export default function Page() {
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const params = new URLSearchParams({ timezone: userTimezone });
       const response = await fetch(
-        `/api/salt-score/reveal?${params.toString()}`,
+        `/api/puzzles/salt-score/today/scores?${params.toString()}`,
       );
 
       if (response.ok) {
