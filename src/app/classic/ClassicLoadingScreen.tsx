@@ -1,14 +1,7 @@
-import Image from "next/image";
 import styles from "./ClassicLoadingScreen.module.css";
 import ManaSpinner from "@/components/UI/ManaSpinner/ManaSpinner";
 
-type ClassicLoadingScreenProps = {
-  cardBackSrc: string;
-};
-
-export default function ClassicLoadingScreen({
-  cardBackSrc,
-}: ClassicLoadingScreenProps) {
+export default function ClassicLoadingScreen() {
   return (
     <div className="page">
       <main className={`main ${styles.loadingPage}`} aria-busy="true">

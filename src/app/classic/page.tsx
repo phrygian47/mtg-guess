@@ -472,7 +472,7 @@ export default function ClassicPage() {
   }, []);
 
   if (showLoadingScreen) {
-    return <ClassicLoadingScreen cardBackSrc={CARD_BACK_SRC} />;
+    return <ClassicLoadingScreen />;
   }
 
   return (

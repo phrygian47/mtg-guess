@@ -1,5 +1,6 @@
 "use client";
 import SaltInfoBar from "@/components/Info/Salt-Info/Salt-Info";
+import SaltAnswers from "@/components/Sections/Salt-Answers/SaltAnswers";
 import Stats from "@/components/Sections/Stats/Stats";
 import ManaSpinner from "@/components/UI/ManaSpinner/ManaSpinner";
 import styles from "./page.module.css";
@@ -58,11 +59,10 @@ function CountUp({
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    // Only run animation when start is true
-    if (!start) {
-      setCount(0);
-      return;
-    }
+    // Only run animation when start is true. No reset is needed on the way
+    // out: the parent keys this component by pair number, so each round gets a
+    // fresh instance that starts back at 0.
+    if (!start) return;
 
     let animationFrameId: number;
     let startTimestamp: number | null = null;
@@ -109,9 +109,6 @@ export default function Page() {
   const [revealedScores, setRevealedScores] = useState<RevealedScores | null>(
     null,
   );
-  const [selectedSide, setSelectedSide] = useState<"left" | "right" | null>(
-    null,
-  );
 
   const countdown = useNextPuzzleCountdown();
   const [copied, setCopied] = useState(false);
@@ -123,6 +120,7 @@ export default function Page() {
   const [stats, setStats] = useState<GuessStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
   const [statsError, setStatsError] = useState<string | null>(null);
+  const [answersLoading, setAnswersLoading] = useState(false);
 
   const persistProgress = useCallback(
     (input: SaltScoreProgressInput) => saveSaltScoreProgress(timezone, input),
@@ -157,21 +155,28 @@ export default function Page() {
   // Restore today's saved progress before the puzzle finishes loading so a
   // refresh drops the player back into the round they left off on.
   useEffect(() => {
-    const savedProgress = loadSaltScoreProgress(timezone);
+    // Deferred a tick, the way the art page restores: localStorage is not
+    // readable during SSR, so this cannot be lazy state, and applying it
+    // synchronously in the effect body throws away the first paint.
+    const restoreTimer = window.setTimeout(() => {
+      const savedProgress = loadSaltScoreProgress(timezone);
 
-    if (!savedProgress) return;
+      if (!savedProgress) return;
 
-    setResults(savedProgress.results);
-    setCurrentRound(savedProgress.currentRound);
-    setCompletionRecorded(savedProgress.completionRecorded);
-    setStats(savedProgress.stats);
+      setResults(savedProgress.results);
+      setCurrentRound(savedProgress.currentRound);
+      setCompletionRecorded(savedProgress.completionRecorded);
+      setStats(savedProgress.stats);
 
-    if (savedProgress.completed) {
-      setGameState("finished");
-      // Cached stats are a snapshot from whenever this game was finished, so
-      // pull the current numbers if the completion is already on the server.
-      setShouldRefreshStats(savedProgress.completionRecorded);
-    }
+      if (savedProgress.completed) {
+        setGameState("finished");
+        // Cached stats are a snapshot from whenever this game was finished, so
+        // pull the current numbers if the completion is already on the server.
+        setShouldRefreshStats(savedProgress.completionRecorded);
+      }
+    }, 0);
+
+    return () => window.clearTimeout(restoreTimer);
   }, [timezone]);
 
   useEffect(() => {
@@ -310,10 +315,51 @@ export default function Page() {
     timezone,
   ]);
 
+  // A game finished in this session already holds every pair's scores from the
+  // last reveal, but a restored one does not, so the answers view refetches
+  // them. The puzzle is over by then, so nothing is given away.
+  useEffect(() => {
+    if (gameState !== "finished" || revealedScores) return;
+
+    let cancelled = false;
+
+    async function loadAnswers() {
+      setAnswersLoading(true);
+
+      try {
+        const params = new URLSearchParams({ timezone });
+        const response = await fetch(
+          `/api/salt-score/reveal?${params.toString()}`,
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to load answers: ${response.status}`);
+        }
+
+        const data: RevealedScores = await response.json();
+
+        if (!cancelled) {
+          setRevealedScores(data);
+        }
+      } catch (answersError) {
+        console.error("Could not load salt score answers:", answersError);
+      } finally {
+        if (!cancelled) {
+          setAnswersLoading(false);
+        }
+      }
+    }
+
+    loadAnswers();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [gameState, revealedScores, timezone]);
+
   const handleGuess = async (side: "left" | "right") => {
     if (revealed || isLoadingScores) return;
     setIsLoadingScores(true);
-    setSelectedSide(side);
 
     try {
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -362,7 +408,6 @@ export default function Page() {
 
       setCurrentRound(nextRound);
       setRevealed(false);
-      setSelectedSide(null);
       persistProgress({
         results: nextResults,
         currentRound: nextRound,
@@ -426,6 +471,13 @@ export default function Page() {
                 </button>
               </div>
 
+              <SaltAnswers
+                pairs={itemPairList ?? []}
+                scores={revealedScores}
+                results={results}
+                loading={answersLoading || !itemPairList}
+              />
+
               <section className={styles.statsPanel}>
                 <Stats
                   guesses={totalScore}
@@ -479,30 +531,6 @@ export default function Page() {
     (p) => p.pair_number === currentPair.pair_number,
   );
 
-  // Determine winner/loser classes
-  let leftClass = styles.item;
-  let rightClass = styles.item;
-
-  if (selectedSide === "left") leftClass += ` ${styles.selected}`;
-  if (selectedSide === "right") rightClass += ` ${styles.selected}`;
-
-  if (revealed && currentScores) {
-    const leftVal = currentScores.left.salt_score;
-    const rightVal = currentScores.right.salt_score;
-
-    if (leftVal > rightVal) {
-      leftClass += ` ${styles.winner}`;
-      rightClass += ` ${styles.loser}`;
-    } else if (rightVal > leftVal) {
-      rightClass += ` ${styles.winner}`;
-      leftClass += ` ${styles.loser}`;
-    } else {
-      // Tie
-      leftClass += ` ${styles.winner}`;
-      rightClass += ` ${styles.winner}`;
-    }
-  }
-
   return (
     <div className="page">
       <main className="main">
@@ -540,6 +568,7 @@ export default function Page() {
                   }`}
                 >
                   <CountUp
+                    key={currentPair.pair_number}
                     end={currentScores.left.salt_score}
                     start={revealed}
                   />
@@ -566,6 +595,7 @@ export default function Page() {
                   }`}
                 >
                   <CountUp
+                    key={currentPair.pair_number}
                     end={currentScores.right.salt_score}
                     start={revealed}
                   />

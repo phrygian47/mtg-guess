@@ -1,0 +1,160 @@
+.panel {
+  width: 100%;
+  padding: 1.25rem 1rem;
+  border: 3px solid var(--gold);
+  border-radius: 0.75rem;
+  background: var(--brown);
+  box-shadow: 0 18px 44px rgb(0 0 0 / 0.22);
+  text-align: center;
+}
+
+.heading {
+  margin: 0 0 0.9rem;
+  color: var(--gold);
+  font-size: 0.85rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.status {
+  margin: 0;
+  color: var(--text-sub);
+}
+
+.tabList {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.1rem;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.45rem 0.7rem;
+  border: 2px solid transparent;
+  border-radius: 0.5rem;
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--text);
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 150ms ease,
+    border-color 150ms ease,
+    background-color 150ms ease;
+}
+
+.tab:hover {
+  transform: translateY(-2px);
+}
+
+.tab:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.tabCorrect {
+  color: #8fd6a8;
+}
+
+.tabIncorrect {
+  color: #e59a9a;
+}
+
+/* The active tab is marked by the gold border, so the correct/incorrect
+   colour stays readable in both states. */
+.tabActive {
+  border-color: var(--gold);
+  background: rgba(184, 148, 82, 0.22);
+}
+
+.tabNumber {
+  font-variant-numeric: tabular-nums;
+}
+
+.tabPanel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.tabPanel:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 4px;
+  border-radius: 0.5rem;
+}
+
+.card {
+  display: grid;
+  justify-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem;
+  border-radius: 0.75rem;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.cardImage {
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+  border-radius: 0.6rem;
+}
+
+.pickCorrect .cardImage {
+  box-shadow: 0 0 18px 4px color-mix(in srgb, var(--correct) 55%, transparent);
+  outline: 3px solid var(--correct);
+}
+
+.pickWrong .cardImage {
+  box-shadow: 0 0 18px 4px color-mix(in srgb, var(--incorrect) 55%, transparent);
+  outline: 3px solid var(--incorrect);
+}
+
+.cardName {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.cardScore {
+  display: grid;
+  gap: 0.1rem;
+  margin: 0;
+}
+
+.scoreValue {
+  color: var(--gold);
+  font-size: 1.5rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.scoreLabel {
+  color: var(--text-sub);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .tabPanel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
