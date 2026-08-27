@@ -144,6 +144,10 @@
   flex-wrap: wrap;
 }
 
+.yesterday {
+  margin: 1rem;
+}
+
 .manaCostSymbols img {
   width: 1rem;
   height: 1rem;

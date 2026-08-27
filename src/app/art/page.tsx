@@ -7,6 +7,7 @@ import type { SubmitEvent } from "react";
 import CustomSearchable from "@/components/UI/CustomSearchable/CustomSearchable";
 import ArtInfoBar from "@/components/Info/Art-Info/Art-Info";
 import Stats from "@/components/Sections/Stats/Stats";
+import YesterdayCard from "@/components/Sections/Yesterday/YesterdayCard";
 import {
   loadArtProgress,
   saveArtProgress,
@@ -729,6 +730,10 @@ export default function ArtPage() {
               ))}
             </ol>
           )}
+
+          <div className={styles.yesterday}>
+            <YesterdayCard mode="art" heading="Yesterday's art" />
+          </div>
         </section>
       </main>
     </div>

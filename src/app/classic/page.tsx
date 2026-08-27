@@ -10,6 +10,7 @@ import CustomSearchable from "@/components/UI/CustomSearchable/CustomSearchable"
 import { submitCard } from "@/lib/game/submitCard";
 import ClassicInfoBar from "@/components/Info/Classic-Info/Classic-Info";
 import Stats from "@/components/Sections/Stats/Stats";
+import YesterdayCard from "@/components/Sections/Yesterday/YesterdayCard";
 import ClassicLoadingScreen from "./ClassicLoadingScreen";
 import { loadCardSearchIndex } from "@/lib/db/loadCardSearchIndex";
 import { GenerateShareString } from "@/lib/game/share";
@@ -534,10 +535,77 @@ export default function ClassicPage() {
                   : "Solve count unavailable"}
               </p>
             )}
+            {}
           </div>
         </div>
         <div>
           <InfoGrid rows={infoGrid} manaSymbolsBySymbol={manaSymbolsBySymbol} />
+
+          {infoGrid.length > 0 && (
+            <div className={styles.indicator_container}>
+              <p className={styles.indicator_heading}>Color Indicators</p>
+
+              <ul className={styles.indicator_list}>
+                <li className={styles.indicator}>
+                  <span
+                    className={`${styles.indicator_swatch} ${styles.indicator_correct}`}
+                    aria-hidden="true"
+                  />
+                  <span className={styles.indicator_label}>Correct</span>
+                </li>
+
+                <li className={styles.indicator}>
+                  <span
+                    className={`${styles.indicator_swatch} ${styles.indicator_partial}`}
+                    aria-hidden="true"
+                  />
+                  <span className={styles.indicator_label}>Close</span>
+                </li>
+
+                <li className={styles.indicator}>
+                  <span
+                    className={`${styles.indicator_swatch} ${styles.indicator_wrong}`}
+                    aria-hidden="true"
+                  />
+                  <span className={styles.indicator_label}>Incorrect</span>
+                </li>
+
+                <li className={styles.indicator}>
+                  <span
+                    className={`${styles.indicator_swatch} ${styles.indicator_arrow}`}
+                    aria-hidden="true"
+                  >
+                    <Image
+                      src="/icons/chevrons-up.svg"
+                      alt=""
+                      width={20}
+                      height={20}
+                    />
+                  </span>
+                  <span className={styles.indicator_label}>Higher</span>
+                </li>
+
+                <li className={styles.indicator}>
+                  <span
+                    className={`${styles.indicator_swatch} ${styles.indicator_arrow}`}
+                    aria-hidden="true"
+                  >
+                    <Image
+                      src="/icons/chevrons-down.svg"
+                      alt=""
+                      width={20}
+                      height={20}
+                    />
+                  </span>
+                  <span className={styles.indicator_label}>Lower</span>
+                </li>
+              </ul>
+            </div>
+          )}
+
+          <div className={styles.yesterday}>
+            <YesterdayCard mode="classic" />
+          </div>
 
           {showVictory && (
             <section ref={victoryRef} className={styles.victorySection}>

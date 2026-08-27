@@ -1,0 +1,12 @@
+.panel {
+  margin: 0 auto;
+}
+
+.name {
+  display: flex;
+  justify-content: center;
+  color: var(--text-sub);
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: center;
+}
