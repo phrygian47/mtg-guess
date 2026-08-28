@@ -32,7 +32,7 @@ import { useVictoryScroll } from "@/lib/game/useVictoryScroll";
 const REVEAL_TOTAL_MS = 2000;
 const RESTORED_VICTORY_DELAY_MS = 1800;
 const CARD_BACK_SRC = "/card_back.webp";
-const MIN_LOADING_MS = 100;
+const MIN_LOADING_MS = 10000;
 
 type AnimatedInfoGridRow = {
   id: string;

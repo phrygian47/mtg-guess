@@ -13,6 +13,8 @@
   height: var(--wheel-size);
   /* Distance from the centre out to each symbol's own centre. */
   --radius: calc((var(--wheel-size) - var(--symbol-size)) / 2);
+  /* How long one full lap around the wheel takes. */
+  --orbit: 2.8s;
 }
 
 /* The color pie itself: a WUBRG conic gradient masked into a thin ring that
@@ -48,17 +50,15 @@
   left: 50%;
   width: var(--symbol-size);
   height: var(--symbol-size);
-  /* Push the symbol out along its spoke, then undo the spin so the glyph
-     stays upright. */
   transform: translate(-50%, -50%) rotate(var(--angle))
     translateY(calc(var(--radius) * -1)) rotate(calc(var(--angle) * -1));
+  animation: manaOrbit var(--orbit) linear infinite;
 }
 
 .symbol img {
   display: block;
   width: 100%;
   height: 100%;
-  animation: manaPulse var(--cycle) ease-in-out infinite;
   animation-delay: var(--delay);
 }
 
@@ -87,47 +87,34 @@
   }
 }
 
-/* The pulse travels around the wheel one color at a time, the way a ring of
-   dots lights up in sequence. */
-@keyframes manaPulse {
-  0%,
-  55%,
-  100% {
-    transform: scale(0.76);
-    opacity: 0.4;
-    /* Keeps the same filter functions as the lit frame so the glow
-       interpolates instead of snapping. */
-    filter: saturate(0.45) brightness(0.8) drop-shadow(0 0 0 transparent);
+@keyframes manaOrbit {
+  from {
+    transform: translate(-50%, -50%) rotate(var(--angle))
+      translateY(calc(var(--radius) * -1)) rotate(calc(var(--angle) * -1));
   }
 
-  20% {
-    transform: scale(1.14);
-    opacity: 1;
-    filter: saturate(1) brightness(1.1)
-      drop-shadow(0 0 calc(var(--symbol-size) * 0.35) var(--glow));
+  to {
+    transform: translate(-50%, -50%) rotate(calc(var(--angle) + 360deg))
+      translateY(calc(var(--radius) * -1))
+      rotate(calc((var(--angle) + 360deg) * -1));
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Motion is the whole point of a spinner, so slow it down rather than
+     stopping it. --cycle and --delay are set inline by the component, and
+     inline styles beat stylesheet values, so those are scaled here instead of
+     redefined. */
+  .wheel {
+    --orbit: 9s;
+  }
+
   .wheel::before {
-    animation: none;
-    opacity: 0.4;
+    animation-duration: 24s;
   }
 
   .symbol img {
-    animation: manaFade var(--cycle) ease-in-out infinite;
-    animation-delay: var(--delay);
-  }
-
-  @keyframes manaFade {
-    0%,
-    55%,
-    100% {
-      opacity: 0.45;
-    }
-
-    20% {
-      opacity: 1;
-    }
+    animation-duration: calc(var(--cycle) * 3);
+    animation-delay: calc(var(--delay) * 3);
   }
 }

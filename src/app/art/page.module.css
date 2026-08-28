@@ -47,6 +47,26 @@
   box-shadow: 0px 0px 37px 10px rgba(0, 0, 0, 0.4);
 }
 
+/* Hidden rather than unmounted so canvasRef stays populated for the draw
+   effect, which returns early when the ref is empty. */
+.artCanvasHidden {
+  display: none;
+}
+
+/* Mirrors .artCanvas geometry exactly so nothing shifts when the art lands. */
+.artPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80%;
+  max-width: 520px;
+  aspect-ratio: 720 / 518;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(184, 148, 82, 0.35);
+  box-shadow: 0px 0px 37px 10px rgba(0, 0, 0, 0.4);
+}
+
 .status {
   display: flex;
   justify-content: center;

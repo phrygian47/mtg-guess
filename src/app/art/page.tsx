@@ -8,6 +8,7 @@ import CustomSearchable from "@/components/UI/CustomSearchable/CustomSearchable"
 import ArtInfoBar from "@/components/Info/Art-Info/Art-Info";
 import Stats from "@/components/Sections/Stats/Stats";
 import YesterdayCard from "@/components/Sections/Yesterday/YesterdayCard";
+import ManaSpinner from "@/components/UI/ManaSpinner/ManaSpinner";
 import {
   loadArtProgress,
   saveArtProgress,
@@ -74,6 +75,7 @@ export default function ArtPage() {
   const countdown = useNextPuzzleCountdown();
   const [puzzle, setPuzzle] = useState<ArtPuzzle | null>(null);
   const [loading, setLoading] = useState(true);
+  const [artReady, setArtReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedGuessCard, setSelectedGuessCard] = useState<CardGuess | null>(
     null,
@@ -320,6 +322,9 @@ export default function ArtPage() {
       }
 
       drawPixelatedImage(canvas, image, pixelWidth);
+      // Only now is there anything to look at. Set once and left alone, so the
+      // placeholder does not flash back in on every guess redraw.
+      setArtReady(true);
     };
 
     image.onerror = () => {
@@ -642,14 +647,28 @@ export default function ArtPage() {
           )}
 
           <div className={styles.artStage}>
-            {loading && (
-              <p className={styles.status}>Loading today&apos;s art...</p>
-            )}
             {!loading && error && <p className={styles.status}>{error}</p>}
+
+            {/* Same footprint as the canvas, so the art's size is obvious
+                before it arrives. */}
+            {!error && !artReady && (
+              <div className={styles.artPlaceholder}>
+                <ManaSpinner
+                  size={110}
+                  label="Loading today's art..."
+                  showLabel={false}
+                />
+              </div>
+            )}
+
+            {/* Stays mounted once the puzzle lands, even while hidden: the
+                draw effect bails out early if canvasRef has nothing in it. */}
             {!loading && puzzle && (
               <canvas
                 ref={canvasRef}
-                className={styles.artCanvas}
+                className={`${styles.artCanvas} ${
+                  artReady ? "" : styles.artCanvasHidden
+                }`}
                 aria-label="Pixelated Magic card art"
               />
             )}
