@@ -5,6 +5,22 @@ import fs from "node:fs";
 
 const FILE_PATH = "src/assets/card-pool.csv";
 
+// Matching on the front face alone would otherwise also hit art cards and
+// tokens, which reuse real card names -- "Baleful Beholder" exists as a real
+// card, an art_series entry and a token. Only real playable layouts qualify.
+const EXCLUDED_LAYOUTS = [
+  "art_series",
+  "token",
+  "double_faced_token",
+  "emblem",
+  "scheme",
+  "planar",
+  "vanguard",
+  "augment",
+  "host",
+  "reversible_card",
+];
+
 async function main() {
   const { sql } = await import("@/lib/db/db");
 
@@ -22,8 +38,10 @@ async function main() {
     select distinct c.oracle_id, true, 1
     from cards c
     join unnest(${names}::text[]) as imported(name)
-      on lower(c.name) = lower(imported.name)
+      on lower(split_part(c.name, ' // ', 1)) = lower(imported.name)
     where c.oracle_id is not null
+      and coalesce(c.layout, '') <> all(${EXCLUDED_LAYOUTS}::text[])
+      and c.name not like 'A-%'
     on conflict (oracle_id) do update
     set enabled = true
   `;
@@ -32,7 +50,9 @@ async function main() {
     select imported.name
     from unnest(${names}::text[]) as imported(name)
     left join cards c
-      on lower(c.name) = lower(imported.name)
+      on lower(split_part(c.name, ' // ', 1)) = lower(imported.name)
+     and coalesce(c.layout, '') <> all(${EXCLUDED_LAYOUTS}::text[])
+     and c.name not like 'A-%'
     where c.oracle_id is null
     order by imported.name
   `;

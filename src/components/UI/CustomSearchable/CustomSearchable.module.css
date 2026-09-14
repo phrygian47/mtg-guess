@@ -10,8 +10,21 @@
   height: 70px;
   margin: 0;
   padding: 0;
+}
+
+/* The artwork lives on a pseudo-element rather than on this box directly.
+   The input is stretched over the full container, so when it was the
+   container's own background, anything that gave the input an opaque
+   background hid the art entirely -- iOS autofill and the Increase Contrast
+   and Smart Invert accessibility settings all do exactly that. A
+   pseudo-element is not a form control, so the OS cannot restyle it. */
+.searchable_container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
   background: url("./assets/button.svg") no-repeat center;
   background-size: 100% 100%;
+  pointer-events: none;
 }
 
 .searchable_input {
@@ -38,6 +51,17 @@
 
 .searchable_input:focus {
   outline: none;
+}
+
+.searchable_input:-webkit-autofill,
+.searchable_input:-webkit-autofill:hover,
+.searchable_input:-webkit-autofill:focus,
+.searchable_input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px transparent inset;
+  box-shadow: 0 0 0 1000px transparent inset;
+  -webkit-text-fill-color: #fff;
+  caret-color: #fff;
+  transition: background-color 9999s ease-in-out 0s;
 }
 
 .btn {
@@ -79,36 +103,36 @@
 .searchable_option,
 .searchable_message,
 .searchable_error {
-  padding: 0.5rem; /* p-2 */
-  font-size: 0.875rem; /* text-sm */
+  padding: 0.5rem;
+  font-size: 0.875rem;
 }
 
 .searchable_message {
-  color: #6b7280; /* text-gray-500 */
+  color: #6b7280;
 }
 
 .searchable_message.italic {
-  font-style: italic; /* italic */
+  font-style: italic;
 }
 
 .searchable_error {
-  color: #ef4444; /* text-red-500 */
+  color: #ef4444;
 }
 
 .searchable_option {
-  cursor: pointer; /* cursor-pointer */
+  cursor: pointer;
   padding: 1rem;
   font-size: 1rem;
 }
 
 .searchable_option:hover {
-  background: #f3f4f6; /* hover:bg-gray-100 */
+  background: #f3f4f6;
 }
 
 .searchable_option.selected {
-  background: #eff6ff; /* bg-blue-50 */
+  background: #eff6ff;
 }
 
 .searchable_option_with_border {
-  border-bottom: 1px solid #f3f4f6; /* border-b border-gray-100 */
+  border-bottom: 1px solid #f3f4f6;
 }
