@@ -5,7 +5,6 @@ import {
   getUtcDateStringPlusDays,
 } from "@/lib/game/dailyPuzzles";
 
-const RECENT_DAYS_TO_AVOID = 180;
 const SALT_SCORE_PAIR_COUNT = 5;
 const SALT_SCORE_CARDS_PER_PAIR = 2;
 const SALT_SCORE_CARD_COUNT = SALT_SCORE_PAIR_COUNT * SALT_SCORE_CARDS_PER_PAIR;
@@ -216,7 +215,7 @@ export async function getSaltScoreSelectionForDate(
 async function pickSaltScoreCandidates(
   puzzleDate: string,
 ): Promise<SaltScoreCandidateRow[]> {
-  const freshRows = (await sql`
+  const unusedRows = (await sql`
     select
         cards.oracle_id::text as oracle_id
       , cards.name
@@ -233,17 +232,19 @@ async function pickSaltScoreCandidates(
           on selection_cards.multicard_game_selection_id = selections.id
         where selections.mode = ${SALT_SCORE_MODE}
           and selection_cards.oracle_id = cards.oracle_id
-          and selections.puzzle_date >= (${puzzleDate}::date - ${RECENT_DAYS_TO_AVOID}::int)
           and selections.puzzle_date < ${puzzleDate}::date
       )
     order by random()
     limit ${CANDIDATE_LIMIT}
   `) as SaltScoreCandidateRow[];
 
-  if (freshRows.length >= SALT_SCORE_CARD_COUNT) {
-    return freshRows;
+  if (unusedRows.length >= SALT_SCORE_CARD_COUNT) {
+    return unusedRows;
   }
 
+  // Every salty card has been used at least once. Reset by allowing
+  // previously used cards back into rotation, rather than lowering the
+  // salt bar, so we still only ever pick cards that are actually salty.
   return (await sql`
     select
         cards.oracle_id::text as oracle_id
@@ -252,6 +253,7 @@ async function pickSaltScoreCandidates(
       , cards.edhrec_saltiness::text as salt_score
     from cards
     where cards.edhrec_saltiness is not null
+      and cards.edhrec_saltiness >= 1.0
       and cards.image_normal is not null
     order by random()
     limit ${CANDIDATE_LIMIT}
