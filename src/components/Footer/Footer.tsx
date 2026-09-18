@@ -22,7 +22,7 @@ export default function Footer() {
         <section className={styles.brand} aria-label="About MTGdle">
           <Link href="/" className={styles.logo}>
             <Image
-              src="/logo.svg"
+              src="/logo.webp"
               alt="MTGdle Logo"
               width={150}
               height={70}

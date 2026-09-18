@@ -9,7 +9,7 @@ export default function Header() {
       <div className={styles.logo}>
         <Link href="/" aria-label="Go to home page">
           <Image
-            src="/logo.svg"
+            src="/logo.webp"
             alt="Logo"
             width={400}
             height={200}
