@@ -25,7 +25,7 @@ export default function Footer() {
               src="/logo.webp"
               alt="MTGdle Logo"
               width={150}
-              height={70}
+              height={75}
               loading="eager"
             />
           </Link>
