@@ -49,7 +49,6 @@ export default function GameNav() {
           </li>
 
           <li>
-            <span className={styles.newTag}>Beta</span>
             <Link
               href="/salt-score"
               className={`${styles.modeLink} ${isSalt ? styles.active : ""}`}

@@ -41,8 +41,6 @@ export default function Home() {
             <Link href="/salt-score" className={styles.button}>
               <span className={styles.buttonTitleRow}>
                 <span className={styles.button_title}>Salt Score</span>
-                <span className={styles.newTag}>New</span>
-                <span className={styles.newTag}>Beta</span>
               </span>
               <span className={styles.button_subtitle}>
                 Guess Which Card is the Saltiest
