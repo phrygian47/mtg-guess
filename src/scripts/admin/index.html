@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Price matchup builder</title>
+  <style>
+    :root {
+      --bg: #14110e;
+      --panel: #211c17;
+      --panel-2: #2a231d;
+      --line: #3a3128;
+      --text: #f1ebe3;
+      --muted: #a89d90;
+      --gold: #b89452;
+      --good: #4fae78;
+      --warn: #d6a640;
+      --bad: #c0605a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    header { padding: 18px 24px; border-bottom: 1px solid var(--line); }
+    header h1 { margin: 0; font-size: 20px; color: var(--gold); }
+    header p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+    main { display: grid; grid-template-columns: minmax(320px, 420px) 1fr; gap: 20px; padding: 20px 24px; align-items: start; }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+    section { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+    section.wide { grid-column: 1 / -1; }
+    h2 { margin: 0 0 12px; font-size: 16px; }
+    label { display: block; margin: 10px 0 4px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+    input[type=text] {
+      width: 100%; padding: 9px 10px; background: var(--bg); color: var(--text);
+      border: 1px solid var(--line); border-radius: 6px; font: inherit;
+    }
+    input[type=text]:focus { outline: 2px solid var(--gold); outline-offset: 0; }
+    label.check { display: flex; gap: 6px; align-items: center; text-transform: none; letter-spacing: 0; font-size: 13px; margin-top: 8px; cursor: pointer; }
+    .pending { display: grid; grid-template-columns: 90px 1fr; gap: 14px; background: var(--panel-2); border: 1px solid var(--gold); border-radius: 8px; padding: 12px; margin-top: 12px; }
+    .pending img { width: 90px; aspect-ratio: 5 / 7; object-fit: contain; background: #000; border-radius: 5px; }
+    .pending .hint { color: var(--muted); font-size: 12px; margin-top: 4px; }
+    .pending .buttons { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
+    .custom { color: var(--gold); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; margin-left: 6px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    button {
+      font: inherit; padding: 8px 14px; border-radius: 6px; border: 1px solid var(--line);
+      background: var(--panel-2); color: var(--text); cursor: pointer;
+    }
+    button:hover { border-color: var(--gold); }
+    button.primary { background: var(--gold); color: #1b1208; border-color: var(--gold); font-weight: 700; }
+    button.danger:hover { border-color: var(--bad); color: var(--bad); }
+    button:disabled { opacity: .5; cursor: default; }
+    .drop {
+      margin-top: 4px; border: 2px dashed var(--line); border-radius: 8px; min-height: 120px;
+      display: grid; place-items: center; text-align: center; color: var(--muted); cursor: pointer; padding: 10px;
+    }
+    .drop.over { border-color: var(--gold); color: var(--text); }
+    .drop img { max-width: 100%; max-height: 180px; border-radius: 6px; display: block; }
+    .status { min-height: 20px; margin-top: 10px; font-size: 13px; }
+    .status.error { color: var(--bad); }
+    .status.ok { color: var(--good); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+    .tile { background: var(--panel-2); border: 2px solid transparent; border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+    .tile.active { border-color: var(--gold); }
+    .tile.hidden-item { opacity: .55; }
+    .tile img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 5px; background: #000; }
+    .tile .name { font-weight: 600; font-size: 14px; }
+    .tile .meta { color: var(--muted); font-size: 12px; }
+    .tile .actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: auto; }
+    .tile .actions button { padding: 4px 8px; font-size: 12px; }
+    .card-tile img { aspect-ratio: 5 / 7; object-fit: contain; }
+    .badge { display: inline-block; padding: 2px 7px; border-radius: 99px; font-size: 11px; font-weight: 700; }
+    .badge.good { background: rgba(79,174,120,.2); color: var(--good); }
+    .badge.warn { background: rgba(214,166,64,.2); color: var(--warn); }
+    .active-item { display: flex; gap: 12px; align-items: center; background: var(--panel-2); border-radius: 8px; padding: 10px; margin-bottom: 12px; }
+    .active-item img { width: 72px; height: 54px; object-fit: cover; border-radius: 5px; }
+    .empty { color: var(--muted); font-size: 14px; }
+    .matchup { display: grid; grid-template-columns: 1fr auto 1fr auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+    .matchup:first-child { border-top: 0; }
+    .side { display: flex; gap: 10px; align-items: center; min-width: 0; }
+    .side img { width: 56px; height: 42px; object-fit: cover; border-radius: 4px; background: #000; flex: none; }
+    .side.card img { width: 42px; height: 58px; object-fit: contain; }
+    .side .t { min-width: 0; }
+    .side .t div:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .vs { color: var(--muted); font-size: 12px; text-align: center; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Price matchup builder</h1>
+    <p>Local only. Add a real-world item, then pick a card to compare it against.</p>
+  </header>
+
+  <main>
+    <section id="add-panel">
+      <h2>1. Add a real-world item</h2>
+      <label for="title">Title</label>
+      <input type="text" id="title" placeholder="A gallon of milk" autocomplete="off" />
+      <label for="price">Price (USD)</label>
+      <input type="text" id="price" inputmode="decimal" placeholder="4.29" autocomplete="off" />
+      <label>Image</label>
+      <div class="drop" id="drop" tabindex="0">Click, drop, or paste an image</div>
+      <input type="file" id="file" accept="image/*" hidden />
+      <div style="margin-top: 12px"><button class="primary" id="add-btn">Add item</button></div>
+      <div class="status" id="add-status"></div>
+    </section>
+
+    <section id="match-panel">
+      <h2>2. Pair it with a card</h2>
+      <div id="active"></div>
+      <label for="card-search">Search printings (only ones with a price)</label>
+      <input type="text" id="card-search" placeholder="Start typing a card name..." autocomplete="off" />
+      <label class="check"><input type="checkbox" id="hide-special" checked /> Hide promo, memorabilia and box-set printings</label>
+      <label class="check"><input type="checkbox" id="priced-only" checked /> Only printings with a market price (uncheck to use a custom price)</label>
+      <div class="status" id="match-status"></div>
+      <div id="pending"></div>
+      <div class="grid" id="card-results" style="margin-top: 10px"></div>
+    </section>
+
+    <section class="wide">
+      <h2>Your items</h2>
+      <div class="grid" id="items"></div>
+    </section>
+
+    <section class="wide">
+      <h2>Matchups</h2>
+      <div id="matchups"></div>
+    </section>
+  </main>
+
+  <script>
+    const state = { items: [], matchups: [], selectedItemId: null, imageDataUrl: null, pending: null };
+    const $ = (id) => document.getElementById(id);
+
+    function h(tag, attrs, ...children) {
+      const node = document.createElement(tag);
+      for (const [key, value] of Object.entries(attrs || {})) {
+        if (key === "class") node.className = value;
+        else if (key.startsWith("on")) node.addEventListener(key.slice(2), value);
+        else if (value !== false && value != null) node.setAttribute(key, value);
+      }
+      for (const child of children.flat()) {
+        if (child == null || child === false) continue;
+        node.append(child.nodeType ? child : document.createTextNode(String(child)));
+      }
+      return node;
+    }
+
+    async function api(method, url, body) {
+      const res = await fetch(url, {
+        method,
+        headers: body ? { "Content-Type": "application/json" } : {},
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+      return data;
+    }
+
+    const money = (dollars) => "$" + dollars.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const itemPrice = (item) => item.price_cents / 100;
+
+    function setStatus(el, message, kind) {
+      el.textContent = message || "";
+      el.className = "status" + (kind ? " " + kind : "");
+    }
+
+    function ratioInfo(a, b) {
+      const hi = Math.max(a, b), lo = Math.min(a, b);
+      const ratio = hi / lo;
+      return { ratio, clear: ratio >= 1.5 };
+    }
+
+    // ---- image picking ----
+    function setImageFile(file) {
+      if (!file || !file.type.startsWith("image/")) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        state.imageDataUrl = reader.result;
+        const drop = $("drop");
+        drop.replaceChildren(h("img", { src: reader.result, alt: "Preview" }));
+      };
+      reader.readAsDataURL(file);
+    }
+
+    $("drop").addEventListener("click", () => $("file").click());
+    $("drop").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") $("file").click(); });
+    $("file").addEventListener("change", (e) => setImageFile(e.target.files[0]));
+    $("drop").addEventListener("dragover", (e) => { e.preventDefault(); $("drop").classList.add("over"); });
+    $("drop").addEventListener("dragleave", () => $("drop").classList.remove("over"));
+    $("drop").addEventListener("drop", (e) => {
+      e.preventDefault();
+      $("drop").classList.remove("over");
+      setImageFile(e.dataTransfer.files[0]);
+    });
+    document.addEventListener("paste", (e) => {
+      const file = [...(e.clipboardData?.files || [])].find((f) => f.type.startsWith("image/"));
+      if (file) setImageFile(file);
+    });
+
+    function resetAddForm() {
+      $("title").value = "";
+      $("price").value = "";
+      state.imageDataUrl = null;
+      $("file").value = "";
+      $("drop").replaceChildren("Click, drop, or paste an image");
+    }
+
+    $("add-btn").addEventListener("click", async () => {
+      const status = $("add-status");
+      const price = parseFloat($("price").value.replace(/[$,\s]/g, ""));
+
+      if (!$("title").value.trim()) return setStatus(status, "Add a title.", "error");
+      if (!(price > 0)) return setStatus(status, "Enter a price above zero.", "error");
+      if (!state.imageDataUrl) return setStatus(status, "Add an image.", "error");
+
+      $("add-btn").disabled = true;
+      setStatus(status, "Uploading...");
+
+      try {
+        const { slug } = await api("POST", "/api/items", {
+          name: $("title").value,
+          price_usd: price,
+          image: state.imageDataUrl,
+        });
+        resetAddForm();
+        await refresh();
+        const created = state.items.find((item) => item.slug === slug);
+        if (created) selectItem(created.id);
+        setStatus(status, "Added. Now pick a card to pair it with.", "ok");
+        $("card-search").focus();
+      } catch (err) {
+        setStatus(status, err.message, "error");
+      } finally {
+        $("add-btn").disabled = false;
+      }
+    });
+
+    // ---- items ----
+    function selectItem(id) {
+      state.selectedItemId = id;
+      renderItems();
+      renderActive();
+      runCardSearch();
+    }
+
+    async function editPrice(item) {
+      const input = prompt(`New price for "${item.name}" (USD):`, itemPrice(item).toFixed(2));
+      if (input === null) return;
+      const price = parseFloat(input.replace(/[$,\s]/g, ""));
+      if (!(price > 0)) return alert("Enter a price above zero.");
+      try {
+        await api("PATCH", `/api/items/${item.id}`, { price_usd: price });
+        await refresh();
+      } catch (err) { alert(err.message); }
+    }
+
+    async function toggleItem(item) {
+      try {
+        await api("PATCH", `/api/items/${item.id}`, { enabled: !item.enabled });
+        await refresh();
+      } catch (err) { alert(err.message); }
+    }
+
+    async function removeItem(item) {
+      const extra = item.matchup_count ? ` Its ${item.matchup_count} matchup(s) will be deleted too.` : "";
+      if (!confirm(`Delete "${item.name}"?${extra}`)) return;
+      try {
+        await api("DELETE", `/api/items/${item.id}`);
+        if (state.selectedItemId === item.id) state.selectedItemId = null;
+        await refresh();
+      } catch (err) { alert(err.message); }
+    }
+
+    function renderItems() {
+      const root = $("items");
+      if (state.items.length === 0) {
+        root.replaceChildren(h("div", { class: "empty" }, "No items yet. Add one above."));
+        return;
+      }
+      root.replaceChildren(...state.items.map((item) =>
+        h("div", { class: "tile" + (item.id === state.selectedItemId ? " active" : "") + (item.enabled ? "" : " hidden-item") },
+          h("img", { src: item.image_url, alt: item.name, loading: "lazy" }),
+          h("div", { class: "name" }, item.name),
+          h("div", { class: "meta" }, money(itemPrice(item))),
+          h("div", { class: "meta" }, `${item.matchup_count} matchup(s)${item.enabled ? "" : " · hidden"}`),
+          h("div", { class: "actions" },
+            h("button", { class: "primary", onclick: () => selectItem(item.id) }, "Pair"),
+            h("button", { onclick: () => editPrice(item) }, "Price"),
+            h("button", { onclick: () => toggleItem(item) }, item.enabled ? "Hide" : "Show"),
+            h("button", { class: "danger", onclick: () => removeItem(item) }, "Delete"),
+          ),
+        ),
+      ));
+    }
+
+    function renderActive() {
+      const item = state.items.find((i) => i.id === state.selectedItemId);
+      $("active").replaceChildren(item
+        ? h("div", { class: "active-item" },
+            h("img", { src: item.image_url, alt: item.name }),
+            h("div", {}, h("div", { style: "font-weight:600" }, item.name), h("div", { class: "meta", style: "color:var(--muted)" }, money(itemPrice(item)))))
+        : h("div", { class: "empty", style: "margin-bottom:12px" }, "Choose an item below (click Pair), or add a new one."));
+    }
+
+    // ---- card search ----
+    let searchTimer;
+    $("card-search").addEventListener("input", () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(runCardSearch, 250);
+    });
+    $("hide-special").addEventListener("change", runCardSearch);
+    $("priced-only").addEventListener("change", runCardSearch);
+
+    async function runCardSearch() {
+      const q = $("card-search").value.trim();
+      const root = $("card-results");
+      const item = state.items.find((i) => i.id === state.selectedItemId);
+      if (q.length < 2) return root.replaceChildren();
+      try {
+        const hide = $("hide-special").checked ? 1 : 0;
+        const priced = $("priced-only").checked ? 1 : 0;
+        const cards = await api("GET", `/api/cards?q=${encodeURIComponent(q)}&hide_special=${hide}&priced_only=${priced}`);
+        if (cards.length === 0) return root.replaceChildren(h("div", { class: "empty" }, "No printings match."));
+        root.replaceChildren(...cards.map((card) => {
+          const hasPrice = card.price != null;
+          const info = item && hasPrice ? ratioInfo(itemPrice(item), card.price) : null;
+          const tags = [card.is_promo && "promo", card.set_type === "memorabilia" && "memorabilia", card.foil_only && "foil"].filter(Boolean);
+          return h("div", { class: "tile card-tile" },
+            h("img", { src: card.image_small, alt: card.name, loading: "lazy" }),
+            h("div", { class: "name" }, card.name),
+            h("div", { class: "meta" }, `${hasPrice ? money(card.price) : "no market price"} · ${(card.set_code || "").toUpperCase()}${card.year ? " " + card.year : ""}`),
+            h("div", { class: "meta" }, card.set_name || ""),
+            tags.length > 0 && h("div", { class: "meta" }, tags.join(" · ")),
+            info && h("div", {}, h("span", { class: "badge " + (info.clear ? "good" : "warn") },
+              info.clear ? `${info.ratio.toFixed(1)}x apart` : `only ${info.ratio.toFixed(1)}x apart`)),
+            h("div", { class: "actions" },
+              hasPrice && h("button", { class: "primary", onclick: () => pair(card) }, "Pair with this"),
+              h("button", { class: hasPrice ? "" : "primary", onclick: () => startCustomize(card) }, "Customize…")),
+          );
+        }));
+      } catch (err) {
+        setStatus($("match-status"), err.message, "error");
+      }
+    }
+
+    async function pair(card, overrides = {}) {
+      const item = state.items.find((i) => i.id === state.selectedItemId);
+      if (!item) return setStatus($("match-status"), "Choose an item first.", "error");
+      try {
+        await api("POST", "/api/matchups", { item_id: item.id, printing_uuid: card.uuid, ...overrides });
+        const label = overrides.card_name || card.name;
+        setStatus($("match-status"), `Paired ${item.name} with ${label} (${(card.set_code || "").toUpperCase()}).`, "ok");
+        state.pending = null;
+        renderPending();
+        await refresh();
+      } catch (err) {
+        setStatus($("match-status"), err.message, "error");
+      }
+    }
+
+    // ---- custom name / price ----
+    function startCustomize(card) {
+      const item = state.items.find((i) => i.id === state.selectedItemId);
+      if (!item) return setStatus($("match-status"), "Choose an item first.", "error");
+      state.pending = card;
+      setStatus($("match-status"), "");
+      renderPending();
+      $("ov-name").focus();
+      $("ov-name").select();
+    }
+
+    function renderPending() {
+      const root = $("pending");
+      const card = state.pending;
+      if (!card) return root.replaceChildren();
+      const item = state.items.find((i) => i.id === state.selectedItemId);
+      const badge = h("span", { class: "badge warn", id: "ov-badge" });
+
+      function updateBadge() {
+        const price = parseFloat($("ov-price").value.replace(/[$,\s]/g, ""));
+        if (!(price > 0) || !item) { badge.textContent = ""; return; }
+        const info = ratioInfo(itemPrice(item), price);
+        badge.className = "badge " + (info.clear ? "good" : "warn");
+        badge.textContent = info.clear ? `${info.ratio.toFixed(1)}x apart` : `only ${info.ratio.toFixed(1)}x apart`;
+      }
+
+      const hasMarket = card.price != null;
+
+      root.replaceChildren(h("div", { class: "pending" },
+        h("img", { src: card.image_small, alt: card.name }),
+        h("div", {},
+          h("div", { class: "meta", style: "color:var(--muted)" }, `Image from ${card.name} · ${(card.set_code || "").toUpperCase()}${card.year ? " " + card.year : ""}`),
+          h("label", { for: "ov-name" }, "Name shown in the game"),
+          h("input", { type: "text", id: "ov-name", value: card.name, autocomplete: "off" }),
+          h("label", { for: "ov-price" }, "Price (USD)"),
+          h("input", { type: "text", id: "ov-price", inputmode: "decimal", autocomplete: "off",
+            value: hasMarket ? card.price.toFixed(2) : "", placeholder: hasMarket ? "" : "Required: no market price" }),
+          h("div", { class: "hint" }, hasMarket ? `Market price is ${money(card.price)}. Change it to use a custom price.` : "This printing has no market price, so enter one."),
+          h("div", { class: "buttons" },
+            h("button", { class: "primary", id: "ov-create" }, "Create matchup"),
+            h("button", { id: "ov-cancel" }, "Cancel"),
+            badge),
+        ),
+      ));
+
+      $("ov-price").addEventListener("input", updateBadge);
+      $("ov-cancel").addEventListener("click", () => { state.pending = null; renderPending(); });
+      $("ov-create").addEventListener("click", () => {
+        const name = $("ov-name").value.trim();
+        const price = parseFloat($("ov-price").value.replace(/[$,\s]/g, ""));
+        const overrides = {};
+        if (name && name !== card.name) overrides.card_name = name;
+        if (price > 0 && (!hasMarket || Math.round(price * 100) !== Math.round(card.price * 100))) overrides.card_price_usd = price;
+        if (!hasMarket && overrides.card_price_usd === undefined) {
+          return setStatus($("match-status"), "Enter a price for this printing.", "error");
+        }
+        pair(card, overrides);
+      });
+      updateBadge();
+    }
+
+    // ---- matchups ----
+    async function removeMatchup(matchup) {
+      if (!confirm(`Delete matchup: ${matchup.item_name} vs ${matchup.card_name}?`)) return;
+      try {
+        await api("DELETE", `/api/matchups/${matchup.id}`);
+        await refresh();
+      } catch (err) { alert(err.message); }
+    }
+
+    function renderMatchups() {
+      const root = $("matchups");
+      if (state.matchups.length === 0) {
+        root.replaceChildren(h("div", { class: "empty" }, "No matchups yet."));
+        return;
+      }
+      root.replaceChildren(...state.matchups.map((m) => {
+        const itemDollars = m.price_cents / 100;
+        const info = m.card_price == null ? null : ratioInfo(itemDollars, m.card_price);
+        return h("div", { class: "matchup" },
+          h("div", { class: "side" },
+            h("img", { src: m.item_image, alt: m.item_name }),
+            h("div", { class: "t" }, h("div", {}, m.item_name), h("div", { class: "meta", style: "color:var(--muted)" }, money(itemDollars)))),
+          h("div", { class: "vs" }, "vs", info && h("div", {}, h("span", { class: "badge " + (info.clear ? "good" : "warn") }, `${info.ratio.toFixed(1)}x`))),
+          h("div", { class: "side card" },
+            h("img", { src: m.card_image || "", alt: m.card_name || "" }),
+            h("div", { class: "t" },
+              h("div", {}, m.card_name || "Card missing", m.name_overridden && h("span", { class: "custom" }, "custom name")),
+              h("div", { class: "meta", style: "color:var(--muted)" },
+                `${m.card_price == null ? "no price" : money(m.card_price)} · ${m.set_code || ""}`,
+                m.price_overridden && h("span", { class: "custom" }, m.market_price != null ? `custom price (market ${money(m.market_price)})` : "custom price")))),
+          h("button", { class: "danger", onclick: () => removeMatchup(m) }, "Delete"),
+        );
+      }));
+    }
+
+    async function refresh() {
+      [state.items, state.matchups] = await Promise.all([api("GET", "/api/items"), api("GET", "/api/matchups")]);
+      renderItems();
+      renderActive();
+      renderMatchups();
+    }
+
+    refresh().catch((err) => setStatus($("add-status"), err.message, "error"));
+  </script>
+</body>
+</html>

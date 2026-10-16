@@ -46,6 +46,16 @@ export default function Home() {
                 Guess Which Card is the Saltiest
               </span>
             </Link>
+            <Link href="/price-check" className={styles.button}>
+              <span className={styles.buttonTitleRow}>
+                <span className={styles.button_title}>Price Check</span>
+                <span className={styles.newTag}>New</span>
+                <span className={styles.newTag}>Beta</span>
+              </span>
+              <span className={styles.button_subtitle}>
+                Guess Which Costs More
+              </span>
+            </Link>
           </div>
         </section>
       </main>

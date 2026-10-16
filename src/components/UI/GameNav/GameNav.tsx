@@ -4,15 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import styles from "./GameNav.module.css";
 import { ClassicIcon } from "@/assets/icons/classic";
-import { Palette, Stone } from "lucide-react";
+import { Coins, Palette, Stone } from "lucide-react";
 
 export default function GameNav() {
   const pathname = usePathname();
   const isClassic = pathname === "/classic";
   const isArt = pathname === "/art";
   const isSalt = pathname === "/salt-score";
+  const isPrice = pathname === "/price-check";
 
-  if (!isClassic && !isArt && !isSalt) {
+  if (!isClassic && !isArt && !isSalt && !isPrice) {
     return null;
   }
 
@@ -58,6 +59,20 @@ export default function GameNav() {
             >
               <i className={styles.iconContainer}>
                 <Stone className={styles.icon} />
+              </i>
+            </Link>
+          </li>
+
+          <li>
+            <Link
+              href="/price-check"
+              className={`${styles.modeLink} ${isPrice ? styles.active : ""}`}
+              aria-current={isPrice ? "page" : undefined}
+              aria-label="Price check game mode"
+              title="Price Check"
+            >
+              <i className={styles.iconContainer}>
+                <Coins className={styles.icon} />
               </i>
             </Link>
           </li>
