@@ -22,9 +22,6 @@ export const metadata: Metadata = {
     default: "MTGdle",
     template: "%s | MTGdle",
   },
-  icons: {
-    icon: "/favicon.svg",
-  },
   description: "A daily Magic: The Gathering card guessing game.",
   openGraph: {
     title: "MTGdle",
