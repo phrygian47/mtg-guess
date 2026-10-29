@@ -7,6 +7,7 @@ import styles from "./page.module.css";
 import { useCallback, useState, useEffect } from "react";
 import { Share } from "lucide-react";
 import { formatCountdown, useNextPuzzleCountdown } from "@/lib/game/countdown";
+import { fetchWithRetry } from "@/lib/http/fetchWithRetry";
 import {
   fetchGameStats,
   recordGameCompletion,
@@ -184,7 +185,7 @@ export default function Page() {
 
     const fetchItems = async () => {
       try {
-        const response = await fetch(
+        const response = await fetchWithRetry(
           `/api/salt-score/start-game?${params.toString()}`,
         );
         const data = await response.json();
@@ -328,7 +329,7 @@ export default function Page() {
 
       try {
         const params = new URLSearchParams({ timezone });
-        const response = await fetch(
+        const response = await fetchWithRetry(
           `/api/salt-score/reveal?${params.toString()}`,
         );
 
@@ -364,7 +365,7 @@ export default function Page() {
     try {
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const params = new URLSearchParams({ timezone: userTimezone });
-      const response = await fetch(
+      const response = await fetchWithRetry(
         `/api/salt-score/reveal?${params.toString()}`,
       );
 

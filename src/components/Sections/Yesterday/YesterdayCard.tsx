@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { fetchWithRetry } from "@/lib/http/fetchWithRetry";
+
 import styles from "./YesterdayCard.module.css";
 
 type YesterdayCardData = {
@@ -28,7 +30,9 @@ export default function YesterdayCard({
     async function loadYesterday() {
       try {
         const params = new URLSearchParams({ timezone, mode });
-        const res = await fetch(`/api/game/yesterday?${params.toString()}`);
+        const res = await fetchWithRetry(
+          `/api/game/yesterday?${params.toString()}`,
+        );
 
         if (!res.ok) {
           // A 404 is normal on the mode's first day, so this stays quiet.

@@ -16,6 +16,7 @@ import {
 } from "@/lib/game/artProgress";
 import { formatCountdown, useNextPuzzleCountdown } from "@/lib/game/countdown";
 import { recordGameCompletion, type GuessStats } from "@/lib/game/stats";
+import { fetchWithRetry } from "@/lib/http/fetchWithRetry";
 import { parseManaCost, parseSymbolText } from "@/lib/game/manaSymbols";
 import type { CardGuess } from "@/lib/question/types";
 import { loadCardSearchIndex } from "@/lib/db/loadCardSearchIndex";
@@ -268,7 +269,9 @@ export default function ArtPage() {
 
       try {
         const params = new URLSearchParams({ timezone });
-        const res = await fetch(`/api/art/start-game?${params.toString()}`);
+        const res = await fetchWithRetry(
+          `/api/art/start-game?${params.toString()}`,
+        );
 
         if (!res.ok) {
           const message = await res.text();
@@ -387,7 +390,7 @@ export default function ArtPage() {
     setError(null);
 
     try {
-      const res = await fetch("/api/art/submit-guess", {
+      const res = await fetchWithRetry("/api/art/submit-guess", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

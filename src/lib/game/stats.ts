@@ -1,3 +1,5 @@
+import { fetchWithRetry } from "@/lib/http/fetchWithRetry";
+
 export type GuessStatBucket = {
   guesses: number;
   players: number;
@@ -40,7 +42,7 @@ export async function recordGameCompletion(
   guessesUsed: number,
   mode: GameMode = "classic",
 ): Promise<GuessStats> {
-  const res = await fetch("/api/game/stats", {
+  const res = await fetchWithRetry("/api/game/stats", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -67,7 +69,7 @@ export async function fetchGameStats(
   mode: GameMode = "classic",
 ): Promise<GuessStats> {
   const params = new URLSearchParams({ timezone, mode });
-  const res = await fetch(`/api/game/stats?${params.toString()}`);
+  const res = await fetchWithRetry(`/api/game/stats?${params.toString()}`);
 
   if (!res.ok) {
     const message = await res.text();

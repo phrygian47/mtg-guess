@@ -186,8 +186,12 @@ async function getSaltScoreSelectionRowForDate(
   return rows[0] ?? null;
 }
 
-export async function getSaltScoreSelectionForDate(
-  puzzleDate: string,
+// Reads a day's selection in a single query. Give it a date, or leave the date
+// null and give it a timezone: the database then works out "today" itself, so
+// a request needs one round trip instead of a date lookup followed by this.
+async function loadSaltScoreSelection(
+  puzzleDate: string | null,
+  timezone: string,
 ): Promise<SaltScoreSelection | null> {
   const rows = (await sql`
     select
@@ -205,11 +209,15 @@ export async function getSaltScoreSelectionForDate(
     join cards
       on cards.oracle_id = selection_cards.oracle_id
     where selections.mode = ${SALT_SCORE_MODE}
-      and selections.puzzle_date = ${puzzleDate}::date
+      and selections.puzzle_date = coalesce(${puzzleDate}::date, (now() at time zone ${timezone})::date)
     order by selection_cards.position
   `) as SaltScoreSelectionCardRow[];
 
   return mapSelectionRows(rows);
+}
+
+export function getSaltScoreSelectionForDate(puzzleDate: string) {
+  return loadSaltScoreSelection(puzzleDate, "UTC");
 }
 
 async function pickSaltScoreCandidates(
@@ -343,6 +351,14 @@ export async function ensureSaltScoreSelectionForDate(
 }
 
 export async function ensureSaltScoreSelectionForTimezone(timezone: string) {
+  // Almost every request lands here with today's puzzle already made, so try
+  // the one-query read first and only work out the date when it must be built.
+  const existing = await loadSaltScoreSelection(null, timezone);
+
+  if (existing) {
+    return { selection: existing, created: false };
+  }
+
   const puzzleDate = await getCurrentPuzzleDate(timezone);
 
   return ensureSaltScoreSelectionForDate(puzzleDate);

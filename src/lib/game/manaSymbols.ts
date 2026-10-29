@@ -1,5 +1,7 @@
 // lib/game/manaSymbols.ts
 
+import { fetchWithRetry } from "@/lib/http/fetchWithRetry";
+
 export type ManaSymbol = {
   symbol: string;
   svg_uri: string;
@@ -25,7 +27,7 @@ export type ParsedSymbolTextToken =
     } & ParsedManaCostSymbol);
 
 export async function fetchManaSymbols(): Promise<ManaSymbolMap> {
-  const res = await fetch("/api/cards/symbology");
+  const res = await fetchWithRetry("/api/cards/symbology");
 
   if (!res.ok) {
     const body = await res.text();

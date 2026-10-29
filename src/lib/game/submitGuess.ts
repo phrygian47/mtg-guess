@@ -1,3 +1,5 @@
+import { fetchWithRetry } from "@/lib/http/fetchWithRetry";
+
 export type SubmitGuessResult = {
   answer: boolean;
   name: string;
@@ -8,7 +10,7 @@ export async function submitGuess(
   timezone: string,
   oracle_id: string,
 ): Promise<SubmitGuessResult> {
-  const res = await fetch("/api/game/submit-guess", {
+  const res = await fetchWithRetry("/api/game/submit-guess", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

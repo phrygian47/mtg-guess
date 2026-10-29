@@ -1,4 +1,5 @@
 import { InfoGridRow } from "@/lib/game/types";
+import { fetchWithRetry } from "@/lib/http/fetchWithRetry";
 
 export async function submitCard(
   timezone: string,
@@ -9,7 +10,7 @@ export async function submitCard(
     cardId,
   });
 
-  const res = await fetch(`/api/game/submit-card?${params.toString()}`, {
+  const res = await fetchWithRetry(`/api/game/submit-card?${params.toString()}`, {
     method: "GET",
   });
 
